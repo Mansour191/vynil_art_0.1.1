@@ -1,0 +1,78 @@
+{
+  "name": "vynil_art",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node node_modules/vite/dist/node/cli.js",
+    "serve": "node node_modules/vite/dist/node/cli.js",
+    "build": "node node_modules/vite/dist/node/cli.js build",
+    "preview": "node node_modules/vite/dist/node/cli.js preview",
+    "lint": "eslint --ext .js,.vue src"
+  },
+  "dependencies": {
+    "@apollo/client": "^3.14.0",
+    "@fortawesome/fontawesome-free": "^7.2.0",
+    "@mdi/font": "^7.4.47",
+    "@tensorflow/tfjs": "^4.22.0",
+    "@vuelidate/core": "^2.0.3",
+    "@vuelidate/validators": "^2.0.4",
+    "axios": "^1.13.6",
+    "chart.js": "^4.5.1",
+    "core-js": "^3.48.0",
+    "emailjs-com": "^3.2.0",
+    "firebase": "^12.10.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
+    "leaflet": "^1.9.4",
+    "leaflet-heatmap": "^1.0.0",
+    "lodash": "^4.17.23",
+    "moment": "^2.30.1",
+    "pinia": "^3.0.4",
+    "regression": "^2.0.1",
+    "simple-statistics": "^7.8.9",
+    "vue": "^3.3.4",
+    "vue-chartjs": "^5.3.3",
+    "vue-i18n": "^9.2.2",
+    "vue-router": "^4.2.4",
+    "vuex": "^4.1.0",
+    "zxcvbn": "^4.4.2",
+    "graphql": "^16.11.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.16",
+    "@babel/eslint-parser": "^7.12.16",
+    "@intlify/unplugin-vue-i18n": "^1.5.0",
+    "@vitejs/plugin-vue": "^4.5.0",
+    "@vue/compiler-sfc": "^3.3.4",
+    "ai-vue-i18n": "^1.0.9",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.10.2",
+    "eslint-plugin-prettier": "^4.2.5",
+    "eslint-plugin-vue": "^9.17.0",
+    "prettier": "^2.4.1",
+    "sass": "^1.32.7",
+    "vite": "^5.0.0",
+    "vite-plugin-imagemin": "^0.6.1"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/vue3-essential",
+      "eslint:recommended",
+      "plugin:prettier/recommended"
+    ],
+    "parserOptions": {
+      "parser": "@babel/eslint-parser"
+    },
+    "rules": {}
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ]
+}
