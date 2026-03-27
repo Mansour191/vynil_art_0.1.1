@@ -965,5 +965,9 @@
     "estimatedTotal": "Prix total estime",
     "aiBusy": "Le service IA est occupe. Le prix par defaut est applique.",
     "fallbackPrice": "Le prix par defaut est affiche en attendant le service IA."
-  }
+  },
+  "fieldRequired": "Ce champ est obligatoire",
+  "nameMinLength": "Le nom doit comporter au moins 3 caractères",
+  "phoneMinLength": "Numéro de téléphone invalide",
+  "messageMinLength": "Le message est trop court"
 }

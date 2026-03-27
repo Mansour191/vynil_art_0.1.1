@@ -1,50 +1,95 @@
 <template>
-  <div class="auth-page">
-    <div class="auth-container">
-      <div class="auth-header">
-        <h3>
-          <i class="fa-solid fa-key"></i>
-          {{ $t('forgotPassword') }}
-        </h3>
-      </div>
+  <v-container class="auth-page" fluid>
+    <v-row justify="center" align="center" class="fill-height">
+      <v-col cols="12" sm="10" md="8" lg="6" xl="4">
+        <v-card class="auth-card" elevation="8">
+          <v-card-text class="pa-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+              <v-icon size="64" color="primary" class="mb-4">
+                mdi-key
+              </v-icon>
+              <h2 class="text-h4 font-weight-bold text-primary mb-2">
+                {{ $t('forgotPassword') }}
+              </h2>
+              <p class="text-body-1 text-medium-emphasis">
+                {{ $t('forgotPasswordDesc') || 'أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.' }}
+              </p>
+            </div>
 
-      <div class="auth-body">
-        <p class="auth-desc">
-          {{ $t('forgotPasswordDesc') || 'أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.' }}
-        </p>
+            <!-- Error Alert -->
+            <v-alert
+              v-if="error"
+              type="error"
+              variant="tonal"
+              class="mb-6"
+              closable
+              @update:model-value="error = null"
+            >
+              <v-alert-title>
+                <v-icon start>mdi-alert-circle</v-icon>
+                خطأ
+              </v-alert-title>
+              {{ error }}
+            </v-alert>
 
-        <div v-if="error" class="error-message">
-          <i class="fa-solid fa-exclamation-circle"></i>
-          {{ error }}
-        </div>
+            <!-- Success Alert -->
+            <v-alert
+              v-if="success"
+              type="success"
+              variant="tonal"
+              class="mb-6"
+              closable
+              @update:model-value="success = null"
+            >
+              <v-alert-title>
+                <v-icon start>mdi-check-circle</v-icon>
+                تم بنجاح
+              </v-alert-title>
+              {{ success }}
+            </v-alert>
 
-        <div v-if="success" class="success-message">
-          <i class="fa-solid fa-check-circle"></i>
-          {{ success }}
-        </div>
+            <!-- Reset Form -->
+            <v-form @submit.prevent="handleReset" v-if="!success">
+              <v-text-field
+                v-model="email"
+                :label="$t('email')"
+                type="email"
+                prepend-inner-icon="mdi-email"
+                variant="outlined"
+                required
+                :rules="emailRules"
+                class="mb-4"
+              />
 
-        <form @submit.prevent="handleReset" v-if="!success">
-          <div class="form-group">
-            <label>
-              <i class="fa-solid fa-envelope"></i>
-              {{ $t('email') }}
-            </label>
-            <input type="email" v-model="email" :placeholder="$t('email')" required />
-          </div>
+              <v-btn
+                type="submit"
+                block
+                size="large"
+                color="primary"
+                :loading="loading"
+                class="mb-4"
+              >
+                <v-icon start>mdi-send</v-icon>
+                {{ $t('send') }}
+              </v-btn>
+            </v-form>
 
-          <button type="submit" class="submit-btn" :disabled="loading">
-            <i class="fa-solid fa-paper-plane"></i>
-            <span v-if="!loading">{{ $t('send') }}</span>
-            <span v-else><i class="fa-solid fa-spinner fa-spin"></i> {{ $t('loading') }}</span>
-          </button>
-        </form>
-
-        <div class="auth-footer">
-          <router-link to="/login">{{ $t('login') }}</router-link>
-        </div>
-      </div>
-    </div>
-  </div>
+            <!-- Footer Link -->
+            <div class="text-center mt-6">
+              <router-link 
+                to="/login" 
+                class="text-decoration-none text-primary font-weight-medium"
+              >
+                <v-icon start size="small">mdi-arrow-left</v-icon>
+                {{ $t('login') }}
+              </router-link>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script setup>
@@ -58,6 +103,12 @@ const email = ref('');
 const loading = ref(false);
 const error = ref(null);
 const success = ref(null);
+
+// Email validation rules
+const emailRules = [
+  v => !!v || 'البريد الإلكتروني مطلوب',
+  v => /.+@.+\..+/.test(v) || 'البريد الإلكتروني غير صالح'
+];
 
 const handleReset = async () => {
   loading.value = true;
@@ -76,56 +127,38 @@ const handleReset = async () => {
 
 <style scoped>
 .auth-page {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 80vh;
-  padding: 20px;
+  background: linear-gradient(135deg, var(--gradient-dark));
 }
-.auth-container {
-  width: 100%;
-  max-width: 450px;
-  background: white;
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+
+.auth-card {
+  backdrop-filter: blur(20px);
+  background: rgba(26, 26, 26, 0.95);
+  border: 1px solid var(--border-primary);
 }
-.auth-header h3 {
-  text-align: center;
-  margin-bottom: 25px;
-  color: #333;
+
+/* Custom styles for dark luxury theme */
+.v-text-field :deep(.v-field) {
+  background-color: rgba(10, 10, 10, 0.5);
+  border-color: var(--border-secondary);
 }
-.auth-desc {
-  text-align: center;
-  margin-bottom: 25px;
-  color: #666;
+
+.v-text-field :deep(.v-field:hover) {
+  border-color: var(--color-primary);
 }
-.form-group {
-  margin-bottom: 20px;
+
+.v-text-field :deep(.v-field--focused) {
+  border-color: var(--color-primary);
+  box-shadow: var(--gold-glow);
 }
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
+
+.v-btn {
+  text-transform: none;
   font-weight: 600;
+  letter-spacing: 0.5px;
 }
-.form-group input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
-.submit-btn {
-  width: 100%;
-  padding: 12px;
-  background: #2c3e50;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-}
-.auth-footer {
-  text-align: center;
-  margin-top: 20px;
+
+.v-alert {
+  backdrop-filter: blur(10px);
 }
 </style>

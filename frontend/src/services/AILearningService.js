@@ -21,13 +21,23 @@ class AILearningService {
     // Start continuous learning
     this.startContinuousLearning();
     
-    // Initialize model training
-    await this.initializeModels();
+    // Initialize models
+    this.initializeModels();
     
     // Start adaptive learning
     this.startAdaptiveLearning();
     
     console.log('✅ AI Learning System Initialized');
+  }
+
+  // Initialize Models
+  initializeModels() {
+    console.log('🤖 Initializing AI Models...');
+    // Initial check of model versions and performance
+    Object.keys(this.aiModels).forEach(modelName => {
+      const model = this.aiModels[modelName];
+      console.log(`- ${modelName}: v${model.version} (Accuracy: ${(model.accuracy * 100).toFixed(1)}%)`);
+    });
   }
 
   // Load Learning Data
@@ -434,7 +444,7 @@ class AILearningService {
       // Get recent user behavior
       const recentBehavior = await this.getRecentUserBehavior();
       
-      // Analyze patterns
+      // Analyze patterns using existing analysis methods
       const patterns = this.analyzeUserPatterns(recentBehavior);
       
       // Adapt responses and recommendations
@@ -445,6 +455,157 @@ class AILearningService {
     } catch (error) {
       console.error('Error adapting to user behavior:', error);
     }
+  }
+
+  // Analyze user behavior patterns - Missing method implementation
+  analyzeUserPatterns(recentBehavior) {
+    if (!recentBehavior || !recentBehavior.interactions) {
+      return {
+        preferredCategories: {},
+        activeHours: {},
+        interactionTypes: {},
+        frequency: 0,
+        sentiment: 'neutral'
+      };
+    }
+
+    const interactions = recentBehavior.interactions.slice(-100); // Last 100 interactions
+    
+    return {
+      preferredCategories: this.analyzePreferredCategories(interactions),
+      activeHours: this.analyzeActiveHours(interactions),
+      interactionTypes: this.analyzeInteractionTypes(interactions),
+      frequency: this.analyzeFrequency(interactions),
+      sentiment: this.analyzeSentiment(interactions)
+    };
+  }
+
+  // Analyze sentiment from interactions
+  analyzeSentiment(interactions) {
+    if (!interactions.length) return 'neutral';
+    
+    const sentiments = interactions
+      .filter(i => i.sentiment)
+      .map(i => i.sentiment);
+    
+    if (!sentiments.length) return 'neutral';
+    
+    const positiveCount = sentiments.filter(s => s === 'positive').length;
+    const negativeCount = sentiments.filter(s => s === 'negative').length;
+    
+    if (positiveCount > negativeCount) return 'positive';
+    if (negativeCount > positiveCount) return 'negative';
+    return 'neutral';
+  }
+
+  // Adapt responses based on user patterns
+  async adaptResponses(patterns) {
+    try {
+      console.log('🧠 Adapting responses based on patterns:', patterns);
+      
+      // Store adaptation data for future use
+      const adaptationData = {
+        timestamp: new Date().toISOString(),
+        patterns,
+        adaptations: {
+          responseStyle: this.calculateResponseStyle(patterns),
+          languageComplexity: this.calculateLanguageComplexity(patterns),
+          interactionSpeed: this.calculateInteractionSpeed(patterns)
+        }
+      };
+      
+      // Save to learning data
+      this.learningData.responseAdaptations = this.learningData.responseAdaptations || [];
+      this.learningData.responseAdaptations.push(adaptationData);
+      this.saveLearningData();
+      
+      console.log('✅ Responses adapted successfully');
+      return adaptationData;
+    } catch (error) {
+      console.error('❌ Error adapting responses:', error);
+      return null;
+    }
+  }
+
+  // Adapt recommendations based on user patterns
+  async adaptRecommendations(patterns) {
+    try {
+      console.log('🎯 Adapting recommendations based on patterns:', patterns);
+      
+      // Store adaptation data for future use
+      const adaptationData = {
+        timestamp: new Date().toISOString(),
+        patterns,
+        adaptations: {
+          categoryPreferences: patterns.preferredCategories,
+          timePreferences: patterns.activeHours,
+          recommendationWeights: this.calculateRecommendationWeights(patterns),
+          diversityFactor: this.calculateDiversityFactor(patterns)
+        }
+      };
+      
+      // Save to learning data
+      this.learningData.recommendationAdaptations = this.learningData.recommendationAdaptations || [];
+      this.learningData.recommendationAdaptations.push(adaptationData);
+      this.saveLearningData();
+      
+      console.log('✅ Recommendations adapted successfully');
+      return adaptationData;
+    } catch (error) {
+      console.error('❌ Error adapting recommendations:', error);
+      return null;
+    }
+  }
+
+  // Helper methods for adaptation calculations
+  calculateResponseStyle(patterns) {
+    const sentiment = patterns.sentiment;
+    const frequency = patterns.frequency;
+    
+    if (sentiment === 'positive' && frequency > 5) {
+      return 'enthusiastic';
+    } else if (sentiment === 'positive') {
+      return 'friendly';
+    } else if (sentiment === 'negative') {
+      return 'supportive';
+    } else {
+      return 'neutral';
+    }
+  }
+
+  calculateLanguageComplexity(patterns) {
+    const frequency = patterns.frequency;
+    
+    if (frequency > 10) return 'advanced';
+    if (frequency > 5) return 'intermediate';
+    return 'simple';
+  }
+
+  calculateInteractionSpeed(patterns) {
+    const frequency = patterns.frequency;
+    
+    if (frequency > 10) return 'fast';
+    if (frequency > 5) return 'normal';
+    return 'slow';
+  }
+
+  calculateRecommendationWeights(patterns) {
+    const weights = {};
+    
+    // Weight categories based on preferences
+    Object.entries(patterns.preferredCategories).forEach(([category, count]) => {
+      weights[category] = Math.min(count / 10, 1.0); // Normalize to 0-1
+    });
+    
+    return weights;
+  }
+
+  calculateDiversityFactor(patterns) {
+    const categoryCount = Object.keys(patterns.preferredCategories).length;
+    const interactionCount = Object.values(patterns.preferredCategories).reduce((sum, count) => sum + count, 0);
+    
+    // Higher diversity if user interacts with many categories
+    return categoryCount / Math.max(interactionCount, 1);
   }
 
   async adaptToSeasonalPatterns() {
@@ -462,6 +623,77 @@ class AILearningService {
   }
 
   // Helper Methods
+  async getRecentUserBehavior() {
+    try {
+      // Get recent interactions from learning data
+      const recentInteractions = this.learningData.userInteractions.slice(-100); // Last 100 interactions
+      
+      // Analyze behavior patterns
+      const behaviorPatterns = {
+        preferredCategories: this.analyzePreferredCategories(recentInteractions),
+        activeHours: this.analyzeActiveHours(recentInteractions),
+        interactionTypes: this.analyzeInteractionTypes(recentInteractions),
+        frequency: this.analyzeFrequency(recentInteractions)
+      };
+      
+      return {
+        patterns: behaviorPatterns,
+        interactions: recentInteractions,
+        lastUpdated: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Error getting recent user behavior:', error);
+      return {
+        patterns: {},
+        interactions: [],
+        lastUpdated: new Date().toISOString()
+      };
+    }
+  }
+
+  analyzePreferredCategories(interactions) {
+    const categories = {};
+    interactions.forEach(interaction => {
+      if (interaction.category) {
+        categories[interaction.category] = (categories[interaction.category] || 0) + 1;
+      }
+    });
+    return categories;
+  }
+
+  analyzeActiveHours(interactions) {
+    const hours = {};
+    interactions.forEach(interaction => {
+      if (interaction.timestamp) {
+        const hour = new Date(interaction.timestamp).getHours();
+        hours[hour] = (hours[hour] || 0) + 1;
+      }
+    });
+    return hours;
+  }
+
+  analyzeInteractionTypes(interactions) {
+    const types = {};
+    interactions.forEach(interaction => {
+      if (interaction.type) {
+        types[interaction.type] = (types[interaction.type] || 0) + 1;
+      }
+    });
+    return types;
+  }
+
+  analyzeFrequency(interactions) {
+    if (interactions.length === 0) return 0;
+    
+    const now = Date.now();
+    const weekAgo = now - (7 * 24 * 60 * 60 * 1000);
+    const recentInteractions = interactions.filter(i => 
+      new Date(i.timestamp).getTime() > weekAgo
+    );
+    
+    return recentInteractions.length / 7; // Average per day
+  }
+
   generateTrainingId() {
     return 'training_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   }

@@ -25,9 +25,10 @@ from api.views import api_root
 urlpatterns = [
     path('', api_root, name='api-root'),
     path('admin/', admin.site.urls),
-    # API Authentication endpoints
-    path('api/', include('api.auth_urls')),
-    # GraphQL Only - REST API Removed
+    # API endpoints (REST)
+    path('api/', include('api.urls')),
+    path('api/auth/', include('api.auth_urls')),
+    # GraphQL endpoint
     path('graphql/', csrf_exempt(GraphQLView.as_view(graphiql=settings.DEBUG)), name='graphql'),
 ]
 

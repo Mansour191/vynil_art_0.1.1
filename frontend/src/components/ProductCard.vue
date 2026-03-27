@@ -1,117 +1,220 @@
 <template>
-  <div class="product-card" :class="{ 'on-sale': product.onSale }">
-    <!-- صورة المنتج مع شارات -->
-    <div class="product-image-container">
-      <img :src="product.image" :alt="product.title" class="product-image" loading="lazy" />
+  <v-card 
+    class="product-card h-100"
+    :class="{ 'on-sale': product.onSale }"
+    elevation="4"
+    hover
+  >
+    <!-- Product Image with Badges -->
+    <div class="product-image-container position-relative">
+      <v-img 
+        :src="product.image" 
+        :alt="product.title" 
+        :aspect-ratio="16/12"
+        cover
+        class="product-image"
+      >
+        <!-- Sale Badge -->
+        <v-chip
+          v-if="isOnSale"
+          color="error"
+          size="small"
+          class="sale-badge position-absolute top-2 right-2"
+        >
+          <v-icon size="small" class="me-1">mdi-sale</v-icon>
+          {{ discount }}% OFF
+        </v-chip>
 
-      <!-- شارة التخفيض -->
-      <span v-if="isOnSale" class="sale-badge">
-        {{ discount }}% OFF
-      </span>
+        <!-- AI Pricing Badge -->
+        <v-chip
+          v-if="pricingData"
+          color="info"
+          size="small"
+          class="ai-pricing-badge position-absolute top-2 left-2"
+        >
+          <v-icon size="small">mdi-brain</v-icon>
+          AI
+        </v-chip>
 
-      <!-- شارة التسعير الذكي -->
-      <span v-if="pricingData" class="ai-pricing-badge">
-        <i class="fa-solid fa-brain"></i>
-        AI
-      </span>
+        <!-- New Badge -->
+        <v-chip
+          v-if="product.isNew"
+          color="success"
+          size="small"
+          class="new-badge position-absolute top-2 left-2"
+        >
+          {{ $t('new') }}
+        </v-chip>
 
-      <!-- شارة جديد -->
-      <span v-if="product.isNew" class="new-badge">
-        {{ $t('new') }}
-      </span>
-
-      <!-- زر المفضلة -->
-      <button class="favorite-btn" @click="toggleFavorite">
-        <i :class="isFavorite ? 'fa-solid fa-heart' : 'far fa-heart'"></i>
-      </button>
+        <!-- Favorite Button -->
+        <v-btn
+          @click="toggleFavorite"
+          :icon="isFavorite ? 'mdi-heart' : 'mdi-heart-outline'"
+          size="small"
+          variant="elevated"
+          color="primary"
+          class="favorite-btn position-absolute bottom-2 right-2"
+        />
+      </v-img>
     </div>
 
-    <!-- معلومات المنتج -->
-    <div class="product-info">
-      <div class="category-chip">
-        <i :class="['fas', product.categoryIcon || 'fa-tag']"></i>
-        {{ $t(product.categoryKey || 'general') }}
-      </div>
+    <!-- Product Information -->
+    <v-card-text>
+      <div class="product-info">
+        <!-- Category Chip -->
+        <v-chip
+          :prepend-icon="product.categoryIcon || 'mdi-tag'"
+          size="small"
+          variant="outlined"
+          color="primary"
+          class="mb-2"
+        >
+          {{ $t(product.categoryKey || 'general') }}
+        </v-chip>
 
-      <h3 class="product-title" v-ai-t>
-        <router-link :to="`/product/${product.id}`">
-          {{ product.translations?.[locale]?.title || product.title }}
-        </router-link>
-      </h3>
+        <!-- Product Title -->
+        <v-card-title class="product-title">
+          <router-link :to="`/product/${product.id}`" class="text-decoration-none text-primary">
+            {{ product.translations?.[locale]?.title || product.title }}
+          </router-link>
+        </v-card-title>
 
-      <p class="product-excerpt" v-ai-t>{{ product.translations?.[locale]?.excerpt || product.excerpt }}</p>
+        <!-- Product Excerpt -->
+        <v-card-subtitle class="product-excerpt">
+          {{ product.translations?.[locale]?.excerpt || product.excerpt }}
+        </v-card-subtitle>
 
-      <!-- السعر والمساحة مع معلومات التسعير الذكي -->
-      <div class="product-footer">
-        <div class="price-section">
-          <div class="price-container">
-            <span class="current-price" :class="{ 'sale-price': isOnSale }">
-              {{ formatPrice(currentPrice) }}
-            </span>
-            <span v-if="isOnSale" class="original-price">
-              {{ formatPrice(originalPrice) }}
-            </span>
-            
-            <!-- مؤشر اتجاه السعر -->
-            <div v-if="pricingData" class="price-trend" :class="priceTrend">
-              <i :class="priceTrend === 'rising' ? 'fa-solid fa-arrow-up' : priceTrend === 'falling' ? 'fa-solid fa-arrow-down' : 'fa-solid fa-minus'"></i>
+        <!-- Price and Size Info -->
+        <div class="product-footer">
+          <div class="price-section">
+            <div class="price-container d-flex align-center ga-2">
+              <span class="current-price text-h6 font-weight-bold" :class="{ 'sale-price': isOnSale }">
+                {{ formatPrice(currentPrice) }}
+                <small v-if="pricingData?.isFallback" class="text-muted" style="font-size: 0.6rem;">
+                  (تقديري)
+                </small>
+              </span>
+              <span v-if="isOnSale" class="original-price text-body-2 text-decoration-line-through">
+                {{ formatPrice(originalPrice) }}
+              </span>
+              
+              <!-- Price Trend Indicator -->
+              <v-chip
+                v-if="pricingData"
+                :icon="priceTrend === 'rising' ? 'mdi-trending-up' : priceTrend === 'falling' ? 'mdi-trending-down' : 'mdi-trending-neutral'"
+                size="x-small"
+                :color="priceTrend === 'rising' ? 'success' : priceTrend === 'falling' ? 'error' : 'default'"
+                class="price-trend"
+              />
+
+              <!-- AI Badge -->
+              <v-chip
+                v-if="pricingData && !pricingData.isFallback"
+                icon="mdi-lightning-bolt"
+                size="x-small"
+                color="warning"
+                title="AI Optimized Price"
+                class="ai-badge"
+              />
             </div>
+            
+            <!-- AI Pricing Details -->
+            <v-expand-transition>
+              <div v-if="pricingData && showPricingDetails" class="pricing-details">
+                <v-row class="pricing-factors ga-2">
+                  <v-col
+                    v-for="factor in ['demand', 'competition', 'seasonality', 'inventory']" 
+                    :key="factor" 
+                    cols="6"
+                    class="factor-item"
+                  >
+                    <div class="text-caption factor-label">{{ getPricingInsight(factor)?.label }}</div>
+                    <div 
+                      class="factor-value text-body-2 font-weight-medium" 
+                      :class="{ 
+                        'text-success': getPricingInsight(factor)?.value > 1, 
+                        'text-error': getPricingInsight(factor)?.value < 1 
+                      }"
+                    >
+                      {{ formatFactorValue(getPricingInsight(factor)?.value, factor) }}
+                    </div>
+                  </v-col>
+                </v-row>
+                
+                <div class="pricing-explanation mt-2">
+                  <small class="text-muted">{{ generatePricingExplanation() }}</small>
+                </div>
+                
+                <div class="pricing-confidence mt-2">
+                  <div class="text-caption confidence-label">مستوى الثقة:</div>
+                  <v-progress-linear
+                    :model-value="pricingConfidence * 100"
+                    color="primary"
+                    height="8"
+                    class="confidence-bar mb-1"
+                  />
+                  <div class="text-caption confidence-value">{{ Math.round(pricingConfidence * 100) }}%</div>
+                </div>
+              </div>
+            </v-expand-transition>
+            
+            <!-- Pricing Toggle Button -->
+            <v-btn
+              v-if="pricingData"
+              variant="text"
+              size="small"
+              color="primary"
+              @click="showPricingDetails = !showPricingDetails"
+              class="pricing-toggle-btn mt-2"
+            >
+              <v-icon>{{ showPricingDetails ? 'mdi-chevron-up' : 'mdi-chevron-down' }}</v-icon>
+              {{ showPricingDetails ? 'إخفاء' : 'عرض' }} التسعير الذكي
+            </v-btn>
           </div>
           
-          <!-- تفاصيل التسعير الذكي -->
-          <div v-if="pricingData && showPricingDetails" class="pricing-details">
-            <div class="pricing-factors">
-              <div v-for="factor in ['demand', 'competition', 'seasonality', 'inventory']" :key="factor" class="factor-item">
-                <span class="factor-label">{{ getPricingInsight(factor)?.label }}</span>
-                <span class="factor-value" :class="{ positive: getPricingInsight(factor)?.value > 1, negative: getPricingInsight(factor)?.value < 1 }">
-                  {{ formatFactorValue(getPricingInsight(factor)?.value, factor) }}
-                </span>
-              </div>
-            </div>
-            
-            <div class="pricing-explanation">
-              <small>{{ generatePricingExplanation() }}</small>
-            </div>
-            
-            <div class="pricing-confidence">
-              <span class="confidence-label">مستوى الثقة:</span>
-              <div class="confidence-bar">
-                <div class="confidence-fill" :style="{ width: (pricingConfidence * 100) + '%' }"></div>
-              </div>
-              <span class="confidence-value">{{ Math.round(pricingConfidence * 100) }}%</span>
-            </div>
-          </div>
-          
-          <!-- زر عرض تفاصيل التسعير -->
-          <button 
-            v-if="pricingData" 
-            class="pricing-toggle-btn" 
-            @click="showPricingDetails = !showPricingDetails"
+          <!-- Size Chip -->
+          <v-chip
+            prepend-icon="mdi-ruler"
+            size="small"
+            variant="outlined"
+            color="secondary"
+            class="size-chip"
           >
-            <i :class="showPricingDetails ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'"></i>
-            {{ showPricingDetails ? 'إخفاء' : 'عرض' }} التسعير الذكي
-          </button>
+            {{ product.minSize }} - {{ product.maxSize }} سم
+          </v-chip>
         </div>
-        
-        <div class="size-chip">
-          <i class="fa-solid fa-ruler-combined"></i>
-          {{ product.minSize }} - {{ product.maxSize }} سم
-        </div>
-      </div>
 
-      <!-- أزرار الإجراءات -->
-      <div class="actions-grid">
-        <router-link :to="`/product/${product.id}`" class="btn-preview">
-          <i class="fa-solid fa-eye"></i>
-          {{ $t('preview') }}
-        </router-link>
-        <button class="btn-order" @click="addToCart" :disabled="pricingLoading">
-          <i :class="pricingLoading ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-shopping-cart'"></i>
-          {{ pricingLoading ? 'جاري التحديث...' : $t('order') }}
-        </button>
+        <!-- Action Buttons -->
+        <v-row class="actions-grid ga-2 mt-3">
+          <v-col cols="6">
+            <v-btn
+              :to="`/product/${product.id}`"
+              prepend-icon="mdi-eye"
+              variant="outlined"
+              color="primary"
+              size="small"
+              block
+            >
+              {{ $t('preview') }}
+            </v-btn>
+          </v-col>
+          <v-col cols="6">
+            <v-btn
+              @click="addToCart"
+              :loading="pricingLoading"
+              prepend-icon="pricingLoading ? 'mdi-loading' : 'mdi-cart'"
+              variant="elevated"
+              color="primary"
+              size="small"
+              block
+            >
+              {{ pricingLoading ? 'جاري التحديث...' : $t('order') }}
+            </v-btn>
+          </v-col>
+        </v-row>
       </div>
-    </div>
-  </div>
+    </v-card-text>
+  </v-card>
 </template>
 
 <script setup>

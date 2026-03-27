@@ -1,93 +1,116 @@
-import { createApp } from 'vue';
-import { createPinia } from 'pinia';
-import App from './App.vue';
-import router from './router';
-import i18n from './plugins/i18n';
-import AITranslation from './plugins/AITranslation';
-import store from './store';
-import seo from './plugins/seo';
-import '@/assets/theme.css';
-import AlertService from '@/integration/services/AlertService';
-import { useAuthStore } from '@/store/auth';
-import AIService from '@/services/AIService';
-import AIMonitorService from '@/services/AIMonitorService';
-import PricingService from '@/services/PricingService';
-import ChatService from '@/integration/services/ChatService';
-import AILearningService from '@/services/AILearningService';
-// استيراد الأيقونات
-import '@fortawesome/fontawesome-free/css/all.min.css';
-import '@mdi/font/css/materialdesignicons.min.css';
+// // C:\Users\Mansour\Desktop\vynilart\frontend\src\main.js
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+// Import Vuetify plugin
+import vuetify from './plugins/vuetify'
+import App from './App.vue'
+import router from './router'
+import i18n from './plugins/i18n'
+import AITranslation from './plugins/AITranslation'
+import store from './store'
+import seo from './plugins/seo'
+import '@/assets/main.css'
+import '@/assets/theme.css'
+import AlertService from '@/integration/services/AlertService'
+import { useAuthStore } from '@/store/auth'
+import AIService from '@/services/AIService'  // Import class directly
+import AIMonitorService from '@/services/AIMonitorService'
+import PricingService from '@/services/PricingService'  // Import class directly
+import ChatService from '@/integration/services/ChatService'
+import AILearningService from '@/services/AILearningService'
+import apiErrorLogger from '@/services/ApiErrorLogger.js'
+import { httpClient } from '@/services/HttpClient.js'
+import ApiDebugger from '@/utils/ApiDebugger.js'
+import ApiTest from '@/utils/ApiTest.js'
 
-const app = createApp(App);
-const pinia = createPinia();
+// Import new plugins
+import PrimeVuePlugin from '@/plugins/primevue'
+import VueUsePlugin from '@/plugins/vueuse'
+import MotionPlugin from '@/plugins/motion'
+import AutoAnimatePlugin from '@/plugins/autoAnimate'
+import { ApolloPlugin } from '@/plugins/apolloPlugin'
 
-// Initialize AI Services Immediately
-console.log('🚀 Starting AI Services...');
+// Import icons
+import '@fortawesome/fontawesome-free/css/all.min.css'
+import '@mdi/font/css/materialdesignicons.min.css'
+import 'primeicons/primeicons.css'
 
-// Start AI Monitoring
-console.log('🔍 Starting AI Monitoring...');
+const app = createApp(App)
+const pinia = createPinia()
 
-// Initialize Pricing Service
-PricingService.clearAllCache();
-console.log('✅ Pricing Service Initialized');
+// Initialize theme system first
+import { useTheme } from '@/composables/useTheme';
 
-// معالج الأخطاء العالمي
+console.log('🎬 Starting Vynil Art Application...')
+
+// Global error handler
 app.config.errorHandler = (err, instance, info) => {
-  console.error('🔥 Global Error:', err);
-  console.error('📍 Info:', info);
+  console.error('🔥 Global Error:', err)
+  console.error('📍 Info:', info)
 
-  // إرسال تنبيه للمستخدم
   AlertService.sendAlert({
     type: 'danger',
     severity: 'high',
     title: '⚠️ حدث خطأ غير متوقع',
     message: 'نعتذر، حدث خطأ في النظام. تم تسجيل الخطأ وسنعمل على إصلاحه.',
-  });
-};
+  })
+}
 
-app.use(pinia);
-app.use(store);
-app.use(router);
-app.use(i18n);
-app.use(AITranslation);
-app.use(seo);
+// Install plugins in correct order
+app.use(pinia)
+app.use(store)
+app.use(router)
+app.use(i18n)
+app.use(AITranslation)
+app.use(seo)
+app.use(vuetify)
+app.use(ApolloPlugin) // Add Apollo plugin
+// Only use PrimeVue if not already used
+if (!app._context.components && !app._context.directives) {
+  app.use(PrimeVuePlugin)
+}
+app.use(VueUsePlugin)
+app.use(MotionPlugin)
+app.use(AutoAnimatePlugin)
 
 // Initialize auth store after all plugins are installed
-const authStore = useAuthStore();
-authStore.initializeAuth();
+const authStore = useAuthStore()
+authStore.initializeAuth()
+
+// Initialize theme
+const { initTheme } = useTheme()
 
 // Mount the app
-const mountedApp = app.mount('#app');
+const mountedApp = app.mount('#app')
 
-// Initialize AI Services after app is mounted
-console.log('🚀 Starting AI Services...');
+// Initialize theme after mounting
+initTheme()
 
-// Initialize AI Services
-AIService.initializeAISystems().then(() => {
-  console.log('✅ AI Services Started Successfully');
-}).catch(error => {
-  console.warn('⚠️ AI Services Warning:', error);
-});
+// Initialize AI Services after app is mounted - COORDINATED INITIALIZATION
+console.log('🔍 Starting API Error Logger...')
+apiErrorLogger.clearStoredErrors() // Clear old errors on startup
+console.log('✅ API Error Logger Initialized')
 
-// Start AI Monitoring
-console.log('🔍 Starting AI Monitoring...');
-AIMonitorService.startMonitoring().then(() => {
-  console.log('✅ AI Monitoring Started');
-}).catch(error => {
-  console.warn('⚠️ AI Monitoring Warning:', error);
-});
+console.log('🚀 Starting AI Services...')
 
-// Initialize Pricing Service
-PricingService.clearAllCache();
-console.log('✅ Pricing Service Initialized');
+// Use singleton pattern to prevent concurrent initializations
+const aiService = AIService.getInstance()
+const pricingService = PricingService.getInstance()
+const aiMonitorService = new AIMonitorService()
 
-// Initialize Chat Service to ensure it's always available
-console.log('💬 Chat Service Initialized');
+// AI Service will auto-initialize via singleton constructor
+// AIMonitorService will coordinate with singleton instances
+console.log('✅ AI Services Coordination Established')
+
+// Initialize Chat Service
+console.log('💬 Chat Service Initialized')
 
 // Initialize AI Learning System
-console.log('🎓 Starting AI Learning System...');
+console.log('🎓 Starting AI Learning System...')
 AILearningService.initializeLearningSystem().then(() => {
-  console.log('✅ AI Learning System Started Successfully');
+  console.log('✅ AI Learning System Started Successfully')
 }).catch(error => {
-  console.warn('⚠️ AI Learning System Warning:', error);
-});
+  console.warn('⚠️ AI Learning System Warning:', error)
+})
+
+console.log('🎬 Vynil Art Application Started Successfully!')

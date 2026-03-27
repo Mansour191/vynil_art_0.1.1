@@ -5,7 +5,7 @@ from .models import (
     Shipping, Coupon, Order, OrderItem, OrderTimeline, Payment,
     CartItem, Wishlist, Review, ReviewReport, DesignCategory, Design,
     Notification, Alert, ERPNextSyncLog, BehaviorTracking, Forecast,
-    CustomerSegment, PricingEngine
+    CustomerSegment, PricingEngine, BlogCategory, BlogPost, ConversationHistory
 )
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -202,4 +202,24 @@ class CustomerSegmentSerializer(serializers.ModelSerializer):
 class PricingEngineSerializer(serializers.ModelSerializer):
     class Meta:
         model = PricingEngine
+        fields = '__all__'
+
+# 10. Blog
+class BlogCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BlogCategory
+        fields = '__all__'
+
+class BlogPostSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source='category.name_en', read_only=True)
+    author_name = serializers.CharField(source='author.username', read_only=True)
+    
+    class Meta:
+        model = BlogPost
+        fields = '__all__'
+
+# 11. AI & Analytics
+class ConversationHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConversationHistory
         fields = '__all__'

@@ -1,35 +1,79 @@
 <template>
-  <div class="auth-page">
-    <div class="auth-container">
-      <div class="auth-header">
-        <h3>
-          <i class="fa-solid fa-envelope-open-text"></i>
-          {{ $t('verifyEmailTitle') || 'تفعيل البريد الإلكتروني' }}
-        </h3>
-      </div>
+  <v-container class="auth-page" fluid>
+    <v-row justify="center" align="center" class="fill-height">
+      <v-col cols="12" sm="10" md="8" lg="6" xl="4">
+        <v-card class="auth-card" elevation="8">
+          <v-card-text class="pa-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+              <v-icon size="64" color="primary" class="mb-4">
+                mdi-email-open-text
+              </v-icon>
+              <h2 class="text-h4 font-weight-bold text-primary mb-2">
+                {{ $t('verifyEmailTitle') || 'تفعيل البريد الإلكتروني' }}
+              </h2>
+            </div>
 
-      <div class="auth-body">
-        <div v-if="loading" class="loading-state">
-          <i class="fa-solid fa-spinner fa-spin"></i>
-          <p>{{ $t('verifying') || 'جاري التحقق...' }}</p>
-        </div>
+            <!-- Loading State -->
+            <div v-if="loading" class="text-center py-8">
+              <v-progress-circular 
+                indeterminate 
+                color="primary" 
+                size="48"
+                class="mb-4"
+              />
+              <p class="text-body-1 text-medium-emphasis">
+                {{ $t('verifying') || 'جاري التحقق...' }}
+              </p>
+            </div>
 
-        <div v-if="error" class="error-message">
-          <i class="fa-solid fa-exclamation-circle"></i>
-          {{ error }}
-        </div>
+            <!-- Error Alert -->
+            <v-alert
+              v-if="error"
+              type="error"
+              variant="tonal"
+              class="mb-6"
+              closable
+              @update:model-value="error = null"
+            >
+              <v-alert-title>
+                <v-icon start>mdi-alert-circle</v-icon>
+                خطأ
+              </v-alert-title>
+              {{ error }}
+            </v-alert>
 
-        <div v-if="success" class="success-message">
-          <i class="fa-solid fa-check-circle"></i>
-          {{ success }}
-        </div>
+            <!-- Success Alert -->
+            <v-alert
+              v-if="success"
+              type="success"
+              variant="tonal"
+              class="mb-6"
+              closable
+              @update:model-value="success = null"
+            >
+              <v-alert-title>
+                <v-icon start>mdi-check-circle</v-icon>
+                تم بنجاح
+              </v-alert-title>
+              {{ success }}
+            </v-alert>
 
-        <div class="auth-footer">
-          <router-link to="/login">{{ $t('login') }}</router-link>
-        </div>
-      </div>
-    </div>
-  </div>
+            <!-- Footer Link -->
+            <div class="text-center mt-6">
+              <router-link 
+                to="/login" 
+                class="text-decoration-none text-primary font-weight-medium"
+              >
+                <v-icon start size="small">mdi-arrow-left</v-icon>
+                {{ $t('login') }}
+              </router-link>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script setup>
@@ -71,35 +115,17 @@ onMounted(async () => {
 
 <style scoped>
 .auth-page {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 80vh;
-  padding: 20px;
+  background: linear-gradient(135deg, var(--gradient-dark));
 }
-.auth-container {
-  width: 100%;
-  max-width: 450px;
-  background: white;
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+
+.auth-card {
+  backdrop-filter: blur(20px);
+  background: rgba(26, 26, 26, 0.95);
+  border: 1px solid var(--border-primary);
 }
-.auth-header h3 {
-  text-align: center;
-  margin-bottom: 25px;
-  color: #333;
-}
-.loading-state {
-  text-align: center;
-  padding: 20px;
-}
-.loading-state i {
-  font-size: 2rem;
-  margin-bottom: 15px;
-}
-.auth-footer {
-  text-align: center;
-  margin-top: 20px;
+
+.v-alert {
+  backdrop-filter: blur(10px);
 }
 </style>

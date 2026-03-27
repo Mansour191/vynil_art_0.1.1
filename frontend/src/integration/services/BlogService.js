@@ -2,15 +2,13 @@ import i18n from '@/plugins/i18n';
 
 class BlogService {
   constructor() {
-    this.baseUrl = 'https://storepaclos.blogspot.com';
+    this.apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
     this.cache = new Map();
     this.cacheTTL = 5 * 60 * 1000; // 5 دقائق
   }
 
   /**
-   * جلب أحدث المقالات من Blogger
-   * @param {number} limit - عدد المقالات المطلوبة
-   * @returns {Promise<Array>} - مصفوفة المقالات
+   * جلب أحدث المقالات من قاعدة البيانات المحلية
    */
   async getLatestPosts(limit = 4) {
     const cacheKey = `latest_${limit}_${i18n.global.locale.value || i18n.global.locale}`;
@@ -20,8 +18,8 @@ class BlogService {
     }
 
     try {
-      // تجربة جلب البيانات مع محاولة تجاوز CORS عبر إضافة معلمات معينة
-      const url = `${this.baseUrl}/feeds/posts/default?alt=json&max-results=${limit}&orderby=published`;
+      // جلب البيانات من الـ API المحلي الجديد
+      const url = `${this.apiBaseUrl}/blog/posts/?limit=${limit}`;
       const response = await fetch(url, {
         method: 'GET',
         headers: { Accept: 'application/json' },
@@ -29,18 +27,35 @@ class BlogService {
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
-      const json = await response.json();
+      const data = await response.json();
       
-      const entries = json.feed?.entry || [];
-      const posts = this._transformEntries(entries);
+      // التعامل مع نتائج DRF (paginated or simple list)
+      const results = data.results || data;
+      const posts = this._transformPosts(results);
       
       this._setCache(cacheKey, posts);
       return posts;
     } catch (error) {
-      console.warn('⚠️ Blogger API failed, using fallback data:', error.message);
-      // إرجاع بيانات افتراضية في حال فشل الـ API لضمان عدم تعطل الواجهة
+      console.warn('⚠️ Local Blog API failed, using fallback data:', error.message);
       return this._getFallbackPosts(limit);
     }
+  }
+
+  /**
+   * تحويل بيانات الـ API إلى التنسيق المستخدم في الواجهة
+   */
+  _transformPosts(results) {
+    const lang = i18n.global.locale.value || i18n.global.locale;
+    return results.map(post => ({
+      id: post.id,
+      title: lang === 'ar' ? post.title_ar : post.title_en,
+      slug: post.slug,
+      image: post.image || 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?q=80&w=800&auto=format&fit=crop',
+      published: post.published_at,
+      summary: lang === 'ar' ? post.summary_ar : post.summary_en,
+      category: post.category_name,
+      tags: post.tags ? post.tags.split(',') : []
+    }));
   }
 
   /**
@@ -85,70 +100,33 @@ class BlogService {
   }
 
   /**
-   * جلب المقالات حسب التسمية (Label)
+   * جلب المقالات حسب التسمية (Category Slug)
    */
   async getPostsByLabel(label, maxResults = 4) {
     const lang = i18n.global.locale.value || i18n.global.locale;
-    const langLabel = typeof label === 'object' ? (lang === 'ar' ? label.ar : label.en) : label;
-    const cacheKey = `label_${langLabel}_${maxResults}_${lang}`;
+    const categorySlug = typeof label === 'object' ? label.slug : label;
+    const cacheKey = `label_${categorySlug}_${maxResults}_${lang}`;
 
     if (this._isCacheValid(cacheKey)) {
       return this.cache.get(cacheKey).data;
     }
 
     try {
-      const url = `${this.baseUrl}/feeds/posts/default/-/${encodeURIComponent(langLabel)}?alt=json&max-results=${maxResults}`;
+      const url = `${this.apiBaseUrl}/blog/posts/?category=${encodeURIComponent(categorySlug)}&limit=${maxResults}`;
       const response = await fetch(url, { method: 'GET' });
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
-      const json = await response.json();
-      const entries = json.feed?.entry || [];
-      const posts = this._transformEntries(entries);
+      const data = await response.json();
+      const results = data.results || data;
+      const posts = this._transformPosts(results);
       
       this._setCache(cacheKey, posts);
       return posts;
     } catch (error) {
-      console.warn(`⚠️ Blogger API failed for label ${langLabel}, using fallback:`, error.message);
+      console.warn(`⚠️ Local Blog API failed for category ${categorySlug}, using fallback:`, error.message);
       return this._getFallbackPosts(maxResults);
     }
-  }
-
-  /**
-   * تحويل بيانات Blogger إلى هيكل بيانات المشروع
-   */
-  _transformEntries(entries) {
-    return entries.map((entry) => {
-      const alternateLink = entry.link.find((l) => l.rel === 'alternate');
-      const thumbUrl = entry.media$thumbnail ? entry.media$thumbnail.url : '';
-      
-      return {
-        id: entry.id.$t,
-        title: entry.title.$t,
-        link: alternateLink ? alternateLink.href : '#',
-        image: thumbUrl
-          ? thumbUrl.replace('s72-c', 's1600')
-          : 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=800&auto=format&fit=crop', // Unsplash placeholder
-        published: entry.published.$t,
-        summary: this._stripHtml(entry.summary ? entry.summary.$t : (entry.content ? entry.content.$t : '')).substring(0, 120) + '...',
-        translations: {
-          ar: {
-            title: entry.title.$t,
-            summary: this._stripHtml(entry.summary ? entry.summary.$t : (entry.content ? entry.content.$t : '')).substring(0, 120) + '...'
-          },
-          en: {
-            title: entry.title.$t, // Blogger doesn't support built-in translations easily
-            summary: this._stripHtml(entry.summary ? entry.summary.$t : (entry.content ? entry.content.$t : '')).substring(0, 120) + '...'
-          }
-        }
-      };
-    });
-  }
-
-  _stripHtml(html) {
-    const tmp = document.createElement("DIV");
-    tmp.innerHTML = html;
-    return tmp.textContent || tmp.innerText || "";
   }
 
   _isCacheValid(key) {

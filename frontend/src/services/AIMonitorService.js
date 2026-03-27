@@ -15,16 +15,29 @@ class AIMonitorService {
     this.maxRetries = 3;
     this.lastHealthCheck = null;
     
-    // Start monitoring immediately
+    // Initialize singleton instances immediately
+    this.aiService = AIService.getInstance();
+    this.pricingService = PricingService.getInstance();
+    this.erpService = ERPNextService.getInstance();
+    
+    console.log('🔍 AIMonitorService initialized with singleton instances');
+    
+    // Start monitoring immediately - but with coordination
     this.startMonitoring();
   }
 
   async startMonitoring() {
-    if (this.isMonitoring) return;
+    if (this.isMonitoring) {
+      console.log('🔄 AIMonitorService already monitoring');
+      return;
+    }
     
     console.log('🔍 Starting AI Systems Monitoring...');
     this.isMonitoring = true;
     this.retryAttempts = 0;
+    
+    // Wait for singleton instances to be ready
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
     // Initial health check
     await this.performHealthCheck();
@@ -32,7 +45,7 @@ class AIMonitorService {
     // Start continuous monitoring
     this.startContinuousMonitoring();
     
-    // Start service initialization
+    // Start service initialization - but check if already initialized
     await this.initializeAllServices();
   }
 
@@ -40,33 +53,37 @@ class AIMonitorService {
     console.log('🚀 Initializing all AI services...');
     
     try {
-      // Force AI services to start
-      await AIService.initializeAISystems();
-      this.serviceStatus.ai = 'active';
-      console.log('✅ AI Services initialized');
+      // AI Service should already be initializing via singleton
+      if (this.aiService.isInitialized) {
+        this.serviceStatus.ai = 'active';
+        console.log('✅ AI Services already initialized');
+      } else {
+        // Wait a bit for initialization to complete
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        this.serviceStatus.ai = this.aiService.isAvailable ? 'active' : 'failed';
+        console.log('✅ AI Services initialization completed');
+      }
     } catch (error) {
       console.warn('⚠️ AI Services initialization warning:', error);
-      this.serviceStatus.ai = 'fallback';
+      this.serviceStatus.ai = 'failed';
     }
     
     // Ensure pricing service is active
     try {
       await this.checkPricingService();
-      this.serviceStatus.pricing = 'active';
       console.log('✅ Pricing Service active');
     } catch (error) {
       console.warn('⚠️ Pricing Service warning:', error);
-      this.serviceStatus.pricing = 'fallback';
+      this.serviceStatus.pricing = 'failed';
     }
     
     // Check ERPNext integration
     try {
       await this.checkERPNextIntegration();
-      this.serviceStatus.erpnext = 'active';
       console.log('✅ ERPNext Integration active');
     } catch (error) {
       console.warn('⚠️ ERPNext Integration warning:', error);
-      this.serviceStatus.erpnext = 'limited';
+      this.serviceStatus.erpnext = 'failed';
     }
     
     this.logServiceStatus();
@@ -90,24 +107,52 @@ class AIMonitorService {
     try {
       this.lastHealthCheck = new Date();
       
-      // Check AI Service
-      const aiHealth = await AIService.healthCheck();
-      this.serviceStatus.ai = aiHealth.status === 'healthy' ? 'active' : 'fallback';
+      console.log('🔍 Performing coordinated health check...');
       
-      // Check Pricing Service
-      const pricingStatus = await this.checkPricingService();
-      this.serviceStatus.pricing = pricingStatus;
+      // Use cached singleton instances to prevent concurrent health checks
+      // Check AI Service with proper error handling
+      try {
+        const aiHealth = await this.aiService.healthCheck();
+        this.serviceStatus.ai = aiHealth.status === 'healthy' ? 'active' : 'failed';
+        console.log('✅ AI Service health check:', this.serviceStatus.ai);
+      } catch (error) {
+        this.serviceStatus.ai = 'failed';
+        console.error('❌ AI Service health check failed:', error.message);
+      }
       
-      // Check ERPNext
-      const erpStatus = await this.checkERPNextIntegration();
-      this.serviceStatus.erpnext = erpStatus;
+      // Check Pricing Service with proper error handling
+      try {
+        const pricingStatus = await this.checkPricingService();
+        this.serviceStatus.pricing = pricingStatus;
+        console.log('✅ Pricing Service health check:', this.serviceStatus.pricing);
+      } catch (error) {
+        this.serviceStatus.pricing = 'failed';
+        console.error('❌ Pricing Service health check failed:', error.message);
+      }
+      
+      // Check ERPNext with proper error handling
+      try {
+        const erpStatus = await this.checkERPNextIntegration();
+        this.serviceStatus.erpnext = erpStatus;
+        console.log('✅ ERPNext Service health check:', this.serviceStatus.erpnext);
+      } catch (error) {
+        this.serviceStatus.erpnext = 'failed';
+        console.error('❌ ERPNext Service health check failed:', error.message);
+      }
       
       // Reset retry attempts on success
       if (this.isHealthy()) {
         this.retryAttempts = 0;
       }
       
-      this.logServiceStatus();
+      // Log comprehensive status
+      console.group('📊 System Health Status');
+      console.log('AI Service:', this.serviceStatus.ai);
+      console.log('Pricing Service:', this.serviceStatus.pricing);
+      console.log('ERPNext Service:', this.serviceStatus.erpnext);
+      console.log('Overall Status:', this.getOverallStatus());
+      console.log('Last Check:', this.lastHealthCheck.toISOString());
+      console.groupEnd();
       
     } catch (error) {
       console.error('❌ Health check failed:', error);
@@ -117,27 +162,44 @@ class AIMonitorService {
 
   async checkPricingService() {
     try {
-      // Test pricing service functionality
-      const testResult = await PricingService.calculateDynamicPrice('test', {
-        customerSegment: 'test',
-        quantity: 1
-      });
+      // Use cached singleton instance to prevent concurrent calls
+      console.log('💰 Checking Pricing Service health...');
       
-      return testResult ? 'active' : 'fallback';
+      // Test pricing service functionality with timeout
+      const testResult = await Promise.race([
+        this.pricingService.calculateDynamicPrice('test', {
+          customerSegment: 'test',
+          quantity: 1
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Pricing service timeout')), 8000)
+        )
+      ]);
+      
+      return testResult ? 'active' : 'failed';
     } catch (error) {
-      console.warn('Pricing service check failed:', error);
-      return 'fallback';
+      console.warn('Pricing service check failed:', error.message);
+      return 'failed';
     }
   }
 
   async checkERPNextIntegration() {
     try {
-      // Test ERPNext connectivity
-      const healthCheck = await ERPNextService.checkIntegrationHealth();
-      return healthCheck ? 'active' : 'limited';
+      // Use cached singleton instance to prevent concurrent calls
+      console.log('🏥 Checking ERPNext Service health...');
+      
+      // Test ERPNext connectivity with timeout
+      const healthCheck = await Promise.race([
+        this.erpService.checkIntegrationHealth(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('ERPNext service timeout')), 8000)
+        )
+      ]);
+      
+      return healthCheck.status === 'healthy' ? 'active' : 'failed';
     } catch (error) {
-      console.warn('ERPNext integration check failed:', error);
-      return 'limited';
+      console.warn('ERPNext integration check failed:', error.message);
+      return 'failed';
     }
   }
 
@@ -159,6 +221,21 @@ class AIMonitorService {
         pricing: 'fallback',
         erpnext: 'limited'
       };
+    }
+  }
+
+  // Get overall system status - FIXED
+  getOverallStatus() {
+    const services = this.serviceStatus;
+    const activeCount = Object.values(services).filter(s => s === 'active').length;
+    const totalCount = Object.keys(services).length;
+    
+    if (activeCount === totalCount) {
+      return 'healthy';
+    } else if (activeCount >= 2) {
+      return 'degraded';
+    } else {
+      return 'critical';
     }
   }
 

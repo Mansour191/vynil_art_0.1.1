@@ -66,6 +66,15 @@ export default [
         },
       },
       {
+        path: 'navigation',
+        name: 'NavigationPage',
+        component: () => import(/* webpackChunkName: "dashboard" */ '@/views/dashboard/NavigationPage.vue'),
+        meta: {
+          title: 'خريطة الموقع',
+          icon: 'fa-solid fa-compass',
+        },
+      },
+      {
         path: 'settings',
         name: 'DashboardSettings',
         component: () =>
@@ -194,6 +203,216 @@ export default [
           title: 'تحليل سلوك العملاء',
           icon: 'fa-solid fa-users',
           requiresAuth: true,
+        },
+      },
+      // AI and Pricing Routes
+      {
+        path: 'ai',
+        name: 'AIDashboard',
+        component: () =>
+          import(
+            /* webpackChunkName: "dashboard-ai" */ '@/views/dashboard/ai/AIDashboard.vue'
+          ),
+        meta: {
+          title: 'لوحة الذكاء الاصطناعي',
+          icon: 'fa-solid fa-brain',
+        },
+      },
+      {
+        path: 'ai/training',
+        name: 'AITraining',
+        component: () =>
+          import(
+            /* webpackChunkName: "dashboard-ai" */ '@/views/dashboard/ai/AITraining.vue'
+          ),
+        meta: {
+          title: 'تدريب الذكاء الاصطناعي',
+          icon: 'fa-solid fa-graduation-cap',
+        },
+      },
+      {
+        path: 'ai/monitor',
+        name: 'AIMonitor',
+        component: () =>
+          import(
+            /* webpackChunkName: "dashboard-ai" */ '@/views/dashboard/ai/AIMonitor.vue'
+          ),
+        meta: {
+          title: 'مراقبة الذكاء الاصطناعي',
+          icon: 'fa-solid fa-heartbeat',
+        },
+      },
+      {
+        path: 'pricing',
+        name: 'PricingManager',
+        component: () =>
+          import(
+            /* webpackChunkName: "dashboard-pricing" */ '@/views/dashboard/pricing/PricingManager.vue'
+          ),
+        meta: {
+          title: 'إدارة التسعير',
+          icon: 'fa-solid fa-chart-line',
+        },
+      },
+      {
+        path: 'pricing/analytics',
+        name: 'PricingAnalytics',
+        component: () =>
+          import(
+            /* webpackChunkName: "dashboard-pricing" */ '@/views/dashboard/pricing/PricingAnalytics.vue'
+          ),
+        meta: {
+          title: 'تحليلات التسعير',
+          icon: 'fa-solid fa-chart-bar',
+        },
+      },
+      {
+        path: 'pricing/rules',
+        name: 'PricingRules',
+        component: () =>
+          import(
+            /* webpackChunkName: "dashboard-pricing" */ '@/views/dashboard/pricing/PricingRules.vue'
+          ),
+        meta: {
+          title: 'قواعد التسعير',
+          icon: 'fa-solid fa-cogs',
+        },
+      },
+      {
+        path: 'analytics',
+        name: 'AdvancedAnalytics',
+        component: () =>
+          import(
+            /* webpackChunkName: "dashboard-analytics" */ '@/views/dashboard/analytics/AdvancedAnalytics.vue'
+          ),
+        meta: {
+          title: 'التحليلات المتقدمة',
+          icon: 'fa-solid fa-chart-line',
+        },
+      },
+      // Shop Routes
+      {
+        path: 'shop',
+        name: 'ShopManager',
+        component: () =>
+          import(
+            /* webpackChunkName: "dashboard-shop" */ '@/views/dashboard/shop/ShopManager.vue'
+          ),
+        meta: {
+          title: 'إدارة المتجر',
+          icon: 'fa-solid fa-store',
+        },
+      },
+      {
+        path: 'cart',
+        name: 'CartManagement',
+        component: () =>
+          import(
+            /* webpackChunkName: "dashboard-shop" */ '@/views/dashboard/shop/CartManager.vue'
+          ),
+        meta: {
+          title: 'إدارة السلة',
+          icon: 'fa-solid fa-shopping-cart',
+        },
+      },
+      // Customer Routes
+      {
+        path: 'customers',
+        name: 'CustomerManagement',
+        component: () =>
+          import(
+            /* webpackChunkName: "dashboard-customers" */ '@/views/dashboard/customers/CustomerManager.vue'
+          ),
+        meta: {
+          title: 'إدارة العملاء',
+          icon: 'fa-solid fa-users',
+        },
+      },
+      {
+        path: 'reviews',
+        name: 'ReviewsManagement',
+        component: () =>
+          import(
+            /* webpackChunkName: "dashboard-customers" */ '@/views/dashboard/customers/ReviewsManager.vue'
+          ),
+        meta: {
+          title: 'إدارة المراجعات',
+          icon: 'fa-solid fa-star',
+        },
+      },
+      // Content Routes
+      {
+        path: 'content',
+        name: 'ContentManager',
+        component: () =>
+          import(
+            /* webpackChunkName: "dashboard-content" */ '@/views/dashboard/content/ContentManager.vue'
+          ),
+        meta: {
+          title: 'إدارة المحتوى',
+          icon: 'fa-solid fa-file-alt',
+        },
+      },
+      {
+        path: 'blog',
+        name: 'BlogManager',
+        component: () =>
+          import(
+            /* webpackChunkName: "dashboard-content" */ '@/views/dashboard/content/BlogManager.vue'
+          ),
+        meta: {
+          title: 'إدارة المدونة',
+          icon: 'fa-solid fa-blog',
+        },
+      },
+      {
+        path: 'media',
+        name: 'MediaManager',
+        component: () =>
+          import(
+            /* webpackChunkName: "dashboard-content" */ '@/views/dashboard/content/MediaManager.vue'
+          ),
+        meta: {
+          title: 'إدارة الوسائط',
+          icon: 'fa-solid fa-images',
+        },
+      },
+      // Security Routes
+      {
+        path: 'security',
+        name: 'SecuritySettings',
+        component: () =>
+          import(
+            /* webpackChunkName: "dashboard-settings" */ '@/views/dashboard/settings/SecuritySettings.vue'
+          ),
+        meta: {
+          title: 'إعدادات الأمان',
+          icon: 'fa-solid fa-shield-alt',
+        },
+      },
+      // Analytics Sub-routes
+      {
+        path: 'analytics/sales',
+        name: 'SalesAnalytics',
+        component: () =>
+          import(
+            /* webpackChunkName: "dashboard-analytics" */ '@/views/dashboard/analytics/SalesAnalytics.vue'
+          ),
+        meta: {
+          title: 'تحليلات المبيعات',
+          icon: 'fa-solid fa-chart-line',
+        },
+      },
+      {
+        path: 'analytics/customers',
+        name: 'CustomerAnalytics',
+        component: () =>
+          import(
+            /* webpackChunkName: "dashboard-analytics" */ '@/views/dashboard/analytics/CustomerAnalytics.vue'
+          ),
+        meta: {
+          title: 'تحليلات العملاء',
+          icon: 'fa-solid fa-users',
         },
       },
     ],

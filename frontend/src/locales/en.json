@@ -986,5 +986,12 @@
     "estimatedTotal": "Estimated total price",
     "aiBusy": "AI service is currently busy. Fallback pricing applied.",
     "fallbackPrice": "Default price is shown until AI service recovers."
-  }
+  },
+  "fieldRequired": "This field is required",
+  "nameMinLength": "Name must be at least 3 characters",
+  "phoneMinLength": "Invalid phone number",
+  "messageMinLength": "Message is too short",
+  "openMenu": "Open Menu",
+  "toggleTheme": "Toggle Theme",
+  "wishlist": "Wishlist"
 }

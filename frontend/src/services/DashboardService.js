@@ -1,31 +1,21 @@
-import axios from 'axios';
+import { api } from '@/composables/useApi';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
 
 class DashboardService {
   constructor() {
-    this.api = axios.create({
-      baseURL: API_BASE_URL,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    // Add auth token to requests
-    this.api.interceptors.request.use((config) => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    });
+    // No need for axios instance setup anymore
   }
 
   // Dashboard Statistics
   async getDashboardStats() {
     try {
-      const response = await this.api.get('/dashboard/stats');
-      return response.data;
+      const response = await api.get('dashboard/stats');
+      await response.execute();
+      if (response.error.value) {
+        throw response.error.value;
+      }
+      return response.data.value;
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
       throw error;

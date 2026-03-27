@@ -1,10 +1,12 @@
 <template>
-  <div 
-    class="skeleton-item" 
-    :class="[type, { 'animate-pulse': animate }]" 
-    :style="style"
-    aria-hidden="true"
-  ></div>
+  <v-skeleton-loader
+    :type="skeletonType"
+    :width="width"
+    :height="height"
+    :loading="animate"
+    class="skeleton-item"
+    :style="customStyle"
+  />
 </template>
 
 <script setup>
@@ -38,56 +40,22 @@ const props = defineProps({
 
 const isRtl = computed(() => locale.value === 'ar');
 
-const style = computed(() => ({
+const skeletonType = computed(() => {
+  const typeMap = {
+    'text': 'text',
+    'title': 'heading',
+    'avatar': 'avatar',
+    'image': 'image',
+    'button': 'button',
+    'circle': 'avatar'
+  };
+  return typeMap[props.type] || 'text';
+});
+
+const customStyle = computed(() => ({
   width: props.width,
   height: props.height,
-  borderRadius: props.type === 'circle' || props.type === 'avatar' ? '50%' : props.borderRadius,
-  '--rtl-direction': isRtl.value ? '-1' : '1'
+  borderRadius: props.type === 'circle' || props.type === 'avatar' ? '50%' : props.borderRadius
 }));
 </script>
 
-<style scoped>
-.skeleton-item {
-  background: linear-gradient(
-    90deg,
-    var(--border-subtle, rgba(255, 255, 255, 0.05)) 25%,
-    var(--bg-surface, rgba(255, 255, 255, 0.1)) 50%,
-    var(--border-subtle, rgba(255, 255, 255, 0.05)) 75%
-  );
-  background-size: 200% 100%;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-.animate-pulse {
-  animation: loading 1.5s infinite ease-in-out;
-}
-
-@keyframes loading {
-  0% {
-    background-position: calc(200% * var(--rtl-direction, 1)) 0;
-  }
-  100% {
-    background-position: calc(-200% * var(--rtl-direction, 1)) 0;
-  }
-}
-
-/* Types */
-.title { height: 2.5rem; margin-bottom: 1.5rem; width: 70%; }
-.text { height: 1.2rem; margin-bottom: 0.8rem; }
-.avatar { width: 50px; height: 50px; }
-.image { width: 100%; height: 250px; }
-.button { width: 140px; height: 45px; border-radius: 12px; }
-.circle { width: 40px; height: 40px; }
-
-/* Light Mode Adjustment */
-:global(body.light-mode) .skeleton-item {
-  background: linear-gradient(
-    90deg,
-    #f0f0f0 25%,
-    #f8f8f8 50%,
-    #f0f0f0 75%
-  );
-  background-size: 200% 100%;
-}
-</style>

@@ -1,54 +1,103 @@
 <template>
-  <div class="auth-page">
-    <div class="auth-container">
-      <div class="auth-header">
-        <h3>
-          <i class="fa-solid fa-lock-open"></i>
-          {{ $t('resetPasswordTitle') || 'إعادة تعيين كلمة المرور' }}
-        </h3>
-      </div>
+  <v-container class="auth-page" fluid>
+    <v-row justify="center" align="center" class="fill-height">
+      <v-col cols="12" sm="10" md="8" lg="6" xl="4">
+        <v-card class="auth-card" elevation="8">
+          <v-card-text class="pa-8">
+            <!-- Header -->
+            <div class="text-center mb-8">
+              <v-icon size="64" color="primary" class="mb-4">
+                mdi-lock-open
+              </v-icon>
+              <h2 class="text-h4 font-weight-bold text-primary mb-2">
+                {{ $t('resetPasswordTitle') || 'إعادة تعيين كلمة المرور' }}
+              </h2>
+            </div>
 
-      <div class="auth-body">
-        <div v-if="error" class="error-message">
-          <i class="fa-solid fa-exclamation-circle"></i>
-          {{ error }}
-        </div>
+            <!-- Error Alert -->
+            <v-alert
+              v-if="error"
+              type="error"
+              variant="tonal"
+              class="mb-6"
+              closable
+              @update:model-value="error = null"
+            >
+              <v-alert-title>
+                <v-icon start>mdi-alert-circle</v-icon>
+                خطأ
+              </v-alert-title>
+              {{ error }}
+            </v-alert>
 
-        <div v-if="success" class="success-message">
-          <i class="fa-solid fa-check-circle"></i>
-          {{ success }}
-        </div>
+            <!-- Success Alert -->
+            <v-alert
+              v-if="success"
+              type="success"
+              variant="tonal"
+              class="mb-6"
+              closable
+              @update:model-value="success = null"
+            >
+              <v-alert-title>
+                <v-icon start>mdi-check-circle</v-icon>
+                تم بنجاح
+              </v-alert-title>
+              {{ success }}
+            </v-alert>
 
-        <form @submit.prevent="handleReset" v-if="!success">
-          <div class="form-group">
-            <label>
-              <i class="fa-solid fa-lock"></i>
-              {{ $t('newPassword') || 'كلمة المرور الجديدة' }}
-            </label>
-            <input type="password" v-model="password" required />
-          </div>
+            <!-- Reset Form -->
+            <v-form @submit.prevent="handleReset" v-if="!success">
+              <v-text-field
+                v-model="password"
+                :label="$t('newPassword') || 'كلمة المرور الجديدة'"
+                type="password"
+                prepend-inner-icon="mdi-lock"
+                variant="outlined"
+                required
+                :rules="passwordRules"
+                class="mb-4"
+              />
 
-          <div class="form-group">
-            <label>
-              <i class="fa-solid fa-lock"></i>
-              {{ $t('confirmPassword') }}
-            </label>
-            <input type="password" v-model="confirmPassword" required />
-          </div>
+              <v-text-field
+                v-model="confirmPassword"
+                :label="$t('confirmPassword')"
+                type="password"
+                prepend-inner-icon="mdi-lock-check"
+                variant="outlined"
+                required
+                :rules="confirmPasswordRules"
+                class="mb-4"
+              />
 
-          <button type="submit" class="submit-btn" :disabled="loading">
-            <i class="fa-solid fa-save"></i>
-            <span v-if="!loading">{{ $t('reset') || 'حفظ كلمة المرور الجديدة' }}</span>
-            <span v-else><i class="fa-solid fa-spinner fa-spin"></i> {{ $t('loading') }}</span>
-          </button>
-        </form>
+              <v-btn
+                type="submit"
+                block
+                size="large"
+                color="primary"
+                :loading="loading"
+                class="mb-4"
+              >
+                <v-icon start>mdi-content-save</v-icon>
+                {{ $t('reset') || 'حفظ كلمة المرور الجديدة' }}
+              </v-btn>
+            </v-form>
 
-        <div class="auth-footer">
-          <router-link to="/login">{{ $t('login') }}</router-link>
-        </div>
-      </div>
-    </div>
-  </div>
+            <!-- Footer Link -->
+            <div class="text-center mt-6">
+              <router-link 
+                to="/login" 
+                class="text-decoration-none text-primary font-weight-medium"
+              >
+                <v-icon start size="small">mdi-arrow-left</v-icon>
+                {{ $t('login') }}
+              </router-link>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script setup>
@@ -67,6 +116,18 @@ const confirmPassword = ref('');
 const loading = ref(false);
 const error = ref(null);
 const success = ref(null);
+
+// Password validation rules
+const passwordRules = [
+  v => !!v || 'كلمة المرور مطلوبة',
+  v => v.length >= 8 || 'كلمة المرور يجب أن تكون 8 أحرف على الأقل'
+];
+
+// Confirm password validation rules
+const confirmPasswordRules = [
+  v => !!v || 'تأكيد كلمة المرور مطلوب',
+  v => v === password.value || 'كلمتا المرور غير متطابقتين'
+];
 
 const handleReset = async () => {
   if (password.value !== confirmPassword.value) {
@@ -99,51 +160,38 @@ const handleReset = async () => {
 
 <style scoped>
 .auth-page {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   min-height: 80vh;
-  padding: 20px;
+  background: linear-gradient(135deg, var(--gradient-dark));
 }
-.auth-container {
-  width: 100%;
-  max-width: 450px;
-  background: white;
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+
+.auth-card {
+  backdrop-filter: blur(20px);
+  background: rgba(26, 26, 26, 0.95);
+  border: 1px solid var(--border-primary);
 }
-.auth-header h3 {
-  text-align: center;
-  margin-bottom: 25px;
-  color: #333;
+
+/* Custom styles for dark luxury theme */
+.v-text-field :deep(.v-field) {
+  background-color: rgba(10, 10, 10, 0.5);
+  border-color: var(--border-secondary);
 }
-.form-group {
-  margin-bottom: 20px;
+
+.v-text-field :deep(.v-field:hover) {
+  border-color: var(--color-primary);
 }
-.form-group label {
-  display: block;
-  margin-bottom: 8px;
+
+.v-text-field :deep(.v-field--focused) {
+  border-color: var(--color-primary);
+  box-shadow: var(--gold-glow);
+}
+
+.v-btn {
+  text-transform: none;
   font-weight: 600;
+  letter-spacing: 0.5px;
 }
-.form-group input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
-.submit-btn {
-  width: 100%;
-  padding: 12px;
-  background: #2c3e50;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-}
-.auth-footer {
-  text-align: center;
-  margin-top: 20px;
+
+.v-alert {
+  backdrop-filter: blur(10px);
 }
 </style>

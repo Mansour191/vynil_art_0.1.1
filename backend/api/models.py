@@ -51,6 +51,8 @@ class Product(models.Model):
     description_ar = models.TextField(blank=True)
     description_en = models.TextField(blank=True)
     base_price = models.DecimalField(max_digits=10, decimal_places=2, help_text="Base rate per m2")
+    cost = models.DecimalField(max_digits=10, decimal_places=2, default=0, help_text="Production cost per m2")
+    stock = models.PositiveIntegerField(default=0)
     image = models.ImageField(upload_to='products/')
     on_sale = models.BooleanField(default=False)
     discount_percent = models.PositiveIntegerField(default=0)
@@ -99,6 +101,38 @@ class Coupon(models.Model):
     def __str__(self):
         return self.code
 
+# 4. Blog
+class BlogCategory(models.Model):
+    name_ar = models.CharField(max_length=100)
+    name_en = models.CharField(max_length=100)
+    slug = models.SlugField(unique=True)
+
+    class Meta:
+        verbose_name_plural = "Blog Categories"
+
+    def __str__(self):
+        return self.name_en
+
+class BlogPost(models.Model):
+    title_ar = models.CharField(max_length=255)
+    title_en = models.CharField(max_length=255)
+    slug = models.SlugField(unique=True)
+    category = models.ForeignKey(BlogCategory, on_delete=models.SET_NULL, null=True, related_name='posts')
+    content_ar = models.TextField()
+    content_en = models.TextField()
+    summary_ar = models.TextField(blank=True)
+    summary_en = models.TextField(blank=True)
+    image = models.ImageField(upload_to='blog/')
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    published_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_published = models.BooleanField(default=True)
+    tags = models.CharField(max_length=255, blank=True, help_text="Comma separated tags")
+
+    def __str__(self):
+        return self.title_en
+
+# 5. Orders Continued (Original)
 class Order(models.Model):
     SYNC_STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -252,11 +286,31 @@ class ERPNextSyncLog(models.Model):
 
 # 9. Analytics & AI
 class BehaviorTracking(models.Model):
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
-    session_id = models.CharField(max_length=100, blank=True)
-    event_type = models.CharField(max_length=50) # page_view, add_to_cart, search
-    metadata = models.JSONField(default=dict)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    session_id = models.CharField(max_length=255, null=True, blank=True)
+    action = models.CharField(max_length=100, default='page_view')
+    page = models.CharField(max_length=255, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+
+class ConversationHistory(models.Model):
+    session_id = models.CharField(max_length=255, db_index=True)
+    role = models.CharField(max_length=20)  # 'user' or 'assistant'
+    message = models.TextField()
+    response = models.TextField(blank=True, null=True)
+    confidence = models.FloatField(default=0.0)
+    source = models.CharField(max_length=50, default='unknown')
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['session_id', 'created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.session_id} - {self.role} - {self.created_at}"
 
 class Forecast(models.Model):
     target_metric = models.CharField(max_length=50) # sales, inventory

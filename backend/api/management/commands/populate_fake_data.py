@@ -64,23 +64,24 @@ class Command(BaseCommand):
 
         # 3. Products & Images & Variants
         vinyl_names = [
-            ("Golden Geometric", "هندسي ذهبي"),
-            ("Silver Marble", "رخام فضي"),
-            ("Emerald Wave", "موج زمردي"),
-            ("Dark Walnut", "خشب جوز داكن"),
-            ("Urban Concrete", "خرسانة مدنية"),
-            ("Vintage Floral", "زهور عتيقة"),
-            ("Azure Sky", "سماء زرقاء"),
-            ("Ruby Texture", "نسيج ياقوتي"),
-            ("Onyx Black", "عقيق أسود"),
-            ("Ivory Silk", "حرير عاجي")
+            ("Golden Geometric", "هندسي ذهبي", "GEO-001"),
+            ("Silver Marble", "رخام فضي", "MAR-002"),
+            ("Emerald Wave", "موج زمردي", "CAR-003"),
+            ("Dark Walnut", "خشب جوز داكن", "KIT-004"),
+            ("Urban Concrete", "خرسانة مدنية", "CON-005"),
+            ("Vintage Floral", "زهور عتيقة", "FLO-006"),
+            ("Azure Sky", "سماء زرقاء", "SKY-007"),
+            ("Ruby Texture", "نسيج ياقوتي", "RUB-008"),
+            ("Onyx Black", "عقيق أسود", "ONY-009"),
+            ("Ivory Silk", "حرير عاجي", "SIL-010"),
+            ("Test Product", "منتج تجريبي", "test")
         ]
 
         products = []
-        for name_en, name_ar in vinyl_names:
+        for name_en, name_ar, slug in vinyl_names:
             category = random.choice(categories)
             product, created = Product.objects.get_or_create(
-                slug=slugify(name_en),
+                slug=slug,
                 defaults={
                     'name_en': name_en,
                     'name_ar': name_ar,
@@ -88,6 +89,8 @@ class Command(BaseCommand):
                     'description_en': fake.paragraph(),
                     'description_ar': "هذا المنتج مصمم بعناية ليناسب أرقى الأذواق الجزائرية، يتميز بجودة عالية وسهولة في التركيب.",
                     'base_price': Decimal(random.randint(2000, 6000)),
+                    'cost': Decimal(random.randint(1500, 4000)),
+                    'stock': random.randint(0, 200),
                     'on_sale': random.choice([True, False]),
                     'discount_percent': random.randint(10, 30) if random.random() > 0.6 else 0,
                     'is_new': random.choice([True, False])

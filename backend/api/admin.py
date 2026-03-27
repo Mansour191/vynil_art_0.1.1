@@ -4,7 +4,7 @@ from .models import (
     Shipping, Coupon, Order, OrderItem, OrderTimeline, Payment,
     CartItem, Wishlist, Review, ReviewReport, DesignCategory, Design,
     Notification, Alert, ERPNextSyncLog, BehaviorTracking, Forecast,
-    CustomerSegment, PricingEngine
+    CustomerSegment, PricingEngine, ConversationHistory
 )
 
 # 1. Users & Auth
@@ -125,7 +125,7 @@ class ERPNextSyncLogAdmin(admin.ModelAdmin):
 # 9. Analytics & AI
 @admin.register(BehaviorTracking)
 class BehaviorTrackingAdmin(admin.ModelAdmin):
-    list_display = ('user', 'event_type', 'timestamp')
+    list_display = ('user', 'action', 'timestamp')
 
 @admin.register(Forecast)
 class ForecastAdmin(admin.ModelAdmin):
@@ -138,3 +138,15 @@ class CustomerSegmentAdmin(admin.ModelAdmin):
 @admin.register(PricingEngine)
 class PricingEngineAdmin(admin.ModelAdmin):
     list_display = ('raw_material_cost', 'labor_cost', 'international_shipping')
+
+# 10. Conversation History
+@admin.register(ConversationHistory)
+class ConversationHistoryAdmin(admin.ModelAdmin):
+    list_display = ('session_id', 'role', 'message_preview', 'source', 'confidence', 'created_at')
+    list_filter = ('role', 'source', 'created_at')
+    search_fields = ('session_id', 'message')
+    readonly_fields = ('created_at',)
+    
+    def message_preview(self, obj):
+        return obj.message[:50] + '...' if len(obj.message) > 50 else obj.message
+    message_preview.short_description = 'Message'

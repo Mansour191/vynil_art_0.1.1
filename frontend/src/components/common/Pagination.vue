@@ -11,17 +11,21 @@
         <i class="fa-solid fa-chevron-right"></i>
       </button>
 
-      <template v-for="page in displayedPages">
-        <button
-          v-if="page !== '...'"
-          :key="page"
-          class="page-btn"
-          :class="{ active: currentPage === page }"
-          @click="$emit('update:currentPage', page)"
+      <template v-for="page in visiblePages" :key="page">
+        <button 
+          v-if="page === currentPage" 
+          class="page-active"
         >
           {{ page }}
         </button>
-        <span v-else :key="page" class="page-dots">...</span>
+        <button 
+          v-else-if="page !== '...'" 
+          class="page-number"
+          @click="goToPage(page)"
+        >
+          {{ page }}
+        </button>
+        <span v-else class="page-dots">...</span>
       </template>
 
       <button class="page-btn" :disabled="currentPage === totalPages" @click="$emit('update:currentPage', currentPage + 1)">

@@ -1,29 +1,57 @@
 <template>
   <div class="product-gallery">
     <!-- Main Image Display -->
-    <div class="main-image-wrapper card border-0 shadow-sm rounded-lg overflow-hidden mb-3" @click="$emit('open-lightbox')">
-      <img 
-        :src="currentImage || images[0]" 
-        :alt="title" 
-        class="main-img transition-all"
-        loading="lazy"
+    <v-card
+      class="main-image-wrapper mb-4"
+      elevation="4"
+      @click="$emit('open-lightbox')"
+      style="cursor: zoom-in"
+    >
+      <v-img
+        :src="currentImage || images[0]"
+        :alt="title"
+        aspect-ratio="1"
+        cover
+        class="main-img"
       >
-      <div class="zoom-hint">
-        <i class="fa-solid fa-search-plus"></i>
-      </div>
-    </div>
+        <template v-slot:placeholder>
+          <v-row class="fill-height" align="center" justify="center">
+            <v-progress-circular indeterminate color="primary"></v-progress-circular>
+          </v-row>
+        </template>
+      </v-img>
+      
+      <!-- Zoom Hint -->
+      <v-btn
+        class="zoom-hint"
+        icon="mdi-magnify-plus"
+        variant="elevated"
+        size="small"
+        color="white"
+        style="position: absolute; bottom: 15px; right: 15px;"
+      />
+    </v-card>
 
     <!-- Thumbnails Grid -->
-    <div v-if="images.length > 1" class="thumbnails-row d-flex gap-2 overflow-auto pb-2">
-      <div 
-        v-for="(img, index) in images" 
+    <div v-if="images.length > 1" class="thumbnails-row d-flex ga-2 overflow-auto pb-2">
+      <v-card
+        v-for="(img, index) in images"
         :key="index"
-        class="thumb-item rounded border-2 transition-all"
-        :class="{ 'active border-gold': currentImage === img || (!currentImage && index === 0) }"
+        class="thumb-item"
+        :class="{ 'border-primary': currentImage === img || (!currentImage && index === 0) }"
+        elevation="2"
+        width="70"
+        height="70"
         @click="currentImage = img"
+        style="cursor: pointer"
       >
-        <img :src="img" :alt="`${title} - ${index + 1}`" loading="lazy">
-      </div>
+        <v-img
+          :src="img"
+          :alt="`${title} - ${index + 1}`"
+          cover
+          height="70"
+        />
+      </v-card>
     </div>
   </div>
 </template>
@@ -36,74 +64,8 @@ defineProps({
   title: { type: String, required: true }
 });
 
-const currentImage = ref(null);
-
 defineEmits(['open-lightbox']);
+
+const currentImage = ref(null);
 </script>
 
-<style scoped>
-.main-image-wrapper {
-  position: relative;
-  aspect-ratio: 1;
-  cursor: zoom-in;
-  background: #f8f9fa;
-}
-
-.main-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.main-image-wrapper:hover .main-img {
-  transform: scale(1.05);
-}
-
-.zoom-hint {
-  position: absolute;
-  bottom: 15px;
-  right: 15px;
-  background: rgba(0,0,0,0.5);
-  color: white;
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.main-image-wrapper:hover .zoom-hint {
-  opacity: 1;
-}
-
-.thumbnails-row {
-  scrollbar-width: thin;
-  scrollbar-color: var(--gold-primary) transparent;
-}
-
-.thumb-item {
-  width: 70px;
-  height: 70px;
-  flex-shrink: 0;
-  cursor: pointer;
-  border: 2px solid transparent;
-  background: white;
-}
-
-.thumb-item img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.thumb-item.active {
-  border-color: var(--gold-primary) !important;
-}
-
-.border-gold {
-  border-color: var(--gold-primary) !important;
-}
-</style>

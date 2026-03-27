@@ -1,114 +1,167 @@
 <template>
-  <div class="category-page">
-    <div class="container">
-      <!-- ===== الهيدر الرئيسي ===== -->
-      <div class="page-header text-center py-5">
-        <h1 class="display-4">
-          <i :class="icon" class="text-gold"></i>
-          {{ $t(titleKey) }}
-        </h1>
-        <p class="lead text-muted">{{ $t(descriptionKey) }}</p>
-      </div>
+  <v-main class="category-page">
+    <v-container>
+      <!-- Main Header -->
+      <v-row class="text-center py-8">
+        <v-col cols="12">
+          <h1 class="text-h4 font-weight-bold mb-2">
+            <v-icon :icon="icon" color="primary" class="mb-2" size="large" />
+            {{ $t(titleKey) }}
+          </h1>
+          <p class="text-body-1 text-medium-emphasis">{{ $t(descriptionKey) }}</p>
+        </v-col>
+      </v-row>
 
-      <!-- ===== أقسام فرعية (اختياري) ===== -->
-      <div v-if="subCategories && subCategories.length" class="sub-categories row g-4 mb-5">
-        <div v-for="sub in subCategories" :key="sub.id" class="col-md-4">
-          <div
-            class="card h-100 shadow-sm border-0 rounded-lg hover-lift"
+      <!-- Sub Categories (Optional) -->
+      <v-row v-if="subCategories && subCategories.length" class="mb-6">
+        <v-col
+          v-for="sub in subCategories"
+          :key="sub.id"
+          cols="12"
+          sm="6"
+          md="4"
+          class="mb-4"
+        >
+          <v-card
+            class="h-100 cursor-pointer"
+            elevation="4"
             @click="navigateTo(sub.link)"
+            hover
           >
-            <div class="card-body text-center">
-              <div class="fs-1 mb-3">{{ sub.emoji }}</div>
-              <h3 class="h5 card-title">{{ $t(sub.titleKey) }}</h3>
-              <p class="card-text small text-muted">{{ $t(sub.descKey) }}</p>
-            </div>
+            <v-card-text class="text-center pa-4">
+              <div class="text-h4 mb-3">{{ sub.emoji }}</div>
+              <h3 class="text-h6 mb-2">{{ $t(sub.titleKey) }}</h3>
+              <p class="text-body-2 text-medium-emphasis">{{ $t(sub.descKey) }}</p>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Latest Designs Section -->
+      <v-row class="mb-6">
+        <v-col cols="12">
+          <div class="d-flex align-center justify-space-between mb-4">
+            <h2 class="text-h5 font-weight-bold">
+              <v-icon color="primary" class="mr-2">mdi-clock</v-icon>
+              {{ $t(latestLabelKey) || $t('latestDesigns') }}
+            </h2>
+            <v-btn
+              :to="'/search?q=' + $t(labelKey)"
+              variant="outlined"
+              color="primary"
+              append-icon="mdi-arrow-left"
+            >
+              {{ $t('viewAll') }}
+            </v-btn>
           </div>
-        </div>
-      </div>
+        </v-col>
+      </v-row>
 
-      <!-- ===== أحدث التصاميم ===== -->
-      <div class="section-title d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h3">
-          <i class="fa-solid fa-clock text-gold"></i>
-          {{ $t(latestLabelKey) || $t('latestDesigns') }}
-        </h2>
-        <router-link :to="'/search?q=' + $t(labelKey)" class="text-gold text-decoration-none">
-          {{ $t('viewAll') }} <i class="fa-solid fa-arrow-left ms-1"></i>
-        </router-link>
-      </div>
+      <!-- Products Grid -->
+      <v-row class="mb-6">
+        <v-col v-if="loading" cols="12" class="text-center py-8">
+          <v-progress-circular
+            indeterminate
+            color="primary"
+            size="48"
+            class="mb-4"
+          />
+          <p class="text-body-1 text-medium-emphasis">{{ $t('loading') }}</p>
+        </v-col>
 
-      <!-- شبكة المنتجات -->
-      <div class="products-grid row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-5">
-        <div v-if="loading" class="col-12 text-center py-5">
-          <div class="spinner-border text-gold" role="status">
-            <span class="visually-hidden">{{ $t('loading') }}</span>
-          </div>
-          <p class="mt-3 text-muted">{{ $t('loading') }}</p>
-        </div>
+        <v-col v-else-if="error" cols="12" class="text-center py-8">
+          <v-alert
+            type="error"
+            variant="elevated"
+            class="mb-4"
+          >
+            <v-alert-title>{{ errorMessage }}</v-alert-title>
+            <v-alert-actions>
+              <v-btn @click="fetchData" prepend-icon="mdi-refresh">
+                {{ $t('retry') || 'إعادة المحاولة' }}
+              </v-btn>
+            </v-alert-actions>
+          </v-alert>
+        </v-col>
 
-        <div v-else-if="error" class="col-12 text-center py-5">
-          <div class="alert alert-danger d-inline-block px-5">
-            <i class="fa-solid fa-exclamation-circle me-2"></i>
-            {{ errorMessage }}
-            <button @click="fetchData" class="btn btn-sm btn-outline-danger ms-3">
-              {{ $t('retry') || 'إعادة المحاولة' }}
-            </button>
-          </div>
-        </div>
-
-        <div v-else-if="products.length === 0" class="col-12 text-center py-5">
-          <p class="text-muted fs-4">{{ $t('noDesignsFound') || 'لا توجد تصاميم متاحة حالياً' }}</p>
-        </div>
+        <v-col v-else-if="products.length === 0" cols="12" class="text-center py-8">
+          <p class="text-h6 text-medium-emphasis">{{ $t('noDesignsFound') || 'لا توجد تصاميم متاحة حالياً' }}</p>
+        </v-col>
 
         <template v-else>
-          <div v-for="product in products" :key="product.id" class="col">
-            <article class="product-card card h-100 shadow-sm border-0 rounded-lg overflow-hidden">
-              <div class="product-image-container position-relative">
-                <router-link :to="product.link">
-                  <img
-                    :src="product.image"
-                    :alt="product.title"
-                    class="card-img-top product-img"
-                    loading="lazy"
-                  />
-                </router-link>
-                <span class="badge bg-gold position-absolute top-0 end-0 m-3 shadow-sm">
-                  {{ badgeLabel || $t('new') }}
-                </span>
-              </div>
-              <div class="card-body">
-                <h3 class="h5 card-title text-truncate">
-                  <router-link :to="product.link" class="text-dark text-decoration-none">{{
-                    product.title
-                  }}</router-link>
-                </h3>
-                <p class="card-text text-muted small mb-3">{{ product.summary }}</p>
-                <div class="d-flex justify-content-between align-items-center">
-                  <router-link
-                    :to="product.link"
-                    class="btn btn-outline-dark btn-sm rounded-pill px-3"
-                  >
-                    <i class="fa-solid fa-eye me-1"></i> {{ $t('preview') }}
+          <v-col
+            v-for="product in products"
+            :key="product.id"
+            cols="12"
+            sm="6"
+            md="4"
+            class="mb-4"
+          >
+            <v-card class="h-100" elevation="4" hover>
+              <!-- Product Image -->
+              <v-img
+                :src="product.image"
+                :alt="product.title"
+                height="240"
+                cover
+                class="product-image"
+              >
+                <template v-slot:placeholder>
+                  <v-row class="fill-height" align="center" justify="center">
+                    <v-progress-circular indeterminate color="primary"></v-progress-circular>
+                  </v-row>
+                </template>
+              </v-img>
+              
+              <!-- Badge -->
+              <v-chip
+                v-if="badgeLabel"
+                :text="badgeLabel || $t('new')"
+                color="primary"
+                size="small"
+                class="ma-3"
+              />
+              
+              <!-- Product Content -->
+              <v-card-text class="pa-4">
+                <v-card-title class="text-h6 mb-2">
+                  <router-link :to="product.link" class="text-decoration-none">
+                    {{ product.title }}
                   </router-link>
-                  <a
-                    :href="
-                      'https://wa.me/213663140341?text=' +
-                      encodeURIComponent($t('whatsappInquiry') + ': ' + product.title)
-                    "
-                    class="btn btn-success btn-sm rounded-pill px-3 shadow-sm"
+                </v-card-title>
+                
+                <v-card-subtitle class="text-body-2 text-medium-emphasis mb-3">
+                  {{ product.summary }}
+                </v-card-subtitle>
+                
+                <v-card-actions class="d-flex justify-space-between align-center">
+                  <v-btn
+                    :to="product.link"
+                    variant="outlined"
+                    prepend-icon="mdi-eye"
+                    size="small"
+                  >
+                    {{ $t('preview') }}
+                  </v-btn>
+                  
+                  <v-btn
+                    :href="'https://wa.me/213663140341?text=' + encodeURIComponent($t('whatsappInquiry') + ': ' + product.title)"
                     target="_blank"
                     rel="noopener noreferrer"
+                    color="success"
+                    prepend-icon="mdi-whatsapp"
+                    size="small"
                   >
-                    <i class="fab fa-whatsapp me-1"></i> {{ $t('inquiry') }}
-                  </a>
-                </div>
-              </div>
-            </article>
-          </div>
+                    {{ $t('inquiry') }}
+                  </v-btn>
+                </v-card-actions>
+              </v-card-text>
+            </v-card>
+          </v-col>
         </template>
-      </div>
-    </div>
-  </div>
+      </v-row>
+    </v-container>
+  </v-main>
 </template>
 
 <script setup>
@@ -165,48 +218,3 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
-.category-page {
-  background-color: #fcfcfc;
-  min-height: 100vh;
-}
-
-.text-gold {
-  color: #d4af37;
-}
-
-.bg-gold {
-  background-color: #d4af37;
-  color: #1a1a2e;
-}
-
-.hover-lift {
-  transition: transform 0.3s, box-shadow 0.3s;
-  cursor: pointer;
-}
-
-.hover-lift:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important;
-}
-
-.product-img {
-  height: 240px;
-  object-fit: cover;
-  transition: transform 0.5s;
-}
-
-.product-card:hover .product-img {
-  transform: scale(1.05);
-}
-
-.btn-success {
-  background-color: #25d366;
-  border-color: #25d366;
-}
-
-.btn-success:hover {
-  background-color: #128c7e;
-  border-color: #128c7e;
-}
-</style>

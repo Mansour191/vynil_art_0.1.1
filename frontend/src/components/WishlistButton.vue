@@ -1,99 +1,60 @@
 <template>
-  <button
-    class="wishlist-btn"
-    :class="{ active: isInWishlist }"
+  <v-btn
+    :icon="isInWishlist ? 'mdi-heart' : 'mdi-heart-outline'"
+    :variant="isInWishlist ? 'elevated' : 'outlined'"
+    :color="isInWishlist ? 'primary' : 'default'"
     @click="toggleWishlist"
     :title="$t(isInWishlist ? 'removeFromWishlist' : 'addToWishlist')"
+    class="wishlist-btn"
   >
-    <i :class="isInWishlist ? 'fa-solid fa-heart' : 'far fa-heart'"></i>
     <span v-if="showText">{{ $t(isInWishlist ? 'removeFromWishlist' : 'addToWishlist') }}</span>
-  </button>
+  </v-btn>
 </template>
 
-<script>
-import { mapGetters, mapActions } from 'vuex';
+<script setup>
+import { computed } from 'vue';
+import { useStore } from 'vuex';
+import { useI18n } from 'vue-i18n';
 
-export default {
-  name: 'WishlistButton',
-  props: {
-    item: {
-      type: Object,
-      required: true,
-    },
-    showText: {
-      type: Boolean,
-      default: false,
-    },
+const props = defineProps({
+  item: {
+    type: Object,
+    required: true,
   },
-  computed: {
-    ...mapGetters('user', ['isInWishlist']),
+  showText: {
+    type: Boolean,
+    default: false,
   },
-  methods: {
-    ...mapActions('user', ['addToWishlist', 'removeFromWishlist']),
+});
 
-    toggleWishlist() {
-      if (this.isInWishlist(this.item.id)) {
-        this.removeFromWishlist(this.item.id);
-        this.showNotification('removed');
-      } else {
-        this.addToWishlist(this.item);
-        this.showNotification('added');
-      }
-    },
+const store = useStore();
+const { t } = useI18n();
 
-    showNotification(action) {
-      // إشعار للمستخدم
-      const message =
-        action === 'added' ? this.$t('itemAddedToWishlist') : this.$t('itemRemovedFromWishlist');
+const isInWishlist = computed(() => {
+  return store.getters['user/isInWishlist'](props.item.id);
+});
 
-      // يمكنك استخدام Vuex لإضافة إشعار
-      this.$store.dispatch('user/addNotification', {
-        type: action === 'added' ? 'success' : 'info',
-        title: this.$t('wishlist'),
-        message: `${message}: ${this.item.title}`,
-        icon: action === 'added' ? 'fa-solid fa-heart' : 'fa-solid fa-heart-broken',
-      });
-    },
-  },
+const toggleWishlist = () => {
+  if (isInWishlist.value) {
+    store.dispatch('user/removeFromWishlist', props.item.id);
+    showNotification('removed');
+  } else {
+    store.dispatch('user/addToWishlist', props.item);
+    showNotification('added');
+  }
+};
+
+const showNotification = (action) => {
+  // إشعار للمستخدم
+  const message = action === 'added' ? t('itemAddedToWishlist') : t('itemRemovedFromWishlist');
+  
+  // يمكنك استخدام Vuex لإضافة إشعار
+  store.dispatch('user/addNotification', {
+    type: action === 'added' ? 'success' : 'info',
+    title: t('wishlist'),
+    message: `${message}: ${props.item.title}`,
+    icon: action === 'added' ? 'mdi-heart' : 'mdi-heart-broken',
+  });
 };
 </script>
 
-<style scoped>
-.wishlist-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 30px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.3s;
-  font-size: 0.95rem;
-}
-
-.wishlist-btn i {
-  color: var(--gold-primary);
-  transition: all 0.3s;
-}
-
-.wishlist-btn:hover {
-  border-color: var(--gold-primary);
-  transform: translateY(-2px);
-}
-
-.wishlist-btn.active {
-  background: var(--gold-gradient);
-  color: var(--bg-deep);
-}
-
-.wishlist-btn.active i {
-  color: var(--bg-deep);
-}
-
-.wishlist-btn:active {
-  transform: scale(0.95);
-}
-</style>

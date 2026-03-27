@@ -1,40 +1,23 @@
-import axios from 'axios';
+import { api } from '@/composables/useApi';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
 const ERPNEXT_API_URL = import.meta.env.VITE_ERPNEXT_URL || 'http://127.0.0.1:8001';
 
 class ERPNextService {
   constructor() {
-    this.api = axios.create({
-      baseURL: API_BASE_URL,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    // Add auth token to requests
-    this.api.interceptors.request.use((config) => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    });
-
-    // ERPNext direct API client
-    this.erpnextApi = axios.create({
-      baseURL: ERPNEXT_API_URL,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    // ERPNext direct API URL for external connections
+    this.erpnextApiUrl = ERPNEXT_API_URL;
   }
 
   // Customer Migration
   async migrateCustomers() {
     try {
-      const response = await this.api.post('/erpnext/migrate/customers');
-      return response.data;
+      const response = await api.post('erpnext/migrate/customers');
+      await response.execute();
+      if (response.error.value) {
+        throw response.error.value;
+      }
+      return response.data.value;
     } catch (error) {
       console.error('Error migrating customers:', error);
       throw error;
@@ -43,8 +26,12 @@ class ERPNextService {
 
   async syncCustomer(customerId) {
     try {
-      const response = await this.api.post(`/erpnext/sync/customer/${customerId}`);
-      return response.data;
+      const response = await api.post(`erpnext/sync/customer/${customerId}`);
+      await response.execute();
+      if (response.error.value) {
+        throw response.error.value;
+      }
+      return response.data.value;
     } catch (error) {
       console.error('Error syncing customer:', error);
       throw error;
@@ -53,8 +40,12 @@ class ERPNextService {
 
   async getCustomerSyncStatus() {
     try {
-      const response = await this.api.get('/erpnext/sync/customers/status');
-      return response.data;
+      const response = await api.get('erpnext/sync/customers/status');
+      await response.execute();
+      if (response.error.value) {
+        throw response.error.value;
+      }
+      return response.data.value;
     } catch (error) {
       console.error('Error fetching customer sync status:', error);
       throw error;
@@ -64,8 +55,12 @@ class ERPNextService {
   // Product Migration
   async migrateProducts() {
     try {
-      const response = await this.api.post('/erpnext/migrate/products');
-      return response.data;
+      const response = await api.post('erpnext/migrate/products');
+      await response.execute();
+      if (response.error.value) {
+        throw response.error.value;
+      }
+      return response.data.value;
     } catch (error) {
       console.error('Error migrating products:', error);
       throw error;
@@ -74,8 +69,12 @@ class ERPNextService {
 
   async syncProduct(productId) {
     try {
-      const response = await this.api.post(`/erpnext/sync/product/${productId}`);
-      return response.data;
+      const response = await api.post(`erpnext/sync/product/${productId}`);
+      await response.execute();
+      if (response.error.value) {
+        throw response.error.value;
+      }
+      return response.data.value;
     } catch (error) {
       console.error('Error syncing product:', error);
       throw error;
@@ -84,8 +83,12 @@ class ERPNextService {
 
   async getProductSyncStatus() {
     try {
-      const response = await this.api.get('/erpnext/sync/products/status');
-      return response.data;
+      const response = await api.get('erpnext/sync/products/status');
+      await response.execute();
+      if (response.error.value) {
+        throw response.error.value;
+      }
+      return response.data.value;
     } catch (error) {
       console.error('Error fetching product sync status:', error);
       throw error;
@@ -99,8 +102,12 @@ class ERPNextService {
       if (startDate) params.append('start_date', startDate);
       if (endDate) params.append('end_date', endDate);
       
-      const response = await this.api.post(`/erpnext/migrate/orders?${params}`);
-      return response.data;
+      const response = await api.post(`erpnext/migrate/orders?${params}`);
+      await response.execute();
+      if (response.error.value) {
+        throw response.error.value;
+      }
+      return response.data.value;
     } catch (error) {
       console.error('Error migrating orders:', error);
       throw error;
@@ -109,8 +116,12 @@ class ERPNextService {
 
   async syncOrder(orderId) {
     try {
-      const response = await this.api.post(`/erpnext/sync/order/${orderId}`);
-      return response.data;
+      const response = await api.post(`erpnext/sync/order/${orderId}`);
+      await response.execute();
+      if (response.error.value) {
+        throw response.error.value;
+      }
+      return response.data.value;
     } catch (error) {
       console.error('Error syncing order:', error);
       throw error;
@@ -119,8 +130,12 @@ class ERPNextService {
 
   async getOrderSyncStatus() {
     try {
-      const response = await this.api.get('/erpnext/sync/orders/status');
-      return response.data;
+      const response = await api.get('erpnext/sync/orders/status');
+      await response.execute();
+      if (response.error.value) {
+        throw response.error.value;
+      }
+      return response.data.value;
     } catch (error) {
       console.error('Error fetching order sync status:', error);
       throw error;
@@ -130,8 +145,12 @@ class ERPNextService {
   // Inventory Migration
   async migrateInventory() {
     try {
-      const response = await this.api.post('/erpnext/migrate/inventory');
-      return response.data;
+      const response = await api.post('erpnext/migrate/inventory');
+      await response.execute();
+      if (response.error.value) {
+        throw response.error.value;
+      }
+      return response.data.value;
     } catch (error) {
       console.error('Error migrating inventory:', error);
       throw error;
@@ -140,8 +159,12 @@ class ERPNextService {
 
   async syncInventoryItem(itemId) {
     try {
-      const response = await this.api.post(`/erpnext/sync/inventory/${itemId}`);
-      return response.data;
+      const response = await api.post(`erpnext/sync/inventory/${itemId}`);
+      await response.execute();
+      if (response.error.value) {
+        throw response.error.value;
+      }
+      return response.data.value;
     } catch (error) {
       console.error('Error syncing inventory item:', error);
       throw error;
@@ -378,7 +401,7 @@ class ERPNextService {
 
   async checkIntegrationHealth() {
     try {
-      const response = await this.api.get('/erpnext/health');
+      const response = await this.api.get('/erpnext/health/');
       return response.data;
     } catch (error) {
       console.error('Integration health check failed:', error);

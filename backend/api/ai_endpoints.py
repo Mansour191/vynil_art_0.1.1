@@ -162,6 +162,178 @@ def _gemini_answer(prompt):
         return None
 
 
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def market_trends(request):
+    """
+    Market trends endpoint - handles frontend's /ai/analytics/market-trends/ requests
+    """
+    try:
+        category = request.query_params.get('category', None)
+        print(f"DEBUG: Market trends request - Category: {category}")
+        
+        # Mock market trends data based on category
+        trends_data = {
+            "trends": [
+                {"name": "زيادة الطلب على الفينيل الفاخر", "change": "+15%", "confidence": 0.8},
+                {"name": "اتجاه الألوان الداكنة", "change": "ألوان هادئة", "confidence": 0.7},
+                {"name": "التصاميم الثمانية شعبية", "change": "+25%", "confidence": 0.9}
+            ],
+            "seasonality": "high" if category in ["furniture", "walls"] else "medium",
+            "confidence": 0.75,
+            "category": category or "all"
+        }
+        
+        return Response(trends_data)
+        
+    except Exception as e:
+        print(f"ERROR in market_trends: {str(e)}")
+        return Response({
+            "error": "Failed to fetch market trends",
+            "trends": [],
+            "confidence": 0.3
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def chatbot_message(request):
+    """
+    Chatbot message endpoint - handles frontend's /ai/chatbot/message requests
+    """
+    try:
+        # Extract data from frontend request
+        message = request.data.get("message", "").strip()
+        system_prompt = request.data.get("system_prompt", "")
+        context = request.data.get("context", {})
+        session_id = request.data.get("session_id", "")
+        temperature = request.data.get("temperature", 0.8)
+        max_tokens = request.data.get("max_tokens", 800)
+        top_p = request.data.get("top_p", 0.9)
+        
+        if not message:
+            return Response({
+                "error": "message is required"
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        print(f"DEBUG: Chatbot message received - Session: {session_id}, Message: {message}")
+        print(f"DEBUG: System prompt: {system_prompt[:100]}...")
+        print(f"DEBUG: Context: {context}")
+        
+        # Save user message to conversation history
+        user_message = ConversationHistory.objects.create(
+            session_id=session_id,
+            role='user',
+            message=message,
+            metadata={
+                'system_prompt': system_prompt[:200] if system_prompt else '',
+                'context': context,
+                'temperature': temperature,
+                'max_tokens': max_tokens,
+                'top_p': top_p
+            }
+        )
+        
+        # Load knowledge base
+        chunks = _load_knowledge_chunks()
+        ranked = sorted(
+            chunks,
+            key=lambda c: _cosine_similarity(message, c["text"]),
+            reverse=True,
+        )
+        top = [c for c in ranked[:3] if _cosine_similarity(message, c["text"]) > 0.12]
+
+        response_data = {}
+        
+        if top:
+            context_text = "\n\n".join([f"[{c['source']}] {c['text'][:500]}" for c in top])
+            answer = (
+                "اعتماداً على دليل Paclos:\n\n"
+                f"{context_text[:900]}\n\n"
+                "إذا أردت، أستطيع تحويل هذه الخطوات إلى قائمة تطبيق عملية لمساحتك."
+            )
+            response_data = {
+                "response": answer,
+                "source": "knowledge_base",
+                "confidence": 0.8,
+                "session_id": session_id
+            }
+
+        # Use system prompt if provided, otherwise use default
+        elif system_prompt:
+            prompt = f"{system_prompt}\n\nUser question: {message}"
+        else:
+            prompt = (
+                "You are Paclos interior decoration assistant. "
+                "Answer in Arabic, stay concise, and keep context on vinyl/marble interior applications.\n"
+                f"User question: {message}"
+            )
+        
+        # Call Gemini API
+        gemini_response = _gemini_answer(prompt)
+        if gemini_response:
+            response_data = {
+                "response": gemini_response,
+                "source": "gemini",
+                "confidence": 0.9,
+                "session_id": session_id
+            }
+
+        # Fallback response
+        else:
+            fallback_response = "حالياً قاعدة المعرفة غير كافية لهذا السؤال، لكن يمكنني مساعدتك باقتراح خامة فينيل مناسبة حسب نوع السطح والإضاءة."
+            response_data = {
+                "response": fallback_response,
+                "source": "fallback",
+                "confidence": 0.6,
+                "session_id": session_id
+            }
+        
+        # Save assistant response to conversation history
+        ConversationHistory.objects.create(
+            session_id=session_id,
+            role='assistant',
+            message=response_data["response"],
+            response=response_data["response"],
+            confidence=response_data["confidence"],
+            source=response_data["source"],
+            metadata={
+                'user_message_id': user_message.id,
+                'processing_time': 'fast'
+            }
+        )
+        
+        print(f"DEBUG: Chatbot response sent - Source: {response_data['source']}, Confidence: {response_data['confidence']}")
+        return Response(response_data)
+        
+    except Exception as e:
+        print(f"ERROR in chatbot_message: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        # Save error to conversation history if possible
+        try:
+            ConversationHistory.objects.create(
+                session_id=session_id,
+                role='assistant',
+                message="Error occurred",
+                response="عذراً، حدث خطأ في معالجة طلبك. يرجى المحاولة مرة أخرى.",
+                confidence=0.3,
+                source='error_fallback',
+                metadata={'error': str(e)}
+            )
+        except:
+            pass  # If we can't save the error, just continue
+            
+        return Response({
+            "error": "Internal server error",
+            "response": "عذراً، حدث خطأ في معالجة طلبك. يرجى المحاولة مرة أخرى.",
+            "source": "error_fallback",
+            "confidence": 0.3,
+            "session_id": session_id
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def chat_service(request):

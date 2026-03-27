@@ -1,8 +1,10 @@
+// vite.config.js
 import { defineConfig, loadEnv } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
 import vueI18n from '@intlify/unplugin-vue-i18n/vite';
 import viteImagemin from 'vite-plugin-imagemin';
+import vuetify from 'vite-plugin-vuetify'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -10,42 +12,30 @@ export default defineConfig(({ mode }) => {
 
   return {
     define: {
-      'process.env': {
-        ...env,
-        NODE_ENV: JSON.stringify(mode),
-        VUE_APP_VERSION: JSON.stringify(process.env.npm_package_version),
-      },
+      // حل مشكلة ReferenceError: process is not defined
+      'process.env': env,
       'process.platform': JSON.stringify('win32'),
+      'global': 'window', // حل لبعض المكتبات القديمة
     },
     envPrefix: 'VUE_APP_',
     plugins: [
-      vue(),
+      // ✅ الترتيب الصحيح: Vue أولاً ثم Vuetify
+      vue(), 
+      vuetify({ 
+        autoImport: true 
+      }),
       vueI18n({
         include: path.resolve(__dirname, './src/locales/**'),
       }),
       viteImagemin({
-        gifsicle: {
-          interlaced: true,
-        },
-        optipng: {
-          optimizationLevel: 5,
-        },
-        mozjpeg: {
-          quality: 80,
-        },
-        pngquant: {
-          quality: [0.8, 0.9],
-          speed: 4,
-        },
+        gifsicle: { interlaced: true },
+        optipng: { optimizationLevel: 5 },
+        mozjpeg: { quality: 80 },
+        pngquant: { quality: [0.8, 0.9], speed: 4 },
         svgo: {
           plugins: [
-            {
-              name: 'removeViewBox',
-            },
-            {
-              name: 'removeEmptyAttrs',
-              active: false,
-            },
+            { name: 'removeViewBox' },
+            { name: 'removeEmptyAttrs', active: false },
           ],
         },
       }),
@@ -62,6 +52,11 @@ export default defineConfig(({ mode }) => {
           target: 'http://127.0.0.1:8000',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/graphql/, '/graphql')
+        },
+        '/api': {
+          target: 'http://127.0.0.1:8000',
+          changeOrigin: true,
+          secure: false
         }
       }
     },

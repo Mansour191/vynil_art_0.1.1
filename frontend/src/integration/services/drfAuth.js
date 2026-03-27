@@ -1,5 +1,7 @@
 // DRF Auth Kit Integration for Frontend
 import { gql } from '@apollo/client/core';
+import { httpClient } from '@/services/HttpClient.js';
+import apiErrorLogger from '@/services/ApiErrorLogger.js';
 
 // GraphQL Mutations for DRF Auth Kit
 export const DRF_LOGIN_MUTATION = gql`
@@ -112,36 +114,46 @@ export const DRF_AUTH_ENDPOINTS = {
 
 // Helper functions for REST API calls
 export const drfAuthRequest = async (endpoint, data = {}, method = 'POST') => {
-  const url = `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'}${endpoint}`;
-  
-  const config = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  };
-  
-  // Add auth token if available
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  
-  if (method !== 'GET' && data) {
-    config.body = JSON.stringify(data);
-  }
+  console.log(`🔐 DRF Auth Request: ${method} ${endpoint}`);
   
   try {
-    const response = await fetch(url, config);
-    const responseData = await response.json();
+    let response;
     
-    if (!response.ok) {
-      throw new Error(responseData.message || 'Request failed');
+    switch (method.toUpperCase()) {
+      case 'GET':
+        response = await httpClient.get(endpoint);
+        break;
+      case 'POST':
+        response = await httpClient.post(endpoint, data);
+        break;
+      case 'PATCH':
+        response = await httpClient.patch(endpoint, data);
+        break;
+      case 'PUT':
+        response = await httpClient.put(endpoint, data);
+        break;
+      case 'DELETE':
+        response = await httpClient.delete(endpoint);
+        break;
+      default:
+        throw new Error(`Unsupported method: ${method}`);
     }
     
+    const responseData = await response.json();
+    console.log(`✅ DRF Auth Success: ${method} ${endpoint}`);
     return responseData;
+    
   } catch (error) {
-    throw new Error(error.message || 'Network error');
+    // Additional auth-specific error logging
+    apiErrorLogger.logError(error, {
+      type: 'DRF_AUTH_ERROR',
+      endpoint,
+      method,
+      data: data ? Object.keys(data) : null,
+      timestamp: new Date().toISOString()
+    });
+    
+    throw new Error(error.message || 'Authentication error');
   }
 };
 

@@ -1,52 +1,44 @@
 <template>
-  <div class="product-faq mt-5 pt-5 border-top">
-    <h4 class="mb-4 text-gold font-weight-bold">
-      <i class="fa-solid fa-question-circle me-2"></i> {{ $t('productFaq') || 'الأسئلة الشائعة حول هذا المنتج' }}
-    </h4>
+  <v-card variant="elevated" class="product-faq mt-8 pa-6">
+    <!-- Header -->
+    <v-card-title class="text-h5 font-weight-bold mb-6">
+      <v-icon color="primary" class="mr-2">mdi-help-circle</v-icon>
+      {{ $t('productFaq') || 'الأسئلة الشائعة حول هذا المنتج' }}
+    </v-card-title>
     
-    <div class="accordion" :id="'faqAccordion-' + productId">
-      <div v-for="(item, index) in faqItems" :key="index" class="accordion-item mb-2 border-0 rounded overflow-hidden shadow-sm">
-        <h2 class="accordion-header">
-          <button 
-            class="accordion-button bg-light font-weight-bold text-dark" 
-            type="button" 
-            :class="{ collapsed: index !== 0 }"
-            data-bs-toggle="collapse" 
-            :data-bs-target="'#collapse' + productId + index"
-            :aria-expanded="index === 0 ? 'true' : 'false'"
-          >
-            {{ item.question }}
-          </button>
-        </h2>
-        <div 
-          :id="'collapse' + productId + index" 
-          class="accordion-collapse collapse" 
-          :class="{ show: index === 0 }"
-          :data-bs-parent="'#faqAccordion-' + productId"
-        >
-          <div class="accordion-body bg-white text-secondary small">
-            {{ item.answer }}
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Quality Badges for Product -->
-    <div class="trust-badges-row mt-4 d-flex justify-content-center gap-4 flex-wrap bg-light p-3 rounded-lg border-dashed">
-      <div class="trust-badge-item d-flex align-items-center gap-2">
-        <i class="fa-solid fa-certificate text-gold"></i>
-        <span class="small font-weight-bold">جودة عالية (A+)</span>
-      </div>
-      <div class="trust-badge-item d-flex align-items-center gap-2">
-        <i class="fa-solid fa-shield-alt text-success"></i>
-        <span class="small font-weight-bold">ضمان 12 شهر</span>
-      </div>
-      <div class="trust-badge-item d-flex align-items-center gap-2">
-        <i class="fa-solid fa-hand-holding-usd text-info"></i>
-        <span class="small font-weight-bold">أفضل سعر للـ m²</span>
-      </div>
-    </div>
-  </div>
+    <!-- FAQ Accordion -->
+    <v-expansion-panels variant="accordion" class="mb-6">
+      <v-expansion-panel
+        v-for="(item, index) in faqItems"
+        :key="index"
+        :value="index"
+        :title="item.question"
+      >
+        <v-expansion-panel-text class="text-body-2">
+          {{ item.answer }}
+        </v-expansion-panel-text>
+      </v-expansion-panel>
+    </v-expansion-panels>
+    
+    <!-- Quality Badges -->
+    <v-card variant="outlined" class="trust-badges pa-4">
+      <v-card-title class="text-h6 mb-4">ضمانات الجودة</v-card-title>
+      <v-row justify="center" class="ga-4">
+        <v-col cols="auto" class="d-flex align-center ga-2">
+          <v-icon color="primary" size="large">mdi-certificate</v-icon>
+          <span class="text-body-2 font-weight-medium">جودة عالية (A+)</span>
+        </v-col>
+        <v-col cols="auto" class="d-flex align-center ga-2">
+          <v-icon color="success" size="large">mdi-shield-check</v-icon>
+          <span class="text-body-2 font-weight-medium">ضمان 12 شهر</span>
+        </v-col>
+        <v-col cols="auto" class="d-flex align-center ga-2">
+          <v-icon color="info" size="large">mdi-hand-coin</v-icon>
+          <span class="text-body-2 font-weight-medium">أفضل سعر للـ م²</span>
+        </v-col>
+      </v-row>
+    </v-card>
+  </v-card>
 </template>
 
 <script setup>
@@ -77,7 +69,7 @@ const faqItems = computed(() => {
       { question: 'هل يحتاج الجدار لمعالجة قبل التركيب؟', answer: 'يجب أن يكون الجدار نظيفاً وجافاً وخالياً من الرطوبة أو التقشر للحصول على أفضل نتيجة.' }
     ],
     cars: [
-      { question: 'هل يتأثر الملصق بغسيل السيارات؟', answer: 'لا يتأثر، الملصق مصمم لتحمل ظروف الجو الصعبة وغسيل السيارات المتكرر.' }
+      { question: 'هل يتأثر الملصق بغاز السيارات؟', answer: 'لا يتأثر، الملصق مصمم لتحمل ظروف الجو الصعبة وغاز السيارات المتكرر.' }
     ],
     kitchens: [
       { question: 'هل يتحمل حرارة المطبخ؟', answer: 'نعم، الفينيل المستخدم مقاوم للحرارة والرطوبة العالية داخل المطبخ.' }
@@ -88,10 +80,3 @@ const faqItems = computed(() => {
 });
 </script>
 
-<style scoped>
-.text-gold { color: var(--gold-primary); }
-.accordion-button:not(.collapsed) { background: rgba(212, 175, 55, 0.1); color: #000; box-shadow: none; }
-.accordion-button:focus { box-shadow: none; border-color: var(--gold-primary); }
-.border-dashed { border: 1px dashed #ddd; }
-.trust-badge-item i { font-size: 1.1rem; }
-</style>

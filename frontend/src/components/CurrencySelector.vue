@@ -1,32 +1,45 @@
 <template>
-  <div class="currency-selector" ref="el">
-    <button class="currency-btn" @click="toggleDropdown">
-      <i class="fa-solid fa-coins"></i>
-      <span>{{ currentCurrency.symbol }}</span>
-    </button>
-
-    <div class="currency-dropdown" v-if="showDropdown">
-      <div
-        v-for="currency in currencies"
-        :key="currency.code"
-        class="currency-option"
-        :class="{ active: currentCode === currency.code }"
-        @click="selectCurrency(currency.code)"
+  <v-menu
+    v-model="showDropdown"
+    location="bottom end"
+    offset="10"
+  >
+    <template v-slot:activator="{ props }">
+      <v-btn
+        v-bind="props"
+        prepend-icon="mdi-cash"
+        variant="outlined"
+        color="primary"
+        class="currency-btn"
       >
-        <span class="currency-symbol">{{ currency.symbol }}</span>
-        <span class="currency-name">{{ currency.name }}</span>
-      </div>
-    </div>
-  </div>
+        {{ currentCurrency.symbol }}
+      </v-btn>
+    </template>
+    
+    <v-card min-width="200" elevation="8">
+      <v-list density="compact">
+        <v-list-item
+          v-for="currency in currencies"
+          :key="currency.code"
+          :class="{ 'bg-primary': currentCode === currency.code }"
+          @click="selectCurrency(currency.code)"
+        >
+          <template v-slot:prepend>
+            <span class="currency-symbol">{{ currency.symbol }}</span>
+          </template>
+          <v-list-item-title class="currency-name">{{ currency.name }}</v-list-item-title>
+        </v-list-item>
+      </v-list>
+    </v-card>
+  </v-menu>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import CurrencyService from '@/integration/services/CurrencyService';
 
 const router = useRouter();
-const el = ref(null);
 
 // State
 const showDropdown = ref(false);
@@ -41,100 +54,13 @@ const currencies = [
 const currentCurrency = computed(() => CurrencyService.getCurrentCurrency());
 
 // Methods
-const toggleDropdown = () => {
-  showDropdown.value = !showDropdown.value;
-};
-
 const selectCurrency = (code) => {
   CurrencyService.setCurrency(code);
   currentCode.value = code;
   showDropdown.value = false;
-
+  
   // إعادة تحميل الصفحة الحالية لتحديث الأرقام
   router.go();
 };
-
-const handleClickOutside = (event) => {
-  if (el.value && !el.value.contains(event.target)) {
-    showDropdown.value = false;
-  }
-};
-
-// Lifecycle
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside);
-});
-
-onBeforeUnmount(() => {
-  document.removeEventListener('click', handleClickOutside);
-});
 </script>
 
-<style scoped>
-.currency-selector {
-  position: relative;
-}
-
-.currency-btn {
-  width: 45px;
-  height: 45px;
-  border-radius: 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  color: var(--gold-1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.currency-btn:hover {
-  background: var(--gold-gradient);
-  color: var(--bg-deep);
-}
-
-.currency-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  min-width: 150px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  border-radius: 12px;
-  margin-top: 5px;
-  box-shadow: var(--shadow-lg);
-  z-index: 100;
-  overflow: hidden;
-}
-
-.currency-option {
-  padding: 10px 15px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.currency-option:hover {
-  background: var(--bg-primary);
-  color: var(--gold-1);
-}
-
-.currency-option.active {
-  background: var(--gold-gradient);
-  color: var(--bg-deep);
-}
-
-.currency-symbol {
-  font-weight: 700;
-  width: 30px;
-}
-
-.currency-name {
-  flex: 1;
-  font-size: 0.9rem;
-}
-</style>
