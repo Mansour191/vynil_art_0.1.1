@@ -177,7 +177,7 @@ class AILearningService {
   async learnFromMarketTrends() {
     try {
       // Get market trends
-      const trends = await AIService.getMarketTrends();
+      const trends = await AIService.getInstance().getMarketTrends();
       
       // Process trends
       const processedTrends = this.processMarketTrends(trends);

@@ -1,107 +1,15 @@
-// DRF Auth Kit Integration for Frontend
-import { gql } from '@apollo/client/core';
-import { httpClient } from '@/services/HttpClient.js';
+// Updated DRF Auth Service - Now uses GraphQL (Apollo Client) as primary
+import GraphQLAuthService from './authGraphQL.js';
 import apiErrorLogger from '@/services/ApiErrorLogger.js';
 
-// GraphQL Mutations for DRF Auth Kit
-export const DRF_LOGIN_MUTATION = gql`
-  mutation Login($email_or_username: String!, $password: String!) {
-    login(emailOrUsername: $email_or_username, password: $password) {
-      success
-      message
-      user {
-        id
-        username
-        email
-        firstName
-        lastName
-        phone
-        isStaff
-        dateJoined
-      }
-      tokens
-      errors
-    }
-  }
-`;
+// Keep the old mutations for backward compatibility during transition
+export const DRF_LOGIN_MUTATION = GraphQLAuthService.LOGIN_MUTATION;
+export const DRF_REGISTER_MUTATION = GraphQLAuthService.REGISTER_MUTATION;
+export const DRF_UPDATE_PROFILE_MUTATION = GraphQLAuthService.UPDATE_PROFILE_MUTATION;
+export const DRF_ME_QUERY = GraphQLAuthService.ME_QUERY;
+export const DRF_MY_PROFILE_QUERY = GraphQLAuthService.MY_PROFILE_QUERY;
 
-export const DRF_REGISTER_MUTATION = gql`
-  mutation Register($username: String!, $email: String!, $password: String!, $password_confirm: String!, $first_name: String!, $last_name: String, $phone: String) {
-    register(username: $username, email: $email, password: $password, passwordConfirm: $password_confirm, firstName: $first_name, lastName: $last_name, phone: $phone) {
-      success
-      message
-      user {
-        id
-        username
-        email
-        firstName
-        lastName
-        phone
-        isStaff
-        dateJoined
-      }
-      tokens
-      errors
-    }
-  }
-`;
-
-export const DRF_CHANGE_PASSWORD_MUTATION = gql`
-  mutation ChangePassword($old_password: String!, $new_password: String!, $new_password_confirm: String!) {
-    changePassword(oldPassword: $old_password, newPassword: $new_password, newPasswordConfirm: $new_password_confirm) {
-      success
-      message
-      user {
-        id
-        username
-        email
-        firstName
-        lastName
-        phone
-        isStaff
-        dateJoined
-      }
-      errors
-    }
-  }
-`;
-
-export const DRF_UPDATE_PROFILE_MUTATION = gql`
-  mutation UpdateProfile($first_name: String, $last_name: String, $email: String, $phone: String) {
-    updateProfile(firstName: $first_name, lastName: $last_name, email: $email, phone: $phone) {
-      success
-      message
-      user {
-        id
-        username
-        email
-        firstName
-        lastName
-        phone
-        isStaff
-        dateJoined
-      }
-      errors
-    }
-  }
-`;
-
-export const DRF_ME_QUERY = gql`
-  query Me {
-    me {
-      id
-      username
-      email
-      firstName
-      lastName
-      phone
-      isStaff
-      dateJoined
-    }
-  }
-`;
-
-// REST API endpoints for DRF Auth Kit
+// REST API endpoints (kept for backward compatibility - will be removed in future)
 export const DRF_AUTH_ENDPOINTS = {
   login: '/api/auth/login/',
   register: '/api/auth/register/',
@@ -112,39 +20,52 @@ export const DRF_AUTH_ENDPOINTS = {
   updateProfile: '/api/auth/profile/update/',
 };
 
-// Helper functions for REST API calls
+// Helper functions for REST API calls (deprecated - will be removed)
 export const drfAuthRequest = async (endpoint, data = {}, method = 'POST') => {
-  console.log(`🔐 DRF Auth Request: ${method} ${endpoint}`);
+  console.warn(`⚠️  DEPRECATED: Using REST API endpoint ${endpoint}. Consider migrating to GraphQL.`);
   
   try {
+    const token = localStorage.getItem('token');
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     let response;
+    const url = `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'}${endpoint}`;
     
     switch (method.toUpperCase()) {
       case 'GET':
-        response = await httpClient.get(endpoint);
+        response = await fetch(url, { headers, method: 'GET' });
         break;
       case 'POST':
-        response = await httpClient.post(endpoint, data);
+        response = await fetch(url, { headers, method: 'POST', body: JSON.stringify(data) });
         break;
       case 'PATCH':
-        response = await httpClient.patch(endpoint, data);
+        response = await fetch(url, { headers, method: 'PATCH', body: JSON.stringify(data) });
         break;
       case 'PUT':
-        response = await httpClient.put(endpoint, data);
+        response = await fetch(url, { headers, method: 'PUT', body: JSON.stringify(data) });
         break;
       case 'DELETE':
-        response = await httpClient.delete(endpoint);
+        response = await fetch(url, { headers, method: 'DELETE' });
         break;
       default:
         throw new Error(`Unsupported method: ${method}`);
     }
     
     const responseData = await response.json();
-    console.log(`✅ DRF Auth Success: ${method} ${endpoint}`);
+    
+    if (!response.ok) {
+      throw new Error(responseData.message || responseData.detail || `HTTP ${response.status}`);
+    }
+    
     return responseData;
     
   } catch (error) {
-    // Additional auth-specific error logging
     apiErrorLogger.logError(error, {
       type: 'DRF_AUTH_ERROR',
       endpoint,
@@ -157,20 +78,28 @@ export const drfAuthRequest = async (endpoint, data = {}, method = 'POST') => {
   }
 };
 
-// DRF Auth Kit service class
+// Updated DRF Auth Kit service class - Now uses GraphQL as primary
 export class DRFAuthService {
+  // Authentication methods now use GraphQL
   static async login(emailOrUsername, password) {
-    return drfAuthRequest(DRF_AUTH_ENDPOINTS.login, {
-      email_or_username: emailOrUsername,
-      password,
-    });
+    return GraphQLAuthService.login(emailOrUsername, password);
   }
   
   static async register(userData) {
-    return drfAuthRequest(DRF_AUTH_ENDPOINTS.register, userData);
+    return GraphQLAuthService.register(userData);
   }
   
+  static async updateProfile(userData) {
+    return GraphQLAuthService.updateProfile(userData);
+  }
+  
+  static async getProfile() {
+    return GraphQLAuthService.fetchMyProfile();
+  }
+  
+  // Deprecated methods - kept for backward compatibility
   static async changePassword(oldPassword, newPassword, newPasswordConfirm) {
+    console.warn('⚠️  DEPRECATED: changePassword via REST. Use GraphQL mutation when available.');
     return drfAuthRequest(DRF_AUTH_ENDPOINTS.changePassword, {
       old_password: oldPassword,
       new_password: newPassword,
@@ -179,10 +108,12 @@ export class DRFAuthService {
   }
   
   static async resetPassword(email) {
+    console.warn('⚠️  DEPRECATED: resetPassword via REST. Use GraphQL mutation when available.');
     return drfAuthRequest(DRF_AUTH_ENDPOINTS.resetPassword, { email });
   }
   
   static async confirmResetPassword(token, newPassword, newPasswordConfirm) {
+    console.warn('⚠️  DEPRECATED: confirmResetPassword via REST. Use GraphQL mutation when available.');
     return drfAuthRequest(DRF_AUTH_ENDPOINTS.confirmResetPassword, {
       token,
       new_password: newPassword,
@@ -190,90 +121,36 @@ export class DRFAuthService {
     });
   }
   
-  static async getProfile() {
-    return drfAuthRequest(DRF_AUTH_ENDPOINTS.profile, {}, 'GET');
-  }
-  
-  static async updateProfile(userData) {
-    return drfAuthRequest(DRF_AUTH_ENDPOINTS.updateProfile, userData, 'PATCH');
-  }
-  
-  // Token management
+  // Token management - delegated to GraphQL service
   static setTokens(tokens) {
-    if (tokens.access) {
-      localStorage.setItem('token', tokens.access);
-    }
-    if (tokens.refresh) {
-      localStorage.setItem('refreshToken', tokens.refresh);
-    }
+    GraphQLAuthService.setTokens(tokens);
   }
   
   static getAccessToken() {
-    return localStorage.getItem('token');
+    return GraphQLAuthService.getAccessToken();
   }
   
   static getRefreshToken() {
-    return localStorage.getItem('refreshToken');
+    return GraphQLAuthService.getRefreshToken();
   }
   
   static clearTokens() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
+    GraphQLAuthService.clearTokens();
   }
   
   // Token refresh
   static async refreshToken() {
-    const refreshToken = this.getRefreshToken();
-    if (!refreshToken) {
-      throw new Error('No refresh token available');
-    }
-    
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'}/api/token/refresh/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refresh: refreshToken }),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error('Token refresh failed');
-      }
-      
-      this.setTokens(data);
-      return data.access;
-    } catch (error) {
-      this.clearTokens();
-      throw error;
-    }
+    return GraphQLAuthService.refreshToken();
   }
   
   // Check if token is expired and refresh if needed
   static async ensureValidToken() {
-    const token = this.getAccessToken();
-    if (!token) {
-      return null;
-    }
-    
-    try {
-      // Decode JWT token to check expiration
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const currentTime = Date.now() / 1000;
-      
-      // If token expires in less than 5 minutes, refresh it
-      if (payload.exp - currentTime < 300) {
-        return await this.refreshToken();
-      }
-      
-      return token;
-    } catch (error) {
-      // If token is invalid, clear it and return null
-      this.clearTokens();
-      return null;
-    }
+    return GraphQLAuthService.ensureValidToken();
+  }
+  
+  // Logout
+  static logout() {
+    GraphQLAuthService.logout();
   }
 }
 

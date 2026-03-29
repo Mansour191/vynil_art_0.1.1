@@ -349,12 +349,6 @@ import {
 ChartJS.register(Title, Tooltip, Legend, LineElement, CategoryScale, LinearScale, PointElement, Filler);
 
 // State
-const aiStats = ref({
-  growthPrediction: 32.5,
-  riskScore: 18,
-  expectedROI: 45.2
-});
-
 const simParams = ref({
   marketing: 10,
   prices: 0,

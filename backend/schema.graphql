@@ -1,0 +1,472 @@
+type Query {
+  products(categorySlug: String): [ProductType]
+  product(slug: String, id: ID): ProductType
+  categories: [CategoryType]
+  category(slug: String): CategoryType
+  materials: [MaterialType]
+  me: UserType
+  myProfile: UserProfileType
+  aiHealth(service: String): AIHealthType
+  systemHealthCheck: AIHealthType
+  marketTrends(category: String, period: String): [MarketTrendType]
+  demandForecast(productId: String, period: String): [DemandForecastType]
+  competitorPrices(productId: String): [CompetitorPriceType]
+  pricingAnalysis(productId: String): PricingAnalysisType
+  shippingOptions: [ShippingType]
+  orders: [OrderType]
+  order(id: ID): OrderType
+  myOrders: [OrderType]
+  orderItems(orderId: ID): [OrderItemType]
+  payments: [PaymentType]
+  payment(id: ID): PaymentType
+  coupons: [CouponType]
+  coupon(code: String): CouponType
+  cartItems: [CartItemType]
+  myCart: [CartItemType]
+  wishlistItems: [WishlistType]
+  myWishlist: [WishlistType]
+  reviews(productId: ID): [ReviewType]
+  productReviews(productSlug: String): [ReviewType]
+  myReviews: [ReviewType]
+  designCategories: [DesignCategoryType]
+  designs(categoryId: ID): [DesignType]
+  myDesigns: [DesignType]
+  notifications: [NotificationType]
+  myNotifications: [NotificationType]
+  alerts: [AlertType]
+  myAlerts: [AlertType]
+}
+
+type ProductType {
+  id: ID!
+  nameAr: String!
+  nameEn: String!
+  slug: String!
+  category: CategoryType
+  descriptionAr: String!
+  descriptionEn: String!
+
+  """Base rate per m2"""
+  basePrice: Decimal!
+  image: String!
+  onSale: Boolean!
+  discountPercent: Int!
+  isNew: Boolean!
+  syncStatus: ApiProductSyncStatusChoices!
+  erpnextItemCode: String!
+  syncError: String!
+  lastSyncedAt: DateTime
+  createdAt: DateTime!
+  images: [ProductImageType!]!
+  variants: [ProductVariantType!]!
+}
+
+type CategoryType {
+  id: ID!
+  nameAr: String!
+  nameEn: String!
+  slug: String!
+
+  """FontAwesome icon class"""
+  icon: String!
+  wastePercent: Decimal!
+}
+
+"""The `Decimal` scalar type represents a python Decimal."""
+scalar Decimal
+
+"""An enumeration."""
+enum ApiProductSyncStatusChoices {
+  """Pending"""
+  PENDING
+
+  """In Progress"""
+  IN_PROGRESS
+
+  """Synced"""
+  SYNCED
+
+  """Failed"""
+  FAILED
+}
+
+"""
+The `DateTime` scalar type represents a DateTime
+value as specified by
+[iso8601](https://en.wikipedia.org/wiki/ISO_8601).
+"""
+scalar DateTime
+
+type ProductImageType {
+  id: ID!
+  product: ProductType!
+  image: String!
+  altText: String!
+}
+
+type ProductVariantType {
+  id: ID!
+  product: ProductType!
+  nameEn: String!
+  nameAr: String!
+  priceAdjustment: Decimal!
+}
+
+type MaterialType {
+  id: ID!
+  nameAr: String!
+  nameEn: String!
+  description: String!
+  pricePerM2: Decimal!
+  isPremium: Boolean!
+}
+
+type UserType {
+  id: ID!
+
+  """Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."""
+  username: String!
+  firstName: String!
+  lastName: String!
+  email: String!
+
+  """Designates whether the user can log into this admin site."""
+  isStaff: Boolean!
+  dateJoined: DateTime!
+}
+
+type UserProfileType {
+  id: ID!
+  user: UserType
+  phone: String!
+  address: String!
+  avatar: String
+  createdAt: DateTime!
+}
+
+type AIHealthType {
+  status: String
+  available: Boolean
+}
+
+type MarketTrendType {
+  trend: String
+  confidence: Float
+  factors: String
+  category: String
+  period: String
+}
+
+type DemandForecastType {
+  forecast: String
+  confidence: Float
+  predictedDemand: Int
+  timePeriod: String
+  productId: String
+}
+
+type CompetitorPriceType {
+  productId: String
+  competitorName: String
+  price: Float
+  currency: String
+  lastUpdated: DateTime
+}
+
+type PricingAnalysisType {
+  productId: String
+  optimalPrice: Float
+  marketAnalysis: MarketTrendType
+  competitorData: [CompetitorPriceType]
+  demandForecast: DemandForecastType
+  confidence: Float
+}
+
+type ShippingType {
+  id: ID!
+  wilayaId: String!
+  nameAr: String!
+  nameFr: String!
+  stopDeskPrice: Decimal!
+  homeDeliveryPrice: Decimal!
+}
+
+type OrderType {
+  id: ID!
+  user: UserType
+  orderNumber: String!
+  customerName: String!
+  phone: String!
+  email: String!
+  address: String!
+  wilaya: ShippingType
+  subtotal: Decimal!
+  shippingCost: Decimal!
+  discountAmount: Decimal!
+  total: Decimal!
+  status: ApiOrderStatusChoices!
+  paymentMethod: ApiOrderPaymentMethodChoices!
+  paymentStatus: Boolean!
+  syncStatus: ApiOrderSyncStatusChoices!
+  erpnextSalesOrderId: String!
+  syncError: String!
+  lastSyncedAt: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  items: [OrderItemType]
+}
+
+"""An enumeration."""
+enum ApiOrderStatusChoices {
+  """Pending"""
+  PENDING
+
+  """Processing"""
+  PROCESSING
+
+  """Shipped"""
+  SHIPPED
+
+  """Delivered"""
+  DELIVERED
+
+  """Cancelled"""
+  CANCELLED
+}
+
+"""An enumeration."""
+enum ApiOrderPaymentMethodChoices {
+  """Cash on Delivery"""
+  COD
+
+  """Online Payment"""
+  CARD
+}
+
+"""An enumeration."""
+enum ApiOrderSyncStatusChoices {
+  """Pending"""
+  PENDING
+
+  """In Progress"""
+  IN_PROGRESS
+
+  """Synced"""
+  SYNCED
+
+  """Failed"""
+  FAILED
+}
+
+type OrderItemType {
+  id: ID!
+  product: ProductType!
+  material: MaterialType
+  width: Decimal!
+  height: Decimal!
+  dimensionUnit: String!
+  marbleTexture: String!
+  customDesign: String!
+  quantity: Int!
+  price: Decimal!
+}
+
+type PaymentType {
+  id: ID!
+  order: OrderType!
+  transactionId: String!
+  amount: Decimal!
+  method: String!
+  status: String!
+  createdAt: DateTime!
+}
+
+type CouponType {
+  id: ID!
+  code: String!
+  discountPercent: Int!
+  validFrom: DateTime!
+  validTo: DateTime!
+  active: Boolean!
+}
+
+type CartItemType {
+  id: ID!
+  user: UserType!
+  product: ProductType!
+  quantity: Int!
+  options: JSONString!
+  createdAt: DateTime!
+}
+
+"""
+Allows use of a JSON String for input / output from the GraphQL schema.
+
+Use of this type is *not recommended* as you lose the benefits of having a defined, static
+schema (one of the key benefits of GraphQL).
+"""
+scalar JSONString
+
+type WishlistType {
+  id: ID!
+  user: UserType!
+  product: ProductType!
+  createdAt: DateTime!
+}
+
+type ReviewType {
+  id: ID!
+  product: ProductType!
+  user: UserType!
+  rating: Int!
+  comment: String!
+  createdAt: DateTime!
+}
+
+type DesignCategoryType {
+  id: ID!
+  nameAr: String!
+  nameEn: String!
+  slug: String!
+}
+
+type DesignType {
+  id: ID!
+  category: DesignCategoryType!
+  titleAr: String!
+  titleEn: String!
+  image: String!
+  creator: UserType
+  createdAt: DateTime!
+}
+
+type NotificationType {
+  id: ID!
+  user: UserType!
+  title: String!
+  message: String!
+  isRead: Boolean!
+  createdAt: DateTime!
+}
+
+type AlertType {
+  id: ID!
+  type: ApiAlertTypeChoices!
+  message: String!
+  isActive: Boolean!
+  createdAt: DateTime!
+}
+
+"""An enumeration."""
+enum ApiAlertTypeChoices {
+  """Info"""
+  INFO
+
+  """Warning"""
+  WARNING
+
+  """Error"""
+  ERROR
+
+  """Success"""
+  SUCCESS
+}
+
+type Mutation {
+  login: LoginResponse
+  tokenAuth: LoginResponse
+  register: RegisterResponse
+  updateProfile: ProfileResponse
+  createCategory: CategoryResponse
+  updateCategory: CategoryResponse
+  deleteCategory: CategoryResponse
+  createProduct: ProductResponse
+  updateProduct: ProductResponse
+  deleteProduct: ProductResponse
+  createOrder: OrderResponse
+  updateOrderStatus: OrderResponse
+  createPayment: PaymentResponse
+  addToCart: CartItemResponse
+  removeFromCart: CartItemResponse
+  createReview: ReviewResponse
+  createDesign: DesignResponse
+  chatWithAi: ChatResponse
+}
+
+type LoginResponse {
+  success: Boolean
+  message: String
+  user: UserType
+  tokens: String
+  errors: String
+}
+
+type RegisterResponse {
+  success: Boolean
+  message: String
+  user: UserType
+  tokens: String
+  errors: String
+}
+
+type ProfileResponse {
+  success: Boolean
+  message: String
+  user: UserType
+  errors: String
+}
+
+type CategoryResponse {
+  success: Boolean
+  message: String
+  category: CategoryType
+  errors: String
+}
+
+type ProductResponse {
+  success: Boolean
+  message: String
+  product: ProductType
+  errors: String
+}
+
+type OrderResponse {
+  success: Boolean
+  message: String
+  order: OrderType
+  errors: String
+}
+
+type PaymentResponse {
+  success: Boolean
+  message: String
+  payment: PaymentType
+  errors: String
+}
+
+type CartItemResponse {
+  success: Boolean
+  message: String
+  cartItem: CartItemType
+  errors: String
+}
+
+type ReviewResponse {
+  success: Boolean
+  message: String
+  review: ReviewType
+  errors: String
+}
+
+type DesignResponse {
+  success: Boolean
+  message: String
+  design: DesignType
+  errors: String
+}
+
+type ChatResponse {
+  response: String
+  success: Boolean
+  error: String
+}

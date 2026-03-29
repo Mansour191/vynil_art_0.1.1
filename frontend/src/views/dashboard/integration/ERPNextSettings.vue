@@ -247,7 +247,9 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
-import ERPNextService from '@/integration/services/ERPNextService';
+// DEPRECATED: ERPNextService has been migrated to GraphQL
+// Use GraphQLERPNextService instead
+import { erpNextSyncService } from '@/services/ERPNextSyncService';
 
 const emit = defineEmits(['settings-saved']);
 
@@ -322,7 +324,7 @@ const testConnection = async () => {
   testing.value = true;
   connectionTested.value = true;
   try {
-    const result = await ERPNextService.testConnection();
+    const result = await erpNextSyncService.testConnection();
     connectionStatus.value = result.success;
     connectionMessage.value = result.success
       ? 'تم الاتصال بنجاح مع ERPNext'

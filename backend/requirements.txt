@@ -1,7 +1,32 @@
-django
-djangorestframework
-django-cors-headers
-djangorestframework-simplejwt
-graphene-django
-Pillow
-python-dotenv
+asgiref==3.11.1
+Django==6.0.3
+django-cors-headers==4.9.0
+django-filter==25.2
+# djangorestframework==3.17.1  # REMOVED - Using GraphQL only
+# djangorestframework_simplejwt==5.5.1  # REMOVED - Using GraphQL JWT
+graphene==3.4.3
+graphene-django==3.2.3
+graphql-core==3.2.8
+graphql-relay==3.2.0
+pillow==12.1.1
+promise==2.3
+PyJWT==2.12.1
+python-dateutil==2.9.0.post0
+python-dotenv==1.2.2
+six==1.17.0
+sqlparse==0.5.5
+text-unidecode==1.3
+typing_extensions==4.15.0
+
+# Added for WebSocket support and real-time features
+channels==4.3.2
+channels-redis==4.3.0
+daphne==4.2.1
+redis==7.4.0
+
+# Added for background tasks and scheduling
+django-q==1.3.6
+
+# Additional dependencies for WebSocket support
+websockets==12.0
+uvicorn[standard]==0.24.0

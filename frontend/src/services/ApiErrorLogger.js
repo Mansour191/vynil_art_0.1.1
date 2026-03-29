@@ -10,6 +10,14 @@ class ApiErrorLogger {
   logError(error, context = {}) {
     if (!this.isEnabled) return;
 
+    // Classify error first
+    const errorType = this.classifyError(error);
+    
+    // Ignore Apollo initialization errors to reduce console noise
+    if (errorType === 'APOLLO_INITIALIZATION_ERROR') {
+      return;
+    }
+
     const timestamp = new Date().toISOString();
     
     // Enhanced error information extraction with fallbacks
@@ -29,7 +37,7 @@ class ApiErrorLogger {
         userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Server',
         timestamp: timestamp,
         // Error type classification
-        errorType: this.classifyError(error),
+        errorType: errorType,
         // Response data if available
         data: error.response?.data || error.data || null
       }
@@ -62,6 +70,11 @@ class ApiErrorLogger {
 
   // Classify error types for better debugging
   classifyError(error) {
+    // Ignore Apollo-related unknown errors during initialization
+    if (error.message?.includes('Apollo') || error.message?.includes('GraphQL') || error.message?.includes('context')) {
+      return 'APOLLO_INITIALIZATION_ERROR';
+    }
+    
     if (error.name === 'AbortError' || error.message.includes('aborted')) {
       return 'ABORT_ERROR';
     }
@@ -140,6 +153,19 @@ class ApiErrorLogger {
           type: 'GRAPHQL_ERROR', 
           details: args.slice(1) 
         });
+      }
+      
+      // طباعة كائن الخطأ كاملاً مع graphQLErrors
+      if (args[0] && args[0].message && (args[0].message.includes('18') || args[0].message.includes('Missing field'))) {
+        console.error('🔍 Apollo Error 18 Details:', {
+          message: args[0].message,
+          graphQLErrors: args[0].graphQLErrors,
+          networkError: args[0].networkError,
+          locations: args[0].locations,
+          path: args[0].path,
+          extensions: args[0].extensions
+        });
+        return;
       }
       
       // Call original console.error for other errors

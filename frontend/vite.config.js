@@ -44,14 +44,22 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@': path.resolve(__dirname, './src'),
       },
+      // Handle Apollo Client React peer dependency
+      dedupe: ['@apollo/client'],
     },
     server: {
       port: 8080,
       proxy: {
+        '/graphql': {
+          target: 'http://127.0.0.1:8000',
+          changeOrigin: true,
+          secure: false
+        },
         '/api/graphql': {
           target: 'http://127.0.0.1:8000',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/graphql/, '/graphql')
+          rewrite: (path) => path.replace(/^\/api\/graphql/, '/graphql'),
+          secure: false
         },
         '/api': {
           target: 'http://127.0.0.1:8000',

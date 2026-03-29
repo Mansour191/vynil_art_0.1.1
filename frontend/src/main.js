@@ -1,5 +1,4 @@
-// // C:\Users\Mansour\Desktop\vynilart\frontend\src\main.js
-import { createApp } from 'vue'
+import { createApp, h, provide } from 'vue'
 import { createPinia } from 'pinia'
 // Import Vuetify plugin
 import vuetify from './plugins/vuetify'
@@ -20,22 +19,28 @@ import ChatService from '@/integration/services/ChatService'
 import AILearningService from '@/services/AILearningService'
 import apiErrorLogger from '@/services/ApiErrorLogger.js'
 import { httpClient } from '@/services/HttpClient.js'
-import ApiDebugger from '@/utils/ApiDebugger.js'
-import ApiTest from '@/utils/ApiTest.js'
 
 // Import new plugins
 import PrimeVuePlugin from '@/plugins/primevue'
 import VueUsePlugin from '@/plugins/vueuse'
 import MotionPlugin from '@/plugins/motion'
 import AutoAnimatePlugin from '@/plugins/autoAnimate'
-import { ApolloPlugin } from '@/plugins/apolloPlugin'
+import { ApolloPlugin, client } from '@/plugins/apolloPlugin'
+import { DefaultApolloClient, provideApolloClient } from '@vue/apollo-composable'
 
 // Import icons
 import '@fortawesome/fontawesome-free/css/all.min.css'
 import '@mdi/font/css/materialdesignicons.min.css'
 import 'primeicons/primeicons.css'
 
-const app = createApp(App)
+const app = createApp({
+  setup() {
+    // Provide Apollo Client at the root level
+    provide(DefaultApolloClient, client);
+    return {};
+  },
+  ...App
+})
 const pinia = createPinia()
 
 // Initialize theme system first
@@ -56,7 +61,7 @@ app.config.errorHandler = (err, instance, info) => {
   })
 }
 
-// Install plugins in correct order
+// Install plugins in correct order - REMOVE DUPLICATE MOTION PLUGIN
 app.use(pinia)
 app.use(store)
 app.use(router)
@@ -64,14 +69,30 @@ app.use(i18n)
 app.use(AITranslation)
 app.use(seo)
 app.use(vuetify)
-app.use(ApolloPlugin) // Add Apollo plugin
+
 // Only use PrimeVue if not already used
 if (!app._context.components && !app._context.directives) {
   app.use(PrimeVuePlugin)
 }
-app.use(VueUsePlugin)
-app.use(MotionPlugin)
-app.use(AutoAnimatePlugin)
+
+// Only use VueUse if not already applied
+try {
+  app.use(VueUsePlugin)
+} catch (error) {
+  if (error.message.includes('has already been applied')) {
+    console.log('ℹ️ VueUse plugin already applied, skipping...')
+  } else {
+    console.warn('⚠️ VueUse plugin error:', error.message)
+  }
+}
+
+// REMOVED: MotionPlugin - already handled by VueUse plugin
+console.log('ℹ️ Motion plugin handled by VueUse plugin, skipping duplicate installation')
+
+// REMOVED: AutoAnimatePlugin - already handled by VueUse plugin  
+console.log('ℹ️ AutoAnimate plugin handled by VueUse plugin, skipping duplicate installation')
+
+// Apollo Client is provided via setup, no need for ApolloPlugin
 
 // Initialize auth store after all plugins are installed
 const authStore = useAuthStore()
@@ -80,37 +101,58 @@ authStore.initializeAuth()
 // Initialize theme
 const { initTheme } = useTheme()
 
+// Provide Apollo Client globally for services outside Vue setup
+console.log('🔗 Providing Apollo Client globally...');
+provideApolloClient(client);
+
+// Make Apollo Client available globally and emit ready event
+window.__APOLLO_CLIENT__ = client;
+
+// Wait for Apollo Client to be fully initialized and emit simple event
+setTimeout(() => {
+  console.log('✅ Apollo Client is ready and provided globally');
+  
+  // Use simple window.dispatchEvent - no custom event objects
+  window.dispatchEvent(new CustomEvent('apollo-client-ready', { 
+    detail: { client } 
+  }));
+}, 100);
+
 // Mount the app
 const mountedApp = app.mount('#app')
 
 // Initialize theme after mounting
 initTheme()
 
-// Initialize AI Services after app is mounted - COORDINATED INITIALIZATION
-console.log('🔍 Starting API Error Logger...')
-apiErrorLogger.clearStoredErrors() // Clear old errors on startup
-console.log('✅ API Error Logger Initialized')
+// Initialize AI Services after Apollo is ready - EVENT-BASED APPROACH
+const initializeAIServices = () => {
+  console.log('🔍 Initializing AI Services after Apollo ready...');
+  
+  // Initialize AI services that depend on Apollo
+  try {
+    // These will now wait for the Apollo ready event
+    import('./services/AIMonitorService').then(module => {
+      const AIMonitorService = module.default;
+      // Service will auto-start when Apollo is ready
+    });
+  } catch (error) {
+    console.error('❌ Failed to initialize AI services:', error);
+  }
+};
 
-console.log('🚀 Starting AI Services...')
+// Start AI services initialization (only once)
+initializeAIServices();
 
-// Use singleton pattern to prevent concurrent initializations
-const aiService = AIService.getInstance()
-const pricingService = PricingService.getInstance()
-const aiMonitorService = new AIMonitorService()
-
-// AI Service will auto-initialize via singleton constructor
-// AIMonitorService will coordinate with singleton instances
-console.log('✅ AI Services Coordination Established')
-
-// Initialize Chat Service
-console.log('💬 Chat Service Initialized')
-
-// Initialize AI Learning System
+// Initialize AI Learning System - Prevent duplicate initialization
 console.log('🎓 Starting AI Learning System...')
-AILearningService.initializeLearningSystem().then(() => {
-  console.log('✅ AI Learning System Started Successfully')
-}).catch(error => {
-  console.warn('⚠️ AI Learning System Warning:', error)
-})
+if (!AILearningService.isInitialized) {
+  AILearningService.initializeLearningSystem().then(() => {
+    console.log('✅ AI Learning System Started Successfully')
+  }).catch(error => {
+    console.warn('⚠️ AI Learning System Warning:', error)
+  })
+} else {
+  console.log('ℹ️ AI Learning System Already Initialized')
+}
 
 console.log('🎬 Vynil Art Application Started Successfully!')

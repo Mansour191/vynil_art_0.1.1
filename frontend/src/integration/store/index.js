@@ -40,7 +40,7 @@ export default {
 
   actions: {
     async testConnection({ commit }) {
-      const erpnextService = (await import('../services/ERPNextService')).default;
+      const erpnextService = (await import('@/services/ERPNextService')).default;
       const result = await erpnextService.testConnection();
       commit('SET_CONNECTION_STATUS', result.success);
       return result;

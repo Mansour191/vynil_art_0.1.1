@@ -9,6 +9,10 @@ const resolveGraphqlUrl = () => {
     import.meta.env.VITE_API_URL ||
     '';
   const normalized = String(envUrl).trim().replace(/\/+$/, '');
+  // Use proxy path for development, direct URL for production
+  if (import.meta.env.DEV) {
+    return '/graphql/';  // Will be proxied to backend
+  }
   return normalized ? `${normalized}/graphql/` : 'http://127.0.0.1:8000/graphql/';
 };
 
@@ -19,6 +23,28 @@ const httpLink = createHttpLink({
     console.log(`🚀 GraphQL Request: ${options?.method || 'POST'} ${uri}`);
     
     return fetch(uri, options).then(response => {
+      // Check if response is HTML (error page) instead of JSON
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('text/html')) {
+        console.error('❌ Server returned HTML instead of JSON - likely a 404 or server error');
+        const error = new Error('ServerParseError: Unexpected HTML response instead of JSON');
+        error.status = response.status;
+        error.statusText = response.statusText;
+        error.url = uri;
+        error.config = { method: options?.method || 'POST', uri };
+        error.isServerParseError = true;
+        
+        apiErrorLogger.logError(error, {
+          type: 'SERVER_PARSE_ERROR',
+          uri,
+          method: options?.method || 'POST',
+          responseStatus: response.status,
+          contentType
+        });
+        
+        throw error;
+      }
+      
       if (!response.ok) {
         const error = new Error(`GraphQL HTTP ${response.status}: ${response.statusText}`);
         error.status = response.status;
@@ -38,12 +64,15 @@ const httpLink = createHttpLink({
       
       return response;
     }).catch(error => {
-      apiErrorLogger.logError(error, {
-        type: 'GRAPHQL_NETWORK_ERROR',
-        uri,
-        method: options?.method || 'POST',
-        networkError: true
-      });
+      // Don't log the same error twice if we already logged it above
+      if (!error.isServerParseError) {
+        apiErrorLogger.logError(error, {
+          type: 'GRAPHQL_NETWORK_ERROR',
+          uri,
+          method: options?.method || 'POST',
+          networkError: true
+        });
+      }
       throw error;
     });
   }
@@ -101,6 +130,16 @@ const apolloClient = new ApolloClient({
               return incoming;
             },
           },
+          checkAIHealth: {
+            merge(_, incoming) {
+              return incoming;
+            },
+          },
+          aiHealth: {
+            merge(_, incoming) {
+              return incoming;
+            },
+          },
         },
       },
     },
@@ -109,11 +148,15 @@ const apolloClient = new ApolloClient({
   defaultOptions: {
     watchQuery: {
       errorPolicy: 'all',
+      fetchPolicy: 'cache-and-network',
     },
     query: {
       errorPolicy: 'all',
+      fetchPolicy: 'cache-first',
     },
   },
+  // Add connectToDevTools for debugging
+  connectToDevTools: import.meta.env.DEV,
 });
 
 export default apolloClient;

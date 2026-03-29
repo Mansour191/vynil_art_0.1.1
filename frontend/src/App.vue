@@ -1,10 +1,10 @@
 <template>
-  <v-app 
-    id="app" 
-    :dir="isRTL ? 'rtl' : 'ltr'" 
-    :theme="currentTheme"
-    class="paclos-app-wrapper"
-  >
+    <v-app 
+      id="app" 
+      :dir="isRTL ? 'rtl' : 'ltr'" 
+      :theme="currentTheme"
+      class="paclos-app-wrapper"
+    >
     <v-progress-linear
       :active="isRouteLoading"
       indeterminate
@@ -61,6 +61,9 @@
     <Footer v-if="showFooter" />
     
     <ChatBot v-if="showChatbot" />
+    <div v-if="showChatbot" style="height: 100px; background-color: #f0f0f0;"></div>
+    <div style="height: 50px;"></div>
+    <div style="height: 100px;"></div>
   </v-app>
 </template>
 

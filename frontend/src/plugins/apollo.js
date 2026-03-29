@@ -15,7 +15,7 @@ const getAuthToken = () => {
 
 // HTTP Link for GraphQL endpoint
 const httpLink = createHttpLink({
-  uri: import.meta.env.VITE_GRAPHQL_URL || 'http://localhost:8000/graphql/',
+  uri: '/api/graphql',
 })
 
 // Auth Link - Inject JWT token into headers

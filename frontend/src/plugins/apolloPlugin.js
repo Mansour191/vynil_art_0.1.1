@@ -11,7 +11,7 @@ const getAuthToken = () => {
 }
 
 const httpLink = createHttpLink({
-  uri: import.meta.env.VITE_GRAPHQL_URL || 'http://localhost:8000/graphql/',
+  uri: '/api/graphql',
 })
 
 const authLink = setContext((_, { headers }) => {

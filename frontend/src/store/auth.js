@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
-import { DRF_LOGIN_MUTATION, DRF_REGISTER_MUTATION, DRF_CHANGE_PASSWORD_MUTATION, DRF_UPDATE_PROFILE_MUTATION, DRF_ME_QUERY, graphqlMutation, graphqlQuery } from '@/integration/services/graphql';
-import DRFAuthService from '@/integration/services/drfAuth';
+import GraphQLAuthService from '@/integration/services/authGraphQL.js';
+import DRFAuthService from '@/integration/services/drfAuth.js';
+import { DRF_LOGIN_MUTATION, DRF_REGISTER_MUTATION, DRF_UPDATE_PROFILE_MUTATION, DRF_ME_QUERY, DRF_MY_PROFILE_QUERY } from '@/integration/services/drfAuth.js';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -45,12 +46,22 @@ export const useAuthStore = defineStore('auth', {
           }
           this.role = role || 'guest';
           
-          // Ensure token is valid (but don't block initialization if it fails)
+          // Ensure token is valid using GraphQL service
           try {
-            const validToken = await DRFAuthService.ensureValidToken();
+            const validToken = await GraphQLAuthService.ensureValidToken();
             if (!validToken) {
               console.warn('Token validation failed, logging out');
               this.logout();
+            } else {
+              // Fetch fresh user data from GraphQL
+              try {
+                const freshUser = await GraphQLAuthService.fetchMe();
+                this.user = freshUser;
+                localStorage.setItem('user', JSON.stringify(this.user));
+              } catch (fetchError) {
+                console.warn('Failed to fetch fresh user data:', fetchError);
+                // Continue with existing user data
+              }
             }
           } catch (tokenError) {
             console.error('Token validation error:', tokenError);
@@ -86,36 +97,17 @@ export const useAuthStore = defineStore('auth', {
         this.loading = true;
         this.error = null;
         
-        // Try GraphQL first, fallback to REST
-        let data;
-        try {
-          data = await graphqlMutation(DRF_LOGIN_MUTATION, {
-            email_or_username: emailOrUsername,
-            password,
-          });
-          
-          if (!data?.login?.success) {
-            throw new Error(data?.login?.message || 'فشل تسجيل الدخول');
-          }
-          
-          const { user, tokens } = data.login;
-          this.setUser(user, tokens.access, tokens.refresh);
-          return { success: true, user, role: this.role };
-        } catch (graphqlError) {
-          // Fallback to REST API
-          console.log('GraphQL login failed, trying REST:', graphqlError);
-          
-          const response = await DRFAuthService.login(emailOrUsername, password);
-          
-          if (!response.success) {
-            throw new Error(response.message || 'فشل تسجيل الدخول');
-          }
-          
-          const { user, tokens } = response.data;
-          DRFAuthService.setTokens(tokens);
-          this.setUser(user, tokens.access, tokens.refresh);
-          return { success: true, user, role: this.role };
+        // Use GraphQL service (Apollo Client)
+        const response = await GraphQLAuthService.login(emailOrUsername, password);
+        
+        if (!response.success) {
+          throw new Error(response.message || 'فشل تسجيل الدخول');
         }
+        
+        const { user, tokens } = response;
+        this.setUser(user, tokens, null); // tokens is now just the access token string
+        
+        return { success: true, user, role: this.role };
       } catch (e) {
         const errorMsg = e.message || 'بيانات الدخول غير صحيحة';
         this.error = errorMsg;
@@ -130,33 +122,17 @@ export const useAuthStore = defineStore('auth', {
         this.loading = true;
         this.error = null;
         
-        // Try GraphQL first, fallback to REST
-        let data;
-        try {
-          data = await graphqlMutation(DRF_REGISTER_MUTATION, userData);
-          
-          if (!data?.register?.success) {
-            throw new Error(data?.register?.message || 'فشل إنشاء الحساب');
-          }
-          
-          const { user, tokens } = data.register;
-          this.setUser(user, tokens.access, tokens.refresh);
-          return data.register;
-        } catch (graphqlError) {
-          // Fallback to REST API
-          console.log('GraphQL register failed, trying REST:', graphqlError);
-          
-          const response = await DRFAuthService.register(userData);
-          
-          if (!response.success) {
-            throw new Error(response.message || 'فشل إنشاء الحساب');
-          }
-          
-          const { user, tokens } = response.data;
-          DRFAuthService.setTokens(tokens);
-          this.setUser(user, tokens.access, tokens.refresh);
-          return response;
+        // Use GraphQL service (Apollo Client)
+        const response = await GraphQLAuthService.register(userData);
+        
+        if (!response.success) {
+          throw new Error(response.message || 'فشل إنشاء الحساب');
         }
+        
+        const { user, tokens } = response;
+        this.setUser(user, tokens, null); // tokens is now just the access token string
+        
+        return response;
       } catch (e) {
         const errorMsg = e.message || 'حدث خطأ أثناء التسجيل';
         this.error = errorMsg;
@@ -171,32 +147,14 @@ export const useAuthStore = defineStore('auth', {
         this.loading = true;
         this.error = null;
         
-        // Try GraphQL first, fallback to REST
-        let data;
-        try {
-          data = await graphqlMutation(DRF_CHANGE_PASSWORD_MUTATION, {
-            old_password: oldPassword,
-            new_password: newPassword,
-            new_password_confirm: newPasswordConfirm,
-          });
-          
-          if (!data?.changePassword?.success) {
-            throw new Error(data?.changePassword?.message || 'فشل تغيير كلمة المرور');
-          }
-          
-          return data.changePassword;
-        } catch (graphqlError) {
-          // Fallback to REST API
-          console.log('GraphQL change password failed, trying REST:', graphqlError);
-          
-          const response = await DRFAuthService.changePassword(oldPassword, newPassword, newPasswordConfirm);
-          
-          if (!response.success) {
-            throw new Error(response.message || 'فشل تغيير كلمة المرور');
-          }
-          
-          return response;
+        // This method still uses REST as GraphQL mutation is not implemented yet
+        const response = await DRFAuthService.changePassword(oldPassword, newPassword, newPasswordConfirm);
+        
+        if (!response.success) {
+          throw new Error(response.message || 'فشل تغيير كلمة المرور');
         }
+        
+        return response;
       } catch (e) {
         const errorMsg = e.message || 'حدث خطأ أثناء تغيير كلمة المرور';
         this.error = errorMsg;
@@ -211,32 +169,17 @@ export const useAuthStore = defineStore('auth', {
         this.loading = true;
         this.error = null;
         
-        // Try GraphQL first, fallback to REST
-        let data;
-        try {
-          data = await graphqlMutation(DRF_UPDATE_PROFILE_MUTATION, userData);
-          
-          if (!data?.updateProfile?.success) {
-            throw new Error(data?.updateProfile?.message || 'فشل تحديث الملف الشخصي');
-          }
-          
-          this.user = data.updateProfile.user;
-          localStorage.setItem('user', JSON.stringify(this.user));
-          return data.updateProfile;
-        } catch (graphqlError) {
-          // Fallback to REST API
-          console.log('GraphQL update profile failed, trying REST:', graphqlError);
-          
-          const response = await DRFAuthService.updateProfile(userData);
-          
-          if (!response.success) {
-            throw new Error(response.message || 'فشل تحديث الملف الشخصي');
-          }
-          
-          this.user = response.data.user;
-          localStorage.setItem('user', JSON.stringify(this.user));
-          return response;
+        // Use GraphQL service (Apollo Client)
+        const response = await GraphQLAuthService.updateProfile(userData);
+        
+        if (!response.success) {
+          throw new Error(response.message || 'فشل تحديث الملف الشخصي');
         }
+        
+        this.user = response.user;
+        localStorage.setItem('user', JSON.stringify(this.user));
+        
+        return response;
       } catch (e) {
         const errorMsg = e.message || 'حدث خطأ أثناء تحديث الملف الشخصي';
         this.error = errorMsg;
@@ -251,28 +194,16 @@ export const useAuthStore = defineStore('auth', {
         this.loading = true;
         this.error = null;
         
-        // Try GraphQL first, fallback to REST
-        let data;
-        try {
-          data = await graphqlQuery(DRF_ME_QUERY);
-          
-          if (data?.me) {
-            this.user = data.me;
-            localStorage.setItem('user', JSON.stringify(this.user));
-            return this.user;
-          }
-        } catch (graphqlError) {
-          // Fallback to REST API
-          console.log('GraphQL fetch profile failed, trying REST:', graphqlError);
-          
-          const response = await DRFAuthService.getProfile();
-          
-          if (response.success) {
-            this.user = response.data.user;
-            localStorage.setItem('user', JSON.stringify(this.user));
-            return this.user;
-          }
+        // Use GraphQL service (Apollo Client)
+        const user = await GraphQLAuthService.fetchMe();
+        
+        if (user) {
+          this.user = user;
+          localStorage.setItem('user', JSON.stringify(this.user));
+          return this.user;
         }
+        
+        throw new Error('لم يتم العثور على بيانات المستخدم');
       } catch (e) {
         const errorMsg = e.message || 'حدث خطأ أثناء جلب الملف الشخصي';
         this.error = errorMsg;
@@ -283,23 +214,21 @@ export const useAuthStore = defineStore('auth', {
     },
 
     logout() {
+      console.log('🔐 Logging out from store');
+      
+      // Use GraphQL service for proper cleanup
+      GraphQLAuthService.logout();
+      
       this.user = null;
       this.token = null;
       this.refreshToken = null;
       this.role = 'guest';
       this.error = null;
-      
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('role');
-      
-      DRFAuthService.clearTokens();
     },
 
     async refreshToken() {
       try {
-        const newToken = await DRFAuthService.refreshToken();
+        const newToken = await GraphQLAuthService.refreshToken();
         this.token = newToken;
         localStorage.setItem('token', newToken);
         return newToken;
