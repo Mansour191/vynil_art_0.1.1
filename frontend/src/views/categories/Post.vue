@@ -1,12 +1,18 @@
 <template>
-  <div class="post-page container">
-    <div class="post-wrapper">
-        <article class="post-card">
-          <h1 class="post-title" v-ai-t>{{ post.title }}</h1>
-          <div class="post-body" v-html="post.content" v-ai-t></div>
-        </article>
-      </div>
-  </div>
+  <v-main class="post-page">
+    <v-container>
+      <v-row>
+        <v-col cols="12">
+          <v-card class="post-card" elevation="4">
+            <v-card-text class="pa-8">
+              <h1 class="text-h3 font-weight-bold text-center mb-6 text-primary" v-ai-t>{{ post.title }}</h1>
+              <div class="post-body" v-html="post.content" v-ai-t></div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
+  </v-main>
 </template>
 
 <script setup>
@@ -24,67 +30,122 @@ const post = ref({
         <img src="https://i.postimg.cc/0QKmBBJ9/kitchen2.png" alt="صورة مصغرة للمقال"/>
     </div>
 
-    <h2 style="color: #D4AF37; text-align: center; font-size: 2.2rem; margin-bottom: 30px;">📘 دليل المبتدئين: كيف تختار الفينيل المناسب لمشروعك؟</h2>
+    <h2 class="text-h2 text-center text-primary mb-8">📘 دليل المبتدئين: كيف تختار الفينيل المناسب لمشروعك؟</h2>
 
-    <div style="background: linear-gradient(135deg, #D4AF37 0%, #FFD700 50%, #D4AF37 100%); padding: 2px; border-radius: 20px; margin-bottom: 30px;">
-        <div style="background: #1A1A1A; padding: 30px; border-radius: 18px;">
-            <p style="color: #E0E0E0; font-size: 1.1rem; line-height: 1.8; text-align: center;">
+    <div class="mb-8">
+        <v-card class="pa-6" color="surface" elevation="4">
+            <p class="text-body-1 text-center">
                 ✨ إذا كنت جديداً في عالم الفينيل اللاصق، قد تشعر بالحيرة عند اختيار النوع المناسب لمشروعك. لا تقلق! هذا الدليل الشامل سيساعدك على فهم كل ما تحتاج معرفته.
             </p>
-        </div>
+        </v-card>
     </div>
 
-    <div style="background: #222222; padding: 25px; border-radius: 20px; margin: 30px 0; border: 1px solid #333;">
-        <h3 style="color: #D4AF37; font-size: 1.5rem; margin-bottom: 15px;">📌 في هذا الدليل:</h3>
-        <ul style="color: #E0E0E0; line-height: 2; columns: 2; list-style: none; padding-right: 0;">
-            <li style="margin-bottom: 10px;">🔹 <a href="#types" style="color: #D4AF37; text-decoration: none;">أنواع الفينيل المختلفة</a></li>
-            <li style="margin-bottom: 10px;">🔹 <a href="#finish" style="color: #D4AF37; text-decoration: none;">الفرق بين اللامع والمطفي</a></li>
-            <li style="margin-bottom: 10px;">🔹 <a href="#tips" style="color: #D4AF37; text-decoration: none;">نصائح الشراء</a></li>
-            <li style="margin-bottom: 10px;">🔹 <a href="#mistakes" style="color: #D4AF37; text-decoration: none;">أخطاء شائعة تجنبها</a></li>
-            <li style="margin-bottom: 10px;">🔹 <a href="#faq" style="color: #D4AF37; text-decoration: none;">أسئلة وأجوبة</a></li>
-        </ul>
-    </div>
+    <v-card class="pa-6 mb-8" elevation="2">
+        <h3 class="text-h5 mb-4 text-primary">📌 في هذا الدليل:</h3>
+        <v-row>
+            <v-col cols="12" md="6">
+                <v-list density="compact">
+                    <v-list-item>
+                        <template v-slot:prepend>
+                            <v-icon color="primary">mdi-circle-small</v-icon>
+                        </template>
+                        <v-list-item-title>
+                            <a href="#types" class="text-primary text-decoration-none">أنواع الفينيل المختلفة</a>
+                        </v-list-item-title>
+                    </v-list-item>
+                    <v-list-item>
+                        <template v-slot:prepend>
+                            <v-icon color="primary">mdi-circle-small</v-icon>
+                        </template>
+                        <v-list-item-title>
+                            <a href="#finish" class="text-primary text-decoration-none">الفرق بين اللامع والمطفي</a>
+                        </v-list-item-title>
+                    </v-list-item>
+                    <v-list-item>
+                        <template v-slot:prepend>
+                            <v-icon color="primary">mdi-circle-small</v-icon>
+                        </template>
+                        <v-list-item-title>
+                            <a href="#tips" class="text-primary text-decoration-none">نصائح الشراء</a>
+                        </v-list-item-title>
+                    </v-list-item>
+                </v-list>
+            </v-col>
+            <v-col cols="12" md="6">
+                <v-list density="compact">
+                    <v-list-item>
+                        <template v-slot:prepend>
+                            <v-icon color="primary">mdi-circle-small</v-icon>
+                        </template>
+                        <v-list-item-title>
+                            <a href="#mistakes" class="text-primary text-decoration-none">أخطاء شائعة تجنبها</a>
+                        </v-list-item-title>
+                    </v-list-item>
+                    <v-list-item>
+                        <template v-slot:prepend>
+                            <v-icon color="primary">mdi-circle-small</v-icon>
+                        </template>
+                        <v-list-item-title>
+                            <a href="#faq" class="text-primary text-decoration-none">أسئلة وأجوبة</a>
+                        </v-list-item-title>
+                    </v-list-item>
+                </v-list>
+            </v-col>
+        </v-row>
+    </v-card>
 
-    <div id="types" style="margin: 50px 0;">
-        <h3 style="color: #D4AF37; font-size: 1.8rem; margin-bottom: 25px; border-bottom: 2px solid #D4AF37; padding-bottom: 10px;">🔰 أنواع الفينيل حسب الاستخدام</h3>
+    <div id="types" class="my-12">
+        <h3 class="text-h4 mb-6 text-primary border-b pb-2">🔰 أنواع الفينيل حسب الاستخدام</h3>
         
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-            <div style="background: #222222; padding: 25px; border-radius: 20px; border: 1px solid #333; transition: all 0.3s;">
-                <div style="font-size: 2.5rem; text-align: center; margin-bottom: 15px;">🪑</div>
-                <h4 style="color: #D4AF37; font-size: 1.3rem; margin-bottom: 10px; text-align: center;">فينيل الأثاث</h4>
-                <p style="color: #E0E0E0; line-height: 1.7;">مصمم خصيصاً للأسطح الخشبية والمدهونة. يتميز بقوة التصاق عالية ومقاومة للخدوش. مثالي لتجديد الخزائن، الطاولات، والأدراج.</p>
-                <div style="background: #1A1A1A; padding: 10px; border-radius: 10px; margin-top: 15px;">
-                    <span style="color: #D4AF37;">✔️ مناسب لـ:</span> <span style="color: #E0E0E0;">الخشب، الـ MDF، الأسطح المدهونة</span>
-                </div>
-            </div>
+        <v-row>
+            <v-col cols="12" md="6">
+                <v-card class="pa-6 h-100" elevation="2" hover>
+                    <div class="text-h6 text-center mb-4">🪑</div>
+                    <h4 class="text-h5 text-center mb-3 text-primary">فينيل الأثاث</h4>
+                    <p class="text-body-1 mb-4">مصمم خصيصاً للأسطح الخشبية والمدهونة. يتميز بقوة التصاق عالية ومقاومة للخدوش. مثالي لتجديد الخزائن، الطاولات، والأدراج.</p>
+                    <v-chip color="primary" variant="tonal" class="mb-2">
+                        <v-icon start>mdi-check</v-icon>
+                        مناسب لـ: الخشب، الـ MDF، الأسطح المدهونة
+                    </v-chip>
+                </v-card>
+            </v-col>
             
-            <div style="background: #222222; padding: 25px; border-radius: 20px; border: 1px solid #333;">
-                <div style="font-size: 2.5rem; text-align: center; margin-bottom: 15px;">🧱</div>
-                <h4 style="color: #D4AF37; font-size: 1.3rem; margin-bottom: 10px; text-align: center;">فينيل الجدران</h4>
-                <p style="color: #E0E0E0; line-height: 1.7;">أخف وزناً وأسهل في الإزالة. مصمم للأسطح الملساء مثل الجدران المدهونة والزجاج. يأتي بتصاميم وألوان لا حصر لها.</p>
-                <div style="background: #1A1A1A; padding: 10px; border-radius: 10px; margin-top: 15px;">
-                    <span style="color: #D4AF37;">✔️ مناسب لـ:</span> <span style="color: #E0E0E0;">الجدران الملساء، الزجاج، المرايا</span>
-                </div>
-            </div>
+            <v-col cols="12" md="6">
+                <v-card class="pa-6 h-100" elevation="2" hover>
+                    <div class="text-h6 text-center mb-4">🧱</div>
+                    <h4 class="text-h5 text-center mb-3 text-primary">فينيل الجدران</h4>
+                    <p class="text-body-1 mb-4">أخف وزناً وأسهل في الإزالة. مصمم للأسطح الملساء مثل الجدران المدهونة والزجاج. يأتي بتصاميم وألوان لا حصر لها.</p>
+                    <v-chip color="primary" variant="tonal" class="mb-2">
+                        <v-icon start>mdi-check</v-icon>
+                        مناسب لـ: الجدران الملساء، الزجاج، المرايا
+                    </v-chip>
+                </v-card>
+            </v-col>
             
-            <div style="background: #222222; padding: 25px; border-radius: 20px; border: 1px solid #333;">
-                <div style="font-size: 2.5rem; text-align: center; margin-bottom: 15px;">🚗</div>
-                <h4 style="color: #D4AF37; font-size: 1.3rem; margin-bottom: 10px; text-align: center;">فينيل السيارات</h4>
-                <p style="color: #E0E0E0; line-height: 1.7;">مقاوم للعوامل الجوية والحرارة. يتميز بمرونة عالية تسمح بتطبيقه على الأسطح المنحنية للسيارات والدراجات النارية.</p>
-                <div style="background: #1A1A1A; padding: 10px; border-radius: 10px; margin-top: 15px;">
-                    <span style="color: #D4AF37;">✔️ مناسب لـ:</span> <span style="color: #E0E0E0;">السيارات، الدراجات، الأسطح الخارجية</span>
-                </div>
-            </div>
+            <v-col cols="12" md="6">
+                <v-card class="pa-6 h-100" elevation="2" hover>
+                    <div class="text-h6 text-center mb-4">🚗</div>
+                    <h4 class="text-h5 text-center mb-3 text-primary">فينيل السيارات</h4>
+                    <p class="text-body-1 mb-4">مقاوم للعوامل الجوية والحرارة. يتميز بمرونة عالية تسمح بتطبيقه على الأسطح المنحنية للسيارات والدراجات النارية.</p>
+                    <v-chip color="primary" variant="tonal" class="mb-2">
+                        <v-icon start>mdi-check</v-icon>
+                        مناسب لـ: السيارات، الدراجات، الأسطح الخارجية
+                    </v-chip>
+                </v-card>
+            </v-col>
             
-            <div style="background: #222222; padding: 25px; border-radius: 20px; border: 1px solid #333;">
-                <div style="font-size: 2.5rem; text-align: center; margin-bottom: 15px;">🪟</div>
-                <h4 style="color: #D4AF37; font-size: 1.3rem; margin-bottom: 10px; text-align: center;">فينيل النوافذ</h4>
-                <p style="color: #E0E0E0; line-height: 1.7;">شبه شفاف أو مزخرف، يستخدم للخصوصية مع السماح بدخول الضوء. مثالي للمكاتب والحمامات وأبواب الزجاج.</p>
-                <div style="background: #1A1A1A; padding: 10px; border-radius: 10px; margin-top: 15px;">
-                    <span style="color: #D4AF37;">✔️ مناسب لـ:</span> <span style="color: #E0E0E0;">النوافذ، الأبواب الزجاجية، الفواصل</span>
-                </div>
-            </div>
-        </div>
+            <v-col cols="12" md="6">
+                <v-card class="pa-6 h-100" elevation="2" hover>
+                    <div class="text-h6 text-center mb-4">🪟</div>
+                    <h4 class="text-h5 text-center mb-3 text-primary">فينيل النوافذ</h4>
+                    <p class="text-body-1 mb-4">شبه شفاف أو مزخرف، يستخدم للخصوصية مع السماح بدخول الضوء. مثالي للمكاتب والحمامات وأبواب الزجاج.</p>
+                    <v-chip color="primary" variant="tonal" class="mb-2">
+                        <v-icon start>mdi-check</v-icon>
+                        مناسب لـ: النوافذ، الأبواب الزجاجية، الفواصل
+                    </v-chip>
+                </v-card>
+            </v-col>
+        </v-row>
     </div>
   `,
 });
@@ -95,42 +156,3 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
-.post-page {
-  padding: 40px 20px;
-}
-
-.post-wrapper {
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.post-card {
-  background: var(--bg-card);
-  border-radius: 24px;
-  padding: 40px;
-  border: 1px solid var(--border-light);
-}
-
-.post-title {
-  font-size: 2.2rem;
-  color: #d4af37;
-  text-align: center;
-  margin-bottom: 40px;
-  line-height: 1.4;
-}
-
-.post-body {
-  color: #e0e0e0;
-  line-height: 1.8;
-}
-
-@media (max-width: 768px) {
-  .post-card {
-    padding: 20px;
-  }
-  .post-title {
-    font-size: 1.8rem;
-  }
-}
-</style>

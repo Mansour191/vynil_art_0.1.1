@@ -1,41 +1,58 @@
 <template>
-  <div class="info-page container py-5">
-    <div class="row justify-content-center">
-      <div class="col-lg-10">
-        <div class="card shadow-sm border-0 rounded-lg overflow-hidden bg-card">
-          <div class="card-header bg-surface border-bottom p-5 text-center">
-            <h1 class="display-5 text-gold mb-3 font-weight-bold">
-              <i class="fa-solid fa-shopping-cart me-3"></i> {{ $t('howToOrder') || 'كيف أطلب' }}
+  <v-container class="py-8">
+    <v-row justify="center">
+      <v-col cols="12" lg="10">
+        <v-card elevation="4" class="overflow-hidden">
+          <!-- Header -->
+          <v-card-text class="pa-8 text-center bg-surface">
+            <h1 class="text-h3 font-weight-bold text-warning mb-4 d-flex align-center justify-center gap-3">
+              <v-icon size="40" color="warning">mdi-cart</v-icon>
+              {{ $t('howToOrder') || 'كيف أطلب' }}
             </h1>
-            <p class="lead text-muted">{{ $t('howToOrderIntro') || 'خطوات بسيطة للحصول على تصاميمك المفضلة' }}</p>
-          </div>
+            <p class="text-h6 text-medium-emphasis">{{ $t('howToOrderIntro') || 'خطوات بسيطة للحصول على تصاميمك المفضلة' }}</p>
+          </v-card-text>
 
-          <div class="card-body p-5">
+          <!-- Steps -->
+          <v-card-text class="pa-8">
             <div class="steps-container">
-              <div v-for="(step, index) in steps" :key="index" class="step-item d-flex gap-4 mb-5">
-                <div class="step-number-wrapper">
-                  <span class="step-number">{{ index + 1 }}</span>
-                  <div v-if="index < steps.length - 1" class="step-line"></div>
-                </div>
-                <div class="step-content pt-2">
-                  <h3 class="h4 mb-2 text-gold font-weight-bold">{{ step.title }}</h3>
-                  <p class="text-secondary mb-0 lead">{{ step.description }}</p>
-                </div>
-              </div>
+              <v-timeline density="compact" side="end">
+                <v-timeline-item
+                  v-for="(step, index) in steps"
+                  :key="index"
+                  dot-color="warning"
+                  size="large"
+                >
+                  <template #icon>
+                    <span class="step-number">{{ index + 1 }}</span>
+                  </template>
+                  <v-card elevation="2" class="pa-4">
+                    <h3 class="text-h5 font-weight-bold text-warning mb-2">{{ step.title }}</h3>
+                    <p class="text-body-1 text-medium-emphasis">{{ step.description }}</p>
+                  </v-card>
+                </v-timeline-item>
+              </v-timeline>
             </div>
 
-            <div class="mt-5 p-4 bg-light rounded-lg border-dashed text-center">
-              <h4 class="text-dark mb-3">{{ $t('needHelp') || 'هل تحتاج لمساعدة؟' }}</h4>
-              <p class="text-muted mb-4">{{ $t('contactOurTeam') || 'فريقنا متاح دائماً لمساعدتك في عملية الطلب.' }}</p>
-              <router-link to="/contact" class="btn btn-gold btn-lg px-5 shadow-sm">
+            <!-- Help Section -->
+            <v-card elevation="6" class="pa-6 mt-8 text-center" color="grey-lighten-5">
+              <h4 class="text-h5 font-weight-bold mb-4">{{ $t('needHelp') || 'هل تحتاج لمساعدة؟' }}</h4>
+              <p class="text-body-1 text-medium-emphasis mb-6">{{ $t('contactOurTeam') || 'فريقنا متاح دائماً لمساعدتك في عملية الطلب.' }}</p>
+              <v-btn
+                to="/contact"
+                color="warning"
+                variant="elevated"
+                size="large"
+                prepend-icon="mdi-email"
+                class="text-none"
+              >
                 {{ $t('contactUs') }}
-              </router-link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+              </v-btn>
+            </v-card>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script setup>
@@ -65,39 +82,17 @@ const steps = computed(() => [
 </script>
 
 <style scoped>
-.bg-card { background: var(--bg-card); }
-.bg-surface { background: var(--bg-surface); }
-.text-gold { color: var(--gold-primary); }
-.btn-gold { background: var(--gold-gradient); color: #000; border: none; font-weight: 700; }
-
-.step-number-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex-shrink: 0;
-}
-
+/* Custom step number styling */
 .step-number {
-  width: 50px;
-  height: 50px;
-  background: var(--gold-gradient);
-  color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  width: 32px;
+  height: 32px;
+  font-size: 1.2rem;
   font-weight: 800;
+  color: #000;
+  background: linear-gradient(135deg, #ffc107 0%, #ffca28 100%);
   border-radius: 50%;
-  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
-  z-index: 2;
 }
-
-.step-line {
-  width: 2px;
-  flex-grow: 1;
-  background: var(--border-subtle);
-  margin-top: 10px;
-}
-
-.border-dashed { border: 2px dashed #ddd; }
 </style>

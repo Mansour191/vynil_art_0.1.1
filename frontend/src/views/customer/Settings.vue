@@ -1,63 +1,612 @@
 <template>
-  <div class="settings-page">
+  <v-main class="settings-page">
+    <!-- Background Effects -->
     <div class="bg-effects">
-      <div class="gradient-overlay"></div>
+      <v-overlay 
+        v-model="overlayActive" 
+        class="gradient-overlay" 
+        persistent 
+        opacity="0.1"
+      />
       <div class="floating-orb orb-1"></div>
       <div class="floating-orb orb-2"></div>
       <div class="floating-orb orb-3"></div>
     </div>
 
-    <div class="settings-container">
-      <div class="glass-card">
+    <v-container>
+      <v-card class="glass-card" elevation="8">
         <!-- Header -->
-        <div class="settings-header">
+        <v-card-title class="pa-6">
           <div class="header-content">
-            <h1 class="page-title">
-              <i class="fa-solid fa-cog"></i>
+            <h1 class="text-h4 font-weight-bold mb-2">
+              <v-icon class="me-2">mdi-cog</v-icon>
               الإعدادات
             </h1>
-            <p class="page-subtitle">إدارة حسابك وتفضيلاتك</p>
+            <p class="text-body-1 text-medium-emphasis">إدارة حسابك وتفضيلاتك</p>
           </div>
-        </div>
+        </v-card-title>
 
         <!-- Settings Navigation -->
-        <div class="settings-nav">
-          <button 
-            v-for="tab in tabs" 
-            :key="tab.id"
-            :class="['nav-btn', { active: activeTab === tab.id }]"
-            @click="activeTab = tab.id"
+        <v-divider />
+        <v-card-text class="pa-0">
+          <v-tabs
+            v-model="activeTab"
+            color="primary"
+            align-tabs="center"
+            class="settings-tabs"
           >
-            <i :class="tab.icon"></i>
-            <span>{{ tab.label }}</span>
-          </button>
-        </div>
+            <v-tab
+              v-for="tab in tabs"
+              :key="tab.id"
+              :value="tab.id"
+            >
+              <v-icon :icon="tab.icon" class="me-2" />
+              {{ tab.label }}
+            </v-tab>
+          </v-tabs>
+        </v-card-text>
+
+        <v-divider />
 
         <!-- Tab Content -->
-        <div class="tab-content">
+        <v-card-text class="pa-6">
           <!-- Profile Settings -->
-          <div v-if="activeTab === 'profile'" class="tab-panel">
-            <div class="settings-section">
-              <h2 class="section-title">معلومات الحساب</h2>
-              <form @submit.prevent="updateProfile" class="settings-form">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label">الاسم الأول</label>
-                    <input 
-                      type="text" 
-                      v-model="profileForm.firstName" 
-                      class="form-input"
-                      placeholder="أدخل اسمك الأول"
-                      required
-                    />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">الاسم الأخير</label>
-                    <input 
-                      type="text" 
-                      v-model="profileForm.lastName" 
-                      class="form-input"
-                      placeholder="أدخل اسمك الأخير"
+          <v-window v-model="activeTab">
+            <v-window-item value="profile">
+              <v-row>
+                <v-col cols="12" md="8">
+                  <v-card class="settings-section" elevation="2">
+                    <v-card-title class="text-h6">معلومات الحساب</v-card-title>
+                    
+                    <v-card-text>
+                      <v-form ref="profileForm" v-model="profileFormValid">
+                        <v-row>
+                          <v-col cols="12" sm="6">
+                            <v-text-field
+                              v-model="profileForm.firstName"
+                              label="الاسم الأول"
+                              variant="outlined"
+                              :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                            />
+                          </v-col>
+                          <v-col cols="12" sm="6">
+                            <v-text-field
+                              v-model="profileForm.lastName"
+                              label="الاسم الأخير"
+                              variant="outlined"
+                              :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                            />
+                          </v-col>
+                          <v-col cols="12">
+                            <v-text-field
+                              v-model="profileForm.email"
+                              label="البريد الإلكتروني"
+                              variant="outlined"
+                              type="email"
+                              :rules="[v => !!v || 'هذا الحقل مطلوب', v => /.+@.+\..+/.test(v) || 'بريد إلكتروني غير صالح']"
+                            />
+                          </v-col>
+                          <v-col cols="12">
+                            <v-text-field
+                              v-model="profileForm.phone"
+                              label="رقم الهاتف"
+                              variant="outlined"
+                              :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                            />
+                          </v-col>
+                        </v-row>
+                      </v-form>
+                    </v-card-text>
+                    
+                    <v-card-actions>
+                      <v-btn
+                        color="primary"
+                        @click="updateProfile"
+                        :loading="saving"
+                        :disabled="!profileFormValid"
+                      >
+                        حفظ التغييرات
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-col>
+              </v-row>
+            </v-window-item>
+
+            <!-- Privacy Settings -->
+            <v-window-item value="privacy">
+              <v-row>
+                <v-col cols="12" md="8">
+                  <v-card class="settings-section" elevation="2">
+                    <v-card-title class="text-h6">خصوصية الحساب</v-card-title>
+                    
+                    <v-card-text>
+                      <v-list>
+                        <v-list-item>
+                          <template v-slot:prepend>
+                            <v-icon>mdi-eye-off</v-icon>
+                          </template>
+                          <v-list-item-title>إخفاء الملف الشخصي</v-list-item-title>
+                          <v-list-item-subtitle>جعل حسابك خاصاً وغير مرئي للآخرين</v-list-item-subtitle>
+                          <template v-slot:append>
+                            <v-switch v-model="privacySettings.privateProfile" />
+                          </template>
+                        </v-list-item>
+                        
+                        <v-list-item>
+                          <template v-slot:prepend>
+                            <v-icon>mdi-account-search</v-icon>
+                          </template>
+                          <v-list-item-title>البحث عني</v-list-item-item>
+                          <v-list-item-subtitle>السماح للآخرين بالعثور على حسابك</v-list-item-subtitle>
+                          <template v-slot:append>
+                            <v-switch v-model="privacySettings.allowSearch" />
+                          </template>
+                        </v-list-item>
+                        
+                        <v-list-item>
+                          <template v-slot:prepend>
+                            <v-icon>mdi-account-multiple</v-icon>
+                          </template>
+                          <v-list-item-title>عرض الأصدقاء</v-list-item-title>
+                          <v-list-item-subtitle>إظهار قائمة الأصدقاء في ملفك الشخصي</v-list-item-subtitle>
+                          <template v-slot:append>
+                            <v-switch v-model="privacySettings.showFriends" />
+                          </template>
+                        </v-list-item>
+                      </v-list>
+                    </v-card-text>
+                    
+                    <v-card-actions>
+                      <v-btn
+                        color="primary"
+                        @click="updatePrivacySettings"
+                        :loading="saving"
+                      >
+                        حفظ الإعدادات
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-col>
+              </v-row>
+            </v-window-item>
+
+            <!-- Security Settings -->
+            <v-window-item value="security">
+              <v-row>
+                <v-col cols="12" md="8">
+                  <v-card class="settings-section" elevation="2">
+                    <v-card-title class="text-h6">أمان الحساب</v-card-title>
+                    
+                    <v-card-text>
+                      <v-list>
+                        <v-list-item>
+                          <template v-slot:prepend>
+                            <v-icon>mdi-lock</v-icon>
+                          </template>
+                          <v-list-item-title>تغيير كلمة المرور</v-list-item-title>
+                          <v-list-item-subtitle>تحديث كلمة المرور الخاصة بك</v-list-item-subtitle>
+                          <template v-slot:append>
+                            <v-btn variant="outlined" @click="showPasswordDialog = true">
+                              تغيير
+                            </v-btn>
+                          </template>
+                        </v-list-item>
+                        
+                        <v-list-item>
+                          <template v-slot:prepend>
+                            <v-icon>mdi-shield-account</v-icon>
+                          </template>
+                          <v-list-item-title>المصادقة الثنائية</v-list-item-title>
+                          <v-list-item-subtitle>إضافة طبقة أمان إضافية لحسابك</v-list-item-subtitle>
+                          <template v-slot:append>
+                            <v-switch v-model="securitySettings.twoFactorEnabled" />
+                          </template>
+                        </v-list-item>
+                        
+                        <v-list-item>
+                          <template v-slot:prepend>
+                            <v-icon>mdi-cellphone-link</v-icon>
+                          </template>
+                          <v-list-item-title>الأجهزة المتصلة</v-list-item-title>
+                          <v-list-item-subtitle>إدارة الأجهزة التي يمكنها الوصول لحسابك</v-list-item-subtitle>
+                          <template v-slot:append>
+                            <v-btn variant="outlined" @click="showDevicesDialog = true">
+                              إدارة
+                            </v-btn>
+                          </template>
+                        </v-list-item>
+                      </v-list>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+              </v-row>
+            </v-window-item>
+
+            <!-- Preferences Settings -->
+            <v-window-item value="preferences">
+              <v-row>
+                <v-col cols="12" md="8">
+                  <v-card class="settings-section" elevation="2">
+                    <v-card-title class="text-h6">التفضيلات</v-card-title>
+                    
+                    <v-card-text>
+                      <v-row>
+                        <v-col cols="12" sm="6">
+                          <v-select
+                            v-model="preferences.language"
+                            :items="languageOptions"
+                            label="اللغة"
+                            variant="outlined"
+                            prepend-inner-icon="mdi-translate"
+                          />
+                        </v-col>
+                        <v-col cols="12" sm="6">
+                          <v-select
+                            v-model="preferences.theme"
+                            :items="themeOptions"
+                            label="المظهر"
+                            variant="outlined"
+                            prepend-inner-icon="mdi-palette"
+                          />
+                        </v-col>
+                        <v-col cols="12">
+                          <v-select
+                            v-model="preferences.currency"
+                            :items="currencyOptions"
+                            label="العملة"
+                            variant="outlined"
+                            prepend-inner-icon="mdi-currency"
+                          />
+                        </v-col>
+                        <v-col cols="12">
+                          <v-select
+                            v-model="preferences.timezone"
+                            :items="timezoneOptions"
+                            label="المنطقة الزمنية"
+                            variant="outlined"
+                            prepend-inner-icon="mdi-clock"
+                          />
+                        </v-col>
+                      </v-row>
+                    </v-card-text>
+                    
+                    <v-card-actions>
+                      <v-btn
+                        color="primary"
+                        @click="updatePreferences"
+                        :loading="saving"
+                      >
+                        حفظ التفضيلات
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-col>
+              </v-row>
+            </v-window-item>
+          </v-window>
+        </v-card-text>
+      </v-card>
+    </v-container>
+
+    <!-- Change Password Dialog -->
+    <v-dialog v-model="showPasswordDialog" max-width="500">
+      <v-card>
+        <v-card-title>تغيير كلمة المرور</v-card-title>
+        
+        <v-card-text>
+          <v-form ref="passwordForm" v-model="passwordFormValid">
+            <v-text-field
+              v-model="passwordForm.currentPassword"
+              label="كلمة المرور الحالية"
+              variant="outlined"
+              type="password"
+              :rules="[v => !!v || 'هذا الحقل مطلوب']"
+            />
+            <v-text-field
+              v-model="passwordForm.newPassword"
+              label="كلمة المرور الجديدة"
+              variant="outlined"
+              type="password"
+              :rules="[v => !!v || 'هذا الحقل مطلوب', v => v.length >= 8 || 'يجب أن تكون 8 أحرف على الأقل']"
+            />
+            <v-text-field
+              v-model="passwordForm.confirmPassword"
+              label="تأكيد كلمة المرور الجديدة"
+              variant="outlined"
+              type="password"
+              :rules="[v => !!v || 'هذا الحقل مطلوب', v => v === passwordForm.newPassword || 'كلمات المرور غير متطابقة']"
+            />
+          </v-form>
+        </v-card-text>
+        
+        <v-card-actions>
+          <v-spacer />
+          <v-btn @click="showPasswordDialog = false">إلغاء</v-btn>
+          <v-btn 
+            color="primary" 
+            @click="changePassword"
+            :loading="changingPassword"
+            :disabled="!passwordFormValid"
+          >
+            تغيير
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-main>
+<script setup>
+import { ref, reactive, onMounted } from 'vue';
+
+// Reactive data
+const overlayActive = ref(true);
+const saving = ref(false);
+const changingPassword = ref(false);
+const activeTab = ref('profile');
+const showPasswordDialog = ref(false);
+const showDevicesDialog = ref(false);
+const profileFormValid = ref(false);
+const passwordFormValid = ref(false);
+const profileForm = ref(null);
+const passwordForm = ref(null);
+
+const profileForm = reactive({
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: ''
+});
+
+const passwordForm = reactive({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+});
+
+const privacySettings = reactive({
+  privateProfile: false,
+  allowSearch: true,
+  showFriends: true
+});
+
+const securitySettings = reactive({
+  twoFactorEnabled: false
+});
+
+const preferences = reactive({
+  language: 'ar',
+  theme: 'auto',
+  currency: 'DZD',
+  timezone: 'Africa/Algiers'
+});
+
+const tabs = ref([
+  { id: 'profile', label: 'الملف الشخصي', icon: 'mdi-account' },
+  { id: 'privacy', label: 'الخصوصية', icon: 'mdi-lock' },
+  { id: 'security', label: 'الأمان', icon: 'mdi-shield-account' },
+  { id: 'preferences', label: 'التفضيلات', icon: 'mdi-cog' }
+]);
+
+const languageOptions = [
+  { title: 'العربية', value: 'ar' },
+  { title: 'English', value: 'en' },
+  { title: 'Français', value: 'fr' }
+];
+
+const themeOptions = [
+  { title: 'تلقائي', value: 'auto' },
+  { title: 'فاتح', value: 'light' },
+  { title: 'داكن', value: 'dark' }
+];
+
+const currencyOptions = [
+  { title: 'دينار جزائري (DZD)', value: 'DZD' },
+  { title: 'يورو (EUR)', value: 'EUR' },
+  { title: 'دولار أمريكي (USD)', value: 'USD' }
+];
+
+const timezoneOptions = [
+  { title: 'الجزائر (GMT+1)', value: 'Africa/Algiers' },
+  { title: 'باريس (GMT+1)', value: 'Europe/Paris' },
+  { title: 'لندن (GMT+0)', value: 'Europe/London' },
+  { title: 'نيويورك (GMT-5)', value: 'America/New_York' }
+];
+
+// Methods
+const loadSettings = async () => {
+  try {
+    // Simulate API call to load user settings
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // In real app, fetch from API
+    Object.assign(profileForm, {
+      firstName: 'أحمد',
+      lastName: 'محمد',
+      email: 'ahmed@example.com',
+      phone: '0551234567'
+    });
+    
+    Object.assign(privacySettings, {
+      privateProfile: false,
+      allowSearch: true,
+      showFriends: true
+    });
+    
+    Object.assign(securitySettings, {
+      twoFactorEnabled: false
+    });
+    
+    Object.assign(preferences, {
+      language: 'ar',
+      theme: 'auto',
+      currency: 'DZD',
+      timezone: 'Africa/Algiers'
+    });
+    
+    console.log('✅ Settings loaded successfully');
+  } catch (error) {
+    console.error('❌ Error loading settings:', error);
+  }
+};
+
+const updateProfile = async () => {
+  if (!profileFormValid.value) return;
+  
+  saving.value = true;
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    console.log('✅ Profile updated:', profileForm);
+    // Show success message
+  } catch (error) {
+    console.error('❌ Error updating profile:', error);
+  } finally {
+    saving.value = false;
+  }
+};
+
+const updatePrivacySettings = async () => {
+  saving.value = true;
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    console.log('✅ Privacy settings updated:', privacySettings);
+  } catch (error) {
+    console.error('❌ Error updating privacy settings:', error);
+  } finally {
+    saving.value = false;
+  }
+};
+
+const updatePreferences = async () => {
+  saving.value = true;
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    console.log('✅ Preferences updated:', preferences);
+    
+    // Apply theme change
+    if (preferences.theme !== 'auto') {
+      document.documentElement.setAttribute('data-theme', preferences.theme);
+    }
+  } catch (error) {
+    console.error('❌ Error updating preferences:', error);
+  } finally {
+    saving.value = false;
+  }
+};
+
+const changePassword = async () => {
+  if (!passwordFormValid.value) return;
+  
+  changingPassword.value = true;
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    console.log('✅ Password changed successfully');
+    
+    // Reset form and close dialog
+    Object.assign(passwordForm, {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+    
+    if (passwordForm.value) {
+      passwordForm.value.reset();
+    }
+    
+    showPasswordDialog.value = false;
+  } catch (error) {
+    console.error('❌ Error changing password:', error);
+  } finally {
+    changingPassword.value = false;
+  }
+};
+
+onMounted(() => {
+  loadSettings();
+});
+</script>
+
+<style scoped>
+.bg-effects {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.floating-orb {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, transparent 70%);
+  animation: float 6s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 300px;
+  height: 300px;
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 200px;
+  height: 200px;
+  top: 60%;
+  right: 15%;
+  animation-delay: 2s;
+}
+
+.orb-3 {
+  width: 250px;
+  height: 250px;
+  bottom: 20%;
+  left: 60%;
+  animation-delay: 4s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+.glass-card {
+  background: rgba(var(--v-theme-surface), 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(var(--v-theme-outline), 0.2);
+  border-radius: 24px;
+  margin-top: 80px;
+}
+
+.settings-section {
+  background: rgba(var(--v-theme-surface-variant), 0.05);
+  border: 1px solid rgba(var(--v-theme-outline), 0.1);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.settings-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+  .glass-card {
+    margin-top: 20px;
+    border-radius: 16px;
+  }
+}
+</style>
                     />
                   </div>
                 </div>

@@ -36,6 +36,8 @@
     "pinia": "^2.1.7",
     "primeicons": "^7.0.0",
     "primevue": "^4.5.4",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "regression": "^2.0.1",
     "simple-statistics": "^7.8.9",
     "subscriptions-transport-ws": "^0.11.0",

@@ -1,60 +1,62 @@
 <template>
-  <div class="info-page container py-5">
-    <div class="row justify-content-center">
-      <div class="col-lg-10">
-        <div class="card shadow-sm border-0 rounded-lg overflow-hidden bg-card">
-          <div class="card-header bg-surface border-bottom p-5 text-center">
-            <h1 class="display-5 text-gold mb-3 font-weight-bold">
-              <i class="fa-solid fa-question-circle me-3"></i> {{ $t('faq') || 'الأسئلة الشائعة' }}
+  <v-container class="py-8">
+    <v-row justify="center">
+      <v-col cols="12" lg="10">
+        <v-card elevation="4" class="overflow-hidden">
+          <!-- Header -->
+          <v-card-text class="pa-8 text-center bg-surface">
+            <h1 class="text-h3 font-weight-bold text-warning mb-4 d-flex align-center justify-center gap-3">
+              <v-icon size="40" color="warning">mdi-help-circle</v-icon>
+              {{ $t('faq') || 'الأسئلة الشائعة' }}
             </h1>
-            <p class="lead text-muted">{{ $t('faqIntro') || 'إليك إجابات لأكثر الأسئلة شيوعاً من عملائنا' }}</p>
-          </div>
+            <p class="text-h6 text-medium-emphasis">{{ $t('faqIntro') || 'إليك إجابات لأكثر الأسئلة شيوعاً من عملائنا' }}</p>
+          </v-card-text>
 
-          <div class="card-body p-5">
-            <div class="accordion" id="faqAccordion">
-              <div v-for="(item, index) in faqItems" :key="index" class="accordion-item mb-3 border-0 rounded shadow-sm overflow-hidden">
-                <h2 class="accordion-header">
-                  <button 
-                    class="accordion-button bg-light font-weight-bold text-dark" 
-                    type="button" 
-                    :class="{ collapsed: index !== 0 }"
-                    data-bs-toggle="collapse" 
-                    :data-bs-target="'#collapse' + index"
-                    aria-expanded="index === 0 ? 'true' : 'false'"
-                  >
-                    {{ item.question }}
-                  </button>
-                </h2>
-                <div 
-                  :id="'collapse' + index" 
-                  class="accordion-collapse collapse" 
-                  :class="{ show: index === 0 }"
-                  data-bs-parent="#faqAccordion"
+          <!-- FAQ Accordion -->
+          <v-card-text class="pa-8">
+            <v-expansion-panels variant="accordion" class="mb-6">
+              <v-expansion-panel
+                v-for="(item, index) in faqItems"
+                :key="index"
+                :title="item.question"
+                :text="item.answer"
+              >
+              </v-expansion-panel>
+            </v-expansion-panels>
+
+            <!-- Contact Section -->
+            <v-card elevation="6" class="pa-6 bg-surface text-center">
+              <h3 class="text-h5 font-weight-bold text-warning mb-4">{{ $t('stillHaveQuestions') || 'هل لديك أسئلة أخرى؟' }}</h3>
+              <p class="text-body-1 text-medium-emphasis mb-6">{{ $t('contactUsFaq') || 'فريق دعمنا الفني جاهز للرد على استفساراتك عبر واتساب أو الهاتف.' }}</p>
+              <div class="d-flex justify-center gap-4 flex-wrap">
+                <v-btn
+                  href="https://wa.me/213663140341"
+                  target="_blank"
+                  color="success"
+                  variant="elevated"
+                  size="large"
+                  prepend-icon="mdi-whatsapp"
+                  class="text-none"
                 >
-                  <div class="accordion-body bg-white text-secondary lead small">
-                    {{ item.answer }}
-                  </div>
-                </div>
+                  واتساب
+                </v-btn>
+                <v-btn
+                  to="/contact"
+                  color="warning"
+                  variant="elevated"
+                  size="large"
+                  prepend-icon="mdi-email"
+                  class="text-none"
+                >
+                  اتصل بنا
+                </v-btn>
               </div>
-            </div>
-
-            <div class="mt-5 p-5 bg-surface rounded-lg text-center shadow-gold">
-              <h3 class="text-gold mb-3 font-weight-bold">{{ $t('stillHaveQuestions') || 'هل لديك أسئلة أخرى؟' }}</h3>
-              <p class="text-white mb-4">{{ $t('contactUsFaq') || 'فريق دعمنا الفني جاهز للرد على استفساراتك عبر واتساب أو الهاتف.' }}</p>
-              <div class="d-flex justify-content-center gap-3 flex-wrap">
-                <a href="https://wa.me/213663140341" target="_blank" class="btn btn-success btn-lg px-4">
-                  <i class="fab fa-whatsapp me-2"></i> واتساب
-                </a>
-                <router-link to="/contact" class="btn btn-gold btn-lg px-4">
-                  <i class="fa-solid fa-envelope me-2"></i> اتصل بنا
-                </router-link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+            </v-card>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script setup>
@@ -88,24 +90,5 @@ const faqItems = computed(() => [
 </script>
 
 <style scoped>
-.bg-card { background: var(--bg-card); }
-.bg-surface { background: var(--bg-surface); }
-.text-gold { color: var(--gold-primary); }
-.btn-gold { background: var(--gold-gradient); color: #000; border: none; font-weight: 700; }
-.shadow-gold { box-shadow: 0 10px 30px rgba(212, 175, 55, 0.1); }
-
-.accordion-button:not(.collapsed) {
-  background: rgba(212, 175, 55, 0.1);
-  color: #000;
-  box-shadow: none;
-}
-
-.accordion-button:focus {
-  box-shadow: none;
-  border-color: var(--gold-primary);
-}
-
-.accordion-button::after {
-  background-size: 1rem;
-}
+/* Vuetify handles most styling */
 </style>

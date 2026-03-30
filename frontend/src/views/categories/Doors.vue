@@ -1,40 +1,37 @@
 <template>
   <CategoryTemplate
-    icon="fa-solid fa-door-open"
+    :icon="categoryData?.icon || 'fa-solid fa-door-open'"
     titleKey="doorsTitle"
     descriptionKey="doorsDescription"
     labelKey="doorsLabel"
     latestLabelKey="latestDoorDesigns"
-    :subCategories="doorCategories"
+    :subCategories="subCategories"
     badgeLabel="doorDesign"
   />
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import CategoryTemplate from '@/components/CategoryTemplate.vue';
+import CategoryService from '@/integration/services/CategoryService';
 
-const doorCategories = ref([
-  {
-    id: 1,
-    emoji: '🚪',
-    titleKey: 'woodenDoors',
-    descKey: 'woodenDoorsDesc',
-    link: '/search?q=wooden',
-  },
-  {
-    id: 2,
-    emoji: '🏢',
-    titleKey: 'modernDoors',
-    descKey: 'modernDoorsDesc',
-    link: '/search?q=modern',
-  },
-  {
-    id: 3,
-    emoji: '✨',
-    titleKey: 'glassDoors',
-    descKey: 'glassDoorsDesc',
-    link: '/search?q=glass',
-  },
-]);
+const categoryData = ref(null);
+const subCategories = ref([]);
+
+onMounted(async () => {
+  try {
+    // جلب بيانات الفئة من قاعدة البيانات
+    const category = await CategoryService.getCategoryBySlug('doors');
+    categoryData.value = category;
+    
+    // جلب الفئات الفرعية
+    const subCats = await CategoryService.getSubCategories('doors');
+    subCategories.value = subCats;
+    
+    console.log('✅ Doors category loaded:', category);
+    console.log('✅ Doors subcategories loaded:', subCats);
+  } catch (error) {
+    console.error('❌ Error loading doors category:', error);
+  }
+});
 </script>

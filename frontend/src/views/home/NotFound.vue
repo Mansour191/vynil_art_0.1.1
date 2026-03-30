@@ -1,62 +1,95 @@
 <template>
-  <div class="not-found-page">
-    <div class="container">
-      <div class="error-content">
-        <div class="error-icon">
-          <i class="fa-solid fa-exclamation-triangle"></i>
-        </div>
+  <v-container class="py-16">
+    <v-row justify="center">
+      <v-col cols="12" md="10" lg="8">
+        <v-card elevation="6" class="error-content text-center">
+          <v-card-text class="pa-12">
+            <!-- Error Icon -->
+            <div class="mb-6">
+              <v-icon size="80" color="warning" class="pulse-animation">mdi-alert-triangle</v-icon>
+            </div>
 
-        <h1 class="error-code">404</h1>
-        <h2 class="error-title">{{ $t('pageNotFound') }}</h2>
-        <p class="error-message">{{ $t('pageNotFoundMessage') }}</p>
+            <!-- Error Code -->
+            <h1 class="text-h1 font-weight-bold text-warning mb-4">404</h1>
 
-        <div class="error-suggestions">
-          <h3>{{ $t('youCanTry') }}</h3>
-          <ul>
-            <li>
-              <router-link to="/">
-                <i class="fa-solid fa-home"></i>
-                {{ $t('backToHome') }}
-              </router-link>
-            </li>
-            <li>
-              <router-link to="/gallery">
-                <i class="fa-solid fa-images"></i>
-                {{ $t('browseGallery') }}
-              </router-link>
-            </li>
-            <li>
-              <router-link to="/blog">
-                <i class="fa-solid fa-blog"></i>
-                {{ $t('readBlog') }}
-              </router-link>
-            </li>
-            <li>
-              <router-link to="/contact">
-                <i class="fa-solid fa-phone-alt"></i>
-                {{ $t('contactSupport') }}
-              </router-link>
-            </li>
-          </ul>
-        </div>
+            <!-- Error Title -->
+            <h2 class="text-h4 font-weight-bold text-warning mb-4">{{ $t('pageNotFound') }}</h2>
 
-        <div class="search-box">
-          <h3>{{ $t('searchInSite') }}</h3>
-          <div class="search-input-group">
-            <input
-              type="text"
-              v-model="searchQuery"
-              :placeholder="$t('searchPlaceholder')"
-              @keyup.enter="performSearch"
-            />
-            <button @click="performSearch">
-              <i class="fa-solid fa-search"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+            <!-- Error Message -->
+            <p class="text-h6 text-medium-emphasis mb-8">{{ $t('pageNotFoundMessage') }}</p>
+
+            <!-- Suggestions -->
+            <v-card elevation="2" class="pa-6 mb-8 bg-surface">
+              <h3 class="text-h5 font-weight-bold text-warning mb-4">{{ $t('youCanTry') }}</h3>
+              <v-row>
+                <v-col cols="12" sm="6">
+                  <v-btn
+                    to="/"
+                    variant="outlined"
+                    color="warning"
+                    prepend-icon="mdi-home"
+                    class="text-none mb-3 w-100"
+                  >
+                    {{ $t('backToHome') }}
+                  </v-btn>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-btn
+                    to="/gallery"
+                    variant="outlined"
+                    color="warning"
+                    prepend-icon="mdi-image-multiple"
+                    class="text-none mb-3 w-100"
+                  >
+                    {{ $t('browseGallery') }}
+                  </v-btn>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-btn
+                    to="/blog"
+                    variant="outlined"
+                    color="warning"
+                    prepend-icon="mdi-post"
+                    class="text-none mb-3 w-100"
+                  >
+                    {{ $t('readBlog') }}
+                  </v-btn>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-btn
+                    to="/contact"
+                    variant="outlined"
+                    color="warning"
+                    prepend-icon="mdi-phone"
+                    class="text-none mb-3 w-100"
+                  >
+                    {{ $t('contactSupport') }}
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-card>
+
+            <!-- Search -->
+            <div class="search-box">
+              <h3 class="text-h5 font-weight-bold text-warning mb-4">{{ $t('searchInSite') }}</h3>
+              <v-text-field
+                v-model="searchQuery"
+                :placeholder="$t('searchPlaceholder')"
+                variant="outlined"
+                color="warning"
+                prepend-inner-icon="mdi-magnify"
+                @keyup.enter="performSearch"
+                @click:append="performSearch"
+                append-icon="mdi-magnify"
+                hide-details
+                class="max-width-400 mx-auto"
+              ></v-text-field>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
@@ -78,169 +111,13 @@ export default {
 </script>
 
 <style scoped>
-.not-found-page {
-  min-height: 70vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  background: var(--bg-deep);
-}
-
-.container {
-  max-width: 800px;
-  width: 100%;
-}
-
-.error-content {
-  background: var(--bg-card);
-  border-radius: 30px;
-  padding: 50px;
-  text-align: center;
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-soft);
-}
-
-.error-icon {
-  font-size: 5rem;
-  color: var(--gold-primary);
-  margin-bottom: 20px;
+/* Pulse animation for error icon */
+.pulse-animation {
   animation: pulse 2s infinite;
 }
 
-.error-code {
-  font-size: 6rem;
-  font-weight: 800;
-  background: var(--gold-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  line-height: 1;
-  margin-bottom: 10px;
-}
-
-.error-title {
-  color: var(--gold-primary);
-  font-size: 2rem;
-  margin-bottom: 15px;
-}
-
-.error-message {
-  color: var(--text-secondary);
-  font-size: 1.1rem;
-  margin-bottom: 30px;
-  max-width: 500px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.error-suggestions {
-  background: var(--bg-surface);
-  border-radius: 20px;
-  padding: 25px;
-  margin: 30px 0;
-  text-align: right;
-}
-
-.error-suggestions h3 {
-  color: var(--gold-primary);
-  font-size: 1.2rem;
-  margin-bottom: 15px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.error-suggestions ul {
-  list-style: none;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
-@media (max-width: 480px) {
-  .error-suggestions ul {
-    grid-template-columns: 1fr;
-  }
-}
-
-.error-suggestions li a {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 15px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  color: var(--text-secondary);
-  text-decoration: none;
-  transition: all 0.3s;
-}
-
-.error-suggestions li a:hover {
-  border-color: var(--gold-primary);
-  background: rgba(212, 175, 55, 0.1);
-  color: var(--gold-primary);
-  transform: translateY(-3px);
-}
-
-.error-suggestions li a i {
-  color: var(--gold-primary);
-  font-size: 1.1rem;
-}
-
-.search-box {
-  margin-top: 30px;
-}
-
-.search-box h3 {
-  color: var(--gold-primary);
-  font-size: 1.2rem;
-  margin-bottom: 15px;
-}
-
-.search-input-group {
-  display: flex;
-  gap: 10px;
-}
-
-.search-input-group input {
-  flex: 1;
-  padding: 15px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: 12px;
-  color: var(--text-primary);
-  font-size: 1rem;
-  transition: all 0.3s;
-}
-
-.search-input-group input:focus {
-  border-color: var(--gold-primary);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
-}
-
-.search-input-group button {
-  width: 55px;
-  height: 55px;
-  background: var(--gold-gradient);
-  border: none;
-  border-radius: 12px;
-  color: var(--bg-deep);
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.search-input-group button:hover {
-  transform: scale(1.05);
-  box-shadow: var(--shadow-gold);
-}
-
 @keyframes pulse {
-  0%,
-  100% {
+  0%, 100% {
     transform: scale(1);
   }
   50% {

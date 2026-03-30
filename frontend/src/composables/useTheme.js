@@ -2,8 +2,8 @@
 import { ref, computed, watch } from 'vue'
 
 export function useTheme() {
-  // Theme state with localStorage persistence
-  const isDark = ref(localStorage.getItem('theme') === 'dark')
+  // Theme state with localStorage persistence - DEFAULT TO DARK MODE
+  const isDark = ref(localStorage.getItem('theme') !== 'light') // Default to dark unless explicitly set to light
   
   // Computed class for html element
   const themeClass = computed(() => isDark.value ? 'my-app-dark' : '')
@@ -82,8 +82,13 @@ export function useTheme() {
     localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
   }
   
-  // Initialize theme on mount
+  // Initialize theme on mount - DEFAULT TO DARK MODE
   const initTheme = () => {
+    // Set dark mode as default if no theme is stored
+    if (!localStorage.getItem('theme')) {
+      isDark.value = true
+      saveTheme()
+    }
     updateDocumentClass()
     updateCSSVariables()
   }

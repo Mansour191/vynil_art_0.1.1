@@ -16,7 +16,7 @@ function loadLocaleMessages() {
 const i18n = createI18n({
   legacy: true, // Set to true to support Options API (this.$i18n, this.$t)
   globalInjection: true,
-  locale: localStorage.getItem('language') || 'ar',
+  locale: localStorage.getItem('language') || 'ar', // Default to Arabic (RTL)
   fallbackLocale: 'ar',
   messages: loadLocaleMessages(),
 });

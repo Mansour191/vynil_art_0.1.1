@@ -18,7 +18,7 @@ class ERPNextService {
 
   async testConnection() {
     try {
-      // Use GraphQL for connection test - Live Connection
+      // Use GraphQL only - no REST fallback since we're GraphQL-only
       const { HELLO_QUERY } = await import('@/graphql/queries');
       const result = await this.client.query({
         query: HELLO_QUERY

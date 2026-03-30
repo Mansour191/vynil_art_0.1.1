@@ -209,4 +209,4 @@ class GraphQLSecurityMiddleware:
             ip = request.META.get('REMOTE_ADDR')
         return ip
 
-print("🔐 GraphQL middleware loaded with authentication, error handling, rate limiting, and security")
+print("GraphQL middleware loaded with authentication, error handling, rate limiting, and security")

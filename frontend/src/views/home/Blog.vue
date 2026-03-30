@@ -1,135 +1,174 @@
 <template>
   <div class="blog-page">
     <!-- Hero Section -->
-    <section class="blog-hero">
-      <div class="container">
-        <h1 class="page-title">{{ $t('blogTitle') }}</h1>
-        <div class="title-decoration">
-          <span class="gold-bar"></span>
-          <i class="fa-solid fa-blog"></i>
-          <span class="gold-bar"></span>
-        </div>
-        <p class="hero-text">{{ $t('blogDescription') }}</p>
+    <v-container class="py-16 text-center">
+      <h1 class="text-h2 font-weight-bold text-warning mb-4">{{ $t('blogTitle') }}</h1>
+      <div class="d-flex align-center justify-center gap-4 mb-6">
+        <v-divider color="warning" thickness="2" length="60"></v-divider>
+        <v-icon size="36" color="warning">mdi-post</v-icon>
+        <v-divider color="warning" thickness="2" length="60"></v-divider>
       </div>
-    </section>
+      <p class="text-h6 text-medium-emphasis">{{ $t('blogDescription') }}</p>
+    </v-container>
 
     <!-- Search Bar -->
-    <section class="search-section">
-      <div class="container">
-        <div class="search-box">
-          <input
-            type="text"
-            v-model="searchQuery"
-            :placeholder="$t('searchArticles')"
-            @keyup.enter="performSearch"
-          />
-          <button @click="performSearch">
-            <i class="fa-solid fa-search"></i>
-          </button>
-        </div>
-      </div>
-    </section>
+    <v-container class="mb-8">
+      <v-text-field
+        v-model="searchQuery"
+        :placeholder="$t('searchArticles')"
+        variant="outlined"
+        color="warning"
+        prepend-inner-icon="mdi-magnify"
+        @keyup.enter="performSearch"
+        @click:append="performSearch"
+        append-icon="mdi-magnify"
+        hide-details
+        class="max-width-600 mx-auto"
+      ></v-text-field>
+    </v-container>
 
     <!-- Categories -->
-    <section class="categories-section">
-      <div class="container">
-        <div class="categories-tabs">
-          <button
-            v-for="category in categories"
-            :key="category.value"
-            :class="['category-btn', { active: activeCategory === category.value }]"
-            @click="filterByCategory(category.value)"
-          >
-            <i :class="category.icon"></i>
-            <span>{{ $t(category.nameKey) }}</span>
-          </button>
-        </div>
-      </div>
-    </section>
+    <v-container class="mb-8">
+      <v-chip-group
+        v-model="activeCategory"
+        mandatory
+        center-active
+        class="justify-center"
+      >
+        <v-chip
+          v-for="category in categories"
+          :key="category.value"
+          :value="category.value"
+          :prepend-icon="category.icon"
+          color="warning"
+          variant="outlined"
+          class="text-none"
+          @click="filterByCategory(category.value)"
+        >
+          {{ $t(category.nameKey) }}
+        </v-chip>
+      </v-chip-group>
+    </v-container>
 
     <!-- Blog Grid -->
-    <section class="blog-grid-section">
-      <div class="container">
-        <LoadingSpinner v-if="loading" :message="$t('loadingArticles')" />
+<v-container>
+  <v-skeleton-loader
+    v-if="loading"
+    type="article, heading, text"
+    :loading="loading"
+    class="mb-8"
+  ></v-skeleton-loader>
 
-        <div v-else-if="filteredPosts.length === 0" class="no-results">
-          <i class="fa-solid fa-search"></i>
-          <h3>{{ $t('noArticlesFound') }}</h3>
-          <p>{{ $t('tryDifferentSearch') }}</p>
-        </div>
+  <v-alert
+    v-else-if="filteredPosts.length === 0"
+    type="info"
+    variant="tonal"
+    class="text-center mb-8"
+  >
+    <template #prepend>
+      <v-icon>mdi-magnify</v-icon>
+    </template>
+    <v-alert-title>{{ $t('noArticlesFound') }}</v-alert-title>
+    {{ $t('tryDifferentSearch') }}
+  </v-alert>
 
-        <div v-else class="blog-grid">
-          <article v-for="post in paginatedPosts" :key="post.id" class="blog-card">
-            <div class="blog-image">
-              <router-link :to="`/post/${post.id}`">
-                <img :src="post.image" :alt="post.title" loading="lazy" />
-              </router-link>
-              <span class="blog-category">{{ post.category }}</span>
-            </div>
-
-            <div class="blog-content">
-              <div class="blog-meta">
-                <span class="blog-date">
-                  <i class="far fa-calendar-alt"></i>
-                  {{ post.date }}
-                </span>
-                <span class="blog-author">
-                  <i class="far fa-user"></i>
-                  {{ post.author }}
-                </span>
-              </div>
-
-              <h3 class="blog-title">
-                <router-link :to="`/post/${post.id}`">{{ post.title }}</router-link>
-              </h3>
-
-              <p class="blog-excerpt">{{ post.excerpt }}</p>
-
-              <div class="blog-footer">
-                <router-link :to="`/post/${post.id}`" class="read-more">
-                  {{ $t('readMore') }} <i class="fa-solid fa-arrow-left"></i>
-                </router-link>
-
-                <div class="blog-stats">
-                  <span><i class="far fa-eye"></i> {{ post.views }}</span>
-                  <span><i class="far fa-comment"></i> {{ post.comments }}</span>
-                </div>
-              </div>
-            </div>
-          </article>
-        </div>
-
-        <!-- Pagination -->
-        <div v-if="totalPages > 1" class="pagination">
-          <button
-            :disabled="currentPage === 1"
-            @click="changePage(currentPage - 1)"
-            class="page-btn"
+  <v-row v-else>
+    <v-col
+      v-for="post in paginatedPosts"
+      :key="post.id"
+      cols="12"
+      md="6"
+      lg="4"
+    >
+      <v-card elevation="4" class="blog-card h-100" hover>
+        <div class="position-relative">
+          <v-img
+            :src="post.image"
+            :alt="post.title"
+            height="200"
+            cover
+            class="blog-image"
           >
-            <i class="fa-solid fa-chevron-right"></i>
-          </button>
-
-          <span class="page-info">
-            {{ $t('page') }} {{ currentPage }} {{ $t('of') }} {{ totalPages }}
-          </span>
-
-          <button
-            :disabled="currentPage === totalPages"
-            @click="changePage(currentPage + 1)"
-            class="page-btn"
+            <template #placeholder>
+              <v-skeleton-loader type="image" height="200"></v-skeleton-loader>
+            </template>
+          </v-img>
+          <v-chip
+            class="blog-category position-absolute top-2 right-2"
+            color="warning"
+            variant="elevated"
+            size="small"
           >
-            <i class="fa-solid fa-chevron-left"></i>
-          </button>
+            {{ post.category }}
+          </v-chip>
         </div>
-      </div>
-    </section>
+
+        <v-card-text class="pa-4">
+          <div class="d-flex gap-4 mb-3 text-caption text-medium-emphasis">
+            <span class="d-flex align-center gap-1">
+              <v-icon size="16">mdi-calendar</v-icon>
+              {{ post.date }}
+            </span>
+            <span class="d-flex align-center gap-1">
+              <v-icon size="16">mdi-account</v-icon>
+              {{ post.author }}
+            </span>
+          </div>
+
+          <h3 class="text-h6 font-weight-bold mb-3">
+            <router-link :to="`/post/${post.id}`" class="text-decoration-none text-white">
+              {{ post.title }}
+            </router-link>
+          </h3>
+
+          <p class="text-body-2 text-medium-emphasis mb-4">{{ post.excerpt }}</p>
+
+          <div class="d-flex justify-space-between align-center">
+            <v-btn
+              :to="`/post/${post.id}`"
+              variant="text"
+              color="warning"
+              class="text-none"
+              append-icon="mdi-arrow-right"
+            >
+              {{ $t('readMore') }}
+            </v-btn>
+
+            <div class="d-flex gap-3 text-caption text-medium-emphasis">
+              <span class="d-flex align-center gap-1">
+                <v-icon size="16">mdi-eye</v-icon>
+                {{ post.views }}
+              </span>
+              <span class="d-flex align-center gap-1">
+                <v-icon size="16">mdi-comment</v-icon>
+                {{ post.comments }}
+              </span>
+            </div>
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-col>
+  </v-row>
+
+  <!-- Pagination -->
+  <div v-if="totalPages > 1" class="text-center mt-8">
+    <v-pagination
+      v-model="currentPage"
+      :length="totalPages"
+      :disabled="loading"
+      color="warning"
+      variant="elevated"
+      class="d-inline-flex"
+      @update:model-value="changePage"
+    ></v-pagination>
   </div>
+</v-container>
+</div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import LoadingSpinner from '@/components/LoadingSpinner.vue';
 
 const route = useRoute();
 
@@ -141,14 +180,14 @@ const currentPage = ref(1);
 const postsPerPage = ref(9);
 
 const categories = [
-  { value: 'all', nameKey: 'allCategories', icon: 'fa-solid fa-th-large' },
-  { value: 'furniture', nameKey: 'furniture', icon: 'fa-solid fa-couch' },
-  { value: 'doors', nameKey: 'doors', icon: 'fa-solid fa-door-open' },
-  { value: 'walls', nameKey: 'walls', icon: 'fa-solid fa-paint-roller' },
-  { value: 'ceilings', nameKey: 'ceilings', icon: 'fa-solid fa-arrow-up' },
-  { value: 'tiles', nameKey: 'tiles', icon: 'fa-solid fa-border-all' },
-  { value: 'kitchens', nameKey: 'kitchens', icon: 'fa-solid fa-utensils' },
-  { value: 'cars', nameKey: 'cars', icon: 'fa-solid fa-car' },
+  { value: 'all', nameKey: 'allCategories', icon: 'mdi-view-grid' },
+  { value: 'furniture', nameKey: 'furniture', icon: 'mdi-sofa' },
+  { value: 'doors', nameKey: 'doors', icon: 'mdi-door' },
+  { value: 'walls', nameKey: 'walls', icon: 'mdi-roller-brush' },
+  { value: 'ceilings', nameKey: 'ceilings', icon: 'mdi-arrow-up-bold' },
+  { value: 'tiles', nameKey: 'tiles', icon: 'mdi-border-all' },
+  { value: 'kitchens', nameKey: 'kitchens', icon: 'mdi-silverware' },
+  { value: 'cars', nameKey: 'cars', icon: 'mdi-car' },
 ];
 
 const allPosts = ref([

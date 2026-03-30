@@ -15,94 +15,175 @@
       <!-- Hero Slider -->
       <HeroSlider />
 
-      <div class="container">
-        <!-- Featured Products Section -->
-        <div class="section-header mt-5">
-          <h2 class="section-title">{{ $t('featuredProducts') || 'منتجات مميزة' }}</h2>
-          <router-link to="/shop" class="view-all">
+      <!-- Featured Products Section -->
+      <v-container class="py-8">
+        <!-- Section Header -->
+        <div class="d-flex justify-space-between align-center mb-6">
+          <h2 class="text-h4 font-weight-bold text-center">
+            {{ $t('featuredProducts') || 'منتجات مميزة' }}
+          </h2>
+          <v-btn
+            :to="'/shop'"
+            variant="text"
+            color="warning"
+            class="text-none"
+            append-icon="mdi-arrow-right"
+          >
             {{ $t('viewAll') }}
-            <i :class="`fa-solid fa-arrow-${directionIcon}`"></i>
-          </router-link>
+          </v-btn>
         </div>
 
-      <!-- Products Loading Skeleton -->
-      <div v-if="loadingProducts" class="row g-4">
-        <div v-for="i in 4" :key="i" class="col-6 col-md-3">
-          <div class="card border-0 bg-card rounded-lg overflow-hidden">
-            <LoadingSkeleton type="image" height="200px" />
-            <div class="card-body">
-              <LoadingSkeleton type="text" height="20px" class="mb-2" />
-              <LoadingSkeleton type="text" height="16px" width="80%" />
-            </div>
-          </div>
-        </div>
-      </div>
+        <!-- Products Loading Skeleton -->
+        <v-row v-if="loadingProducts">
+          <v-col
+            v-for="i in 4"
+            :key="i"
+            cols="6"
+            md="3"
+          >
+            <v-card elevation="2" class="h-100">
+              <v-skeleton-loader
+                type="image, heading, text"
+                height="300"
+                class="pa-0"
+              ></v-skeleton-loader>
+            </v-card>
+          </v-col>
+        </v-row>
 
-      <!-- Products Error -->
-      <div v-else-if="productsError" class="alert alert-danger text-center">
-        <i class="fa-solid fa-exclamation-triangle me-2"></i>
-        {{ productsError }}
-      </div>
+        <!-- Products Error -->
+        <v-alert
+          v-else-if="productsError"
+          type="error"
+          variant="tonal"
+          class="mb-6"
+          text
+        >
+          <template #prepend>
+            <v-icon>mdi-alert-circle</v-icon>
+          </template>
+          {{ productsError }}
+        </v-alert>
 
-      <!-- Featured Products Grid -->
-      <div v-else class="row g-4">
-        <div v-for="(product, index) in featuredProducts" :key="product.id" class="col-6 col-md-3">
-          <ProductCard 
-            :product="product"
-            @add-to-cart="handleAddToCart"
-            @toggle-favorite="handleToggleFavorite"
-            :is-new="index === 0"
-          />
-        </div>
-      </div>
+        <!-- Featured Products Grid -->
+        <v-row v-else>
+          <v-col
+            v-for="(product, index) in featuredProducts"
+            :key="product.id"
+            cols="6"
+            md="3"
+          >
+            <ProductCard 
+              :product="product"
+              @add-to-cart="handleAddToCart"
+              @toggle-favorite="handleToggleFavorite"
+              :is-new="index === 0"
+            />
+          </v-col>
+        </v-row>
+      </v-container>
 
-      <!-- Blog Section -->
-      <div class="section-header mt-5">
-        <h2 class="section-title">{{ $t('latestBlog') || 'أحدث المدونات' }}</h2>
-        <router-link to="/blog" class="view-all">
-          {{ $t('viewAll') }}
-          <i :class="`fa-solid fa-arrow-${directionIcon}`"></i>
-        </router-link>
-      </div>
+      <!-- Google Maps Section -->
+<v-container class="py-8">
+  <div class="text-center mb-6">
+    <h2 class="text-h4 font-weight-bold">
+      {{ $t('ourLocation') || 'موقعنا' }}
+    </h2>
+  </div>
+  <GoogleMap />
+</v-container>
+
+<!-- Blog Section -->
+<v-container class="py-8">
+  <!-- Section Header -->
+  <div class="d-flex justify-space-between align-center mb-6">
+    <h2 class="text-h4 font-weight-bold text-center">
+      {{ $t('latestBlog') || 'أحدث المدونات' }}
+    </h2>
+    <v-btn
+      :to="'/blog'"
+      variant="text"
+      color="warning"
+      class="text-none"
+      append-icon="mdi-arrow-right"
+    >
+      {{ $t('viewAll') }}
+    </v-btn>
+  </div>
 
       <!-- Blog Loading Skeleton -->
-      <div v-if="loadingPosts" class="row g-4">
-        <div v-for="i in 4" :key="i" class="col-6 col-md-3">
-          <div class="card border-0 bg-card rounded-lg overflow-hidden">
-            <LoadingSkeleton type="image" height="150px" />
-            <div class="card-body">
-              <LoadingSkeleton type="text" height="20px" class="mb-2" />
-              <LoadingSkeleton type="text" height="14px" width="90%" />
-            </div>
-          </div>
-        </div>
-      </div>
+<v-row v-if="loadingPosts">
+  <v-col
+    v-for="i in 4"
+    :key="i"
+    cols="6"
+    md="3"
+  >
+    <v-card elevation="2" class="h-100">
+      <v-skeleton-loader
+        type="image, heading, text"
+        height="250"
+        class="pa-0"
+      ></v-skeleton-loader>
+    </v-card>
+  </v-col>
+</v-row>
 
-      <!-- Blog Error -->
-      <div v-else-if="postsError" class="alert alert-warning text-center">
-        <i class="fa-solid fa-exclamation-triangle me-2"></i>
-        {{ postsError }}
-      </div>
+<!-- Blog Error -->
+<v-alert
+  v-else-if="postsError"
+  type="warning"
+  variant="tonal"
+  class="mb-6"
+  text
+>
+  <template #prepend>
+    <v-icon>mdi-alert-circle</v-icon>
+  </template>
+  {{ postsError }}
+</v-alert>
 
-      <!-- Blog Posts Grid -->
-      <div v-else class="row g-4">
-        <div v-for="post in posts" :key="post.id" class="col-6 col-md-3">
-          <div class="card border-0 bg-card rounded-lg overflow-hidden h-100">
-            <img :src="post.image" class="card-img-top" :alt="post.title" />
-            <div class="card-body">
-              <h5 class="card-title">{{ post.title }}</h5>
-              <p class="card-text text-muted">{{ post.excerpt }}</p>
-              <router-link :to="`/blog/${post.slug}`" class="btn btn-outline-primary btn-sm">
-                {{ $t('readMore') || 'اقرأ المزيد' }}
-              </router-link>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+<!-- Blog Posts Grid -->
+<v-row v-else>
+  <v-col
+    v-for="post in posts"
+    :key="post.id"
+    cols="6"
+    md="3"
+  >
+    <v-card elevation="2" class="h-100" hover>
+      <v-img
+        :src="post.image"
+        :alt="post.title"
+        height="150"
+        cover
+      ></v-img>
+      <v-card-title class="text-h6">
+        {{ post.title }}
+      </v-card-title>
+      <v-card-text>
+        <p class="text-medium-emphasis">{{ post.excerpt }}</p>
+      </v-card-text>
+      <v-card-actions>
+        <v-btn
+          :to="`/blog/${post.slug}`"
+          variant="outlined"
+          color="primary"
+          size="small"
+          class="text-none"
+        >
+          {{ $t('readMore') || 'اقرأ المزيد' }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-col>
+</v-row>
+</v-container>
 
-    <!-- Contact Section -->
-    <ContactForm />
+<!-- Contact Section -->
+<v-container class="py-8">
+  <ContactForm />
+</v-container>
     </div>
   </div>
 </template>
@@ -112,9 +193,9 @@ import { ref, computed, onMounted, onErrorCaptured } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useStore } from 'vuex';
 import HeroSlider from '@/components/HeroSlider.vue';
+import GoogleMap from '@/components/GoogleMap.vue';
 import ContactForm from '@/components/common/ContactForm.vue';
 import ProductCard from '@/components/ProductCard.vue';
-import LoadingSkeleton from '@/components/LoadingSkeleton.vue';
 import BlogService from '@/integration/services/BlogService';
 import { useProducts } from '@/composables/useGraphQL';
 
@@ -170,7 +251,6 @@ const loadingPosts = ref(true);
 const postsError = ref(null);
 
 const isAuthenticated = computed(() => store.getters['auth/isAuthenticated']);
-const directionIcon = computed(() => (locale.value === 'ar' ? 'left' : 'right'));
 
 const handleAddToCart = (product) => {
   if (!isAuthenticated.value) {
@@ -268,87 +348,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-
-.section-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text-color);
-  margin: 0;
-}
-
-.view-all {
-  color: var(--primary-color);
-  text-decoration: none;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: color 0.3s ease;
-}
-
-.view-all:hover {
-  color: var(--primary-hover);
-}
-
-.card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
-.card-img-top {
-  height: 200px;
-  object-fit: cover;
-}
-
-.card-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.card-text {
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: var(--text-muted);
-}
-
-.alert {
-  padding: 1rem;
-  border-radius: 0.5rem;
-  margin-bottom: 2rem;
-}
-
-.alert-danger {
-  background-color: #fee;
-  border-color: #fcc;
-  color: #721c24;
-}
-
-.alert-warning {
-  background-color: #fff3cd;
-  border-color: #ffeaa7;
-  color: #856404;
-}
-
-@media (max-width: 768px) {
-  .section-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
-  }
-  
-  .view-all {
-    align-self: flex-end;
-  }
+/* Vuetify handles most styling, only custom styles needed */
+.text-center {
+  text-align: center;
 }
 </style>

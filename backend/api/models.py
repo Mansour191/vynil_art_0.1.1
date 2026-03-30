@@ -332,3 +332,289 @@ class PricingEngine(models.Model):
 
     class Meta:
         verbose_name_plural = "Pricing Engine"
+
+# 6. Media Files Management
+class MediaFile(models.Model):
+    FILE_TYPES = [
+        ('image', 'Image'),
+        ('video', 'Video'),
+        ('document', 'Document'),
+    ]
+    
+    title = models.CharField(max_length=255)
+    file = models.FileField(upload_to='media_files/')
+    file_type = models.CharField(max_length=10, choices=FILE_TYPES, default='image')
+    description = models.TextField(blank=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='media_files', null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name_plural = "Media Files"
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return self.title
+
+# 7. Addresses Management
+class Address(models.Model):
+    ADDRESS_TYPES = [
+        ('shipping', 'Shipping Address'),
+        ('billing', 'Billing Address'),
+        ('both', 'Both'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='addresses')
+    type = models.CharField(max_length=10, choices=ADDRESS_TYPES, default='shipping')
+    title = models.CharField(max_length=100, help_text="e.g., Home, Office")
+    street_address = models.CharField(max_length=255)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    postal_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=100)
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name_plural = "Addresses"
+        ordering = ['-is_default', '-created_at']
+    
+    def __str__(self):
+        return f"{self.title} - {self.street_address}"
+
+# 8. Inventory/Stock Management
+class Inventory(models.Model):
+    STATUS_CHOICES = [
+        ('in_stock', 'In Stock'),
+        ('low_stock', 'Low Stock'),
+        ('out_of_stock', 'Out of Stock'),
+        ('discontinued', 'Discontinued'),
+    ]
+    
+    product = models.OneToOneField(Product, on_delete=models.CASCADE, related_name='inventory')
+    quantity = models.PositiveIntegerField(default=0)
+    reorder_level = models.PositiveIntegerField(default=10, help_text="Alert when stock reaches this level")
+    max_stock = models.PositiveIntegerField(default=1000, help_text="Maximum stock capacity")
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='in_stock')
+    last_restocked = models.DateTimeField(null=True, blank=True)
+    cost_per_unit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    location = models.CharField(max_length=100, blank=True, help_text="Warehouse location")
+    notes = models.TextField(blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name_plural = "Inventory"
+        ordering = ['-updated_at']
+    
+    def __str__(self):
+        return f"{self.product.name_en} - {self.quantity} units"
+    
+    def is_low_stock(self):
+        return self.quantity <= self.reorder_level
+
+# 9. Settings/Config Models
+class WishlistSettings(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='wishlist_settings')
+    auto_notify = models.BooleanField(default=True, help_text="Notify when wishlist items go on sale")
+    public_wishlist = models.BooleanField(default=False, help_text="Make wishlist publicly visible")
+    share_link = models.CharField(max_length=255, blank=True, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name_plural = "Wishlist Settings"
+    
+    def __str__(self):
+        return f"{self.user.username}'s Wishlist Settings"
+
+class DashboardSettings(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='dashboard_settings')
+    theme = models.CharField(max_length=20, choices=[
+        ('light', 'Light'),
+        ('dark', 'Dark'),
+        ('auto', 'Auto'),
+    ], default='auto')
+    language = models.CharField(max_length=5, default='en')
+    notifications_enabled = models.BooleanField(default=True)
+    email_notifications = models.BooleanField(default=True)
+    dashboard_layout = models.JSONField(default=dict, help_text="Custom dashboard layout configuration")
+    default_view = models.CharField(max_length=20, choices=[
+        ('overview', 'Overview'),
+        ('products', 'Products'),
+        ('orders', 'Orders'),
+        ('analytics', 'Analytics'),
+    ], default='overview')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name_plural = "Dashboard Settings"
+    
+    def __str__(self):
+        return f"{self.user.username}'s Dashboard Settings"
+
+# 10. Analytics and Dashboard Models
+class DashboardStats(models.Model):
+    PERIOD_CHOICES = [
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'),
+        ('yearly', 'Yearly'),
+    ]
+    
+    period = models.CharField(max_length=10, choices=PERIOD_CHOICES, default='monthly')
+    date = models.DateField()
+    total_sales = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_orders = models.PositiveIntegerField(default=0)
+    new_customers = models.PositiveIntegerField(default=0)
+    active_customers = models.PositiveIntegerField(default=0)
+    average_order_value = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name_plural = "Dashboard Statistics"
+        unique_together = ['period', 'date']
+        ordering = ['-date']
+    
+    def __str__(self):
+        return f"{self.period} stats for {self.date}"
+
+class ProductAnalytics(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='analytics')
+    date = models.DateField()
+    views = models.PositiveIntegerField(default=0)
+    sales = models.PositiveIntegerField(default=0)
+    revenue = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    conversion_rate = models.FloatField(default=0.0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name_plural = "Product Analytics"
+        unique_together = ['product', 'date']
+        ordering = ['-date']
+    
+    def __str__(self):
+        return f"{self.product.name_en} - {self.date}"
+
+class RegionalAnalytics(models.Model):
+    WILAYA_CHOICES = [
+        ('adrar', 'أدرار'),
+        ('chlef', 'الشلف'),
+        ('laghouat', 'الأغواط'),
+        ('oum_bouaghi', 'أم البواقي'),
+        ('batna', 'باتنة'),
+        ('bejaia', 'بجاية'),
+        ('biskra', 'بسكرة'),
+        ('bechar', 'بشار'),
+        ('blida', 'البليدة'),
+        ('bouira', 'البويرة'),
+        ('tamanrasset', 'تمنراست'),
+        ('tebessa', 'تبسة'),
+        ('tlemcen', 'تلمسان'),
+        ('tiaret', 'تيارت'),
+        ('tizi_ouzou', 'تيزي وزو'),
+        ('algiers', 'الجزائر'),
+        ('djelfa', 'الجلفة'),
+        ('jiel', 'جيجل'),
+        ('setif', 'سطيف'),
+        ('saida', 'سعيدة'),
+        ('skikda', 'سكيكدة'),
+        ('sidi_bel_abbes', 'سيدي بلعباس'),
+        ('annaba', 'عنابة'),
+        ('guelma', 'قالمة'),
+        ('constantine', 'قسنطينة'),
+        ('medea', 'المديية'),
+        ('mostaganem', 'مستغانم'),
+        ('msila', 'المسيلة'),
+        ('mascara', 'معسكر'),
+        ('ouargla', 'ورقلة'),
+        ('oran', 'وهران'),
+        ('el_bayadh', 'البيض'),
+        ('illizi', 'إليزي'),
+        ('bordj_bou_arreridj', 'برج بوعريريج'),
+        ('boumerdes', 'بومرداس'),
+        ('el_tarf', 'الطارف'),
+        ('tindouf', 'تندوف'),
+        ('tissemsilt', 'تيسمسيلت'),
+        ('el_oued', 'الوادي'),
+        ('khenchela', 'خنشلة'),
+        ('souk_ahras', 'سوق أهراس'),
+        ('tipaza', 'تيبازة'),
+        ('mila', 'ميلة'),
+        ('ain_defla', 'عين الدفلى'),
+        ('naama', 'النعامة'),
+        ('ain_temouchent', 'عين تموشنت'),
+        ('ghardaia', 'غرداية'),
+        ('relizane', 'غليزان'),
+        ('timimoun', 'تيميمون'),
+        (' Bordj_Badji_Mokhtar', 'برج باجي مختار'),
+        ('ouled_djellal', 'أولاد جلال'),
+        ('beni_mellal', 'بني ملال'),
+        ('in_sal', 'عين صالح'),
+        ('in_guezzam', 'عين قزام'),
+        ('touggourt', 'تقرت'),
+        ('djanet', 'جانت'),
+        ('el_mghair', 'المغير'),
+        ('el_menia', 'المنيعة'),
+    ]
+    
+    wilaya = models.CharField(max_length=50, choices=WILAYA_CHOICES)
+    date = models.DateField()
+    total_sales = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_orders = models.PositiveIntegerField(default=0)
+    unique_customers = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name_plural = "Regional Analytics"
+        unique_together = ['wilaya', 'date']
+        ordering = ['-date']
+    
+    def __str__(self):
+        return f"{self.get_wilaya_display()} - {self.date}"
+
+class InvestorMetrics(models.Model):
+    PERIOD_CHOICES = [
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
+    ]
+    
+    period = models.CharField(max_length=10, choices=PERIOD_CHOICES, default='monthly')
+    date = models.DateField()
+    total_revenue = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    catalog_progress = models.FloatField(default=0.0, help_text="Percentage of catalog completion")
+    sales_growth = models.FloatField(default=0.0, help_text="Sales growth percentage")
+    active_investors = models.PositiveIntegerField(default=0)
+    roi = models.FloatField(default=0.0, help_text="Return on Investment percentage")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        verbose_name_plural = "Investor Metrics"
+        unique_together = ['period', 'date']
+        ordering = ['-date']
+    
+    def __str__(self):
+        return f"{self.period} investor metrics for {self.date}"
+
+class SalesForecast(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='forecasts', null=True, blank=True)
+    forecast_date = models.DateField()
+    predicted_sales = models.PositiveIntegerField(default=0)
+    predicted_revenue = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    confidence_score = models.FloatField(default=0.0, help_text="Confidence level 0-1")
+    model_version = models.CharField(max_length=50, default='v1.0')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name_plural = "Sales Forecasts"
+        unique_together = ['product', 'forecast_date']
+        ordering = ['-forecast_date']
+    
+    def __str__(self):
+        if self.product:
+            return f"Forecast for {self.product.name_en} - {self.forecast_date}"
+        return f"Overall forecast - {self.forecast_date}"

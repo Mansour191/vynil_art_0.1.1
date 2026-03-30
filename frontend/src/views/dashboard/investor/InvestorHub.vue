@@ -96,38 +96,46 @@ const fetchInvestorData = async () => {
     loading.value = true;
     error.value = null;
 
+    // Use GraphQL API instead of multiple services
+    const { default: GraphQLService } = await import('@/services/GraphQLService');
+    const graphQLService = new GraphQLService();
+
     // Fetch real investor data from backend
     const [
       dashboardStats,
       salesForecast,
       marketTrends,
-      customerInsights,
-      erpSyncStatus
+      customerInsights
     ] = await Promise.all([
-      DashboardService.getDashboardStats(),
-      AIService.getSalesForecast('30days'),
-      AIService.getMarketTrends(),
-      AIService.getCustomerInsights(),
-      ERPNextService.checkIntegrationHealth()
-    ]);
+        graphQLService.getDashboardStats('monthly'),
+        graphQLService.getSalesForecasts(),
+        graphQLService.getRegionalAnalytics(),
+        graphQLService.getInvestorMetrics('monthly')
+      ]);
 
     // Update investor store with real data
     investorStore.updateKPIs({
-      totalRevenue: dashboardStats.totalRevenue || 0,
-      catalogProgress: dashboardStats.catalogProgress || 0,
-      salesGrowth: salesForecast.growthRate || 0,
-      activeInvestors: dashboardStats.activeInvestors || 0
+      totalRevenue: dashboardStats[0]?.totalSales || 0,
+      catalogProgress: 35, // This should come from a separate API
+      salesGrowth: salesForecast[0]?.confidenceScore * 100 || 0,
+      activeInvestors: customerInsights[0]?.uniqueCustomers || 0
     });
 
-    investorStore.updateRegionalStats(marketTrends.regionalData || []);
-    investorStore.updateSalesData(salesForecast.monthlyData || []);
+    investorStore.updateRegionalStats(marketTrends.map(trend => ({
+      state: trend.wilaya,
+      value: trend.totalSales
+    })));
+
+    investorStore.updateSalesData(salesForecast.map(forecast => ({
+      month: forecast.forecastDate,
+      sales: forecast.predictedSales
+    })));
 
     console.log('Investor data loaded successfully:', {
       dashboardStats,
       salesForecast,
       marketTrends,
-      customerInsights,
-      erpSyncStatus
+      customerInsights
     });
 
   } catch (err) {

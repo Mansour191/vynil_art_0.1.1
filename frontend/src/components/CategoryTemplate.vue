@@ -168,7 +168,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from 'vue-i18n';
-import BlogService from '@/integration/services/BlogService';
+import ProductService from '@/integration/services/ProductService';
 
 const props = defineProps({
   icon: { type: String, required: true },
@@ -191,15 +191,15 @@ const fetchData = async () => {
   loading.value = true;
   error.value = false;
   try {
-    const labels = {
-      ar: t(props.labelKey, 'ar'),
-      en: t(props.labelKey, 'en'),
-    };
-    products.value = await BlogService.getPostsByLabel(labels);
+    // جلب المنتجات حسب الفئة من قاعدة البيانات
+    const categorySlug = props.labelKey.toLowerCase().replace('label', '');
+    products.value = await ProductService.getProductsByCategory(categorySlug, 12);
+    
+    console.log(`✅ Loaded ${products.value.length} products for category: ${categorySlug}`);
   } catch (err) {
     error.value = true;
     errorMessage.value = t('failedToLoadProducts') || 'فشل تحميل المنتجات. يرجى المحاولة مرة أخرى.';
-    console.error('❌ Error fetching data:', err);
+    console.error('❌ Error fetching products:', err);
   } finally {
     loading.value = false;
   }

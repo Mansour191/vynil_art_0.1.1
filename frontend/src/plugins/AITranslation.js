@@ -32,9 +32,22 @@ const AITranslation = {
         return state.translations[cacheKey];
       }
 
+      console.log('AI Translation:', {
+        text,
+        targetLang,
+        cacheKey,
+        fromCache: !!state.translations[cacheKey]
+      });
+
       try {
         const translated = await AIService.translate(text, targetLang);
         state.translations[cacheKey] = translated;
+        
+        console.log('AI Translation result:', {
+          original: text,
+          translated,
+          targetLang
+        });
         
         // تحديث الكاش في التخزين المحلي (بشكل محدود لتوفير المساحة)
         const cacheEntries = Object.entries(state.translations);
@@ -104,6 +117,37 @@ const AITranslation = {
       }
     });
 
+    /**
+     * دالة لترجمة جميع العناصر في الصفحة
+     */
+    const translateAllElements = async (targetLang) => {
+      console.log('Translating all elements to:', targetLang);
+      
+      // البحث عن جميع العناصر القابلة للترجمة
+      const allTranslatableElements = document.querySelectorAll(
+        '[data-i18n], [data-translate], h1, h2, h3, h4, h5, h6, p, span, div, button, a, li, td, th'
+      );
+      
+      console.log('Found elements to translate:', allTranslatableElements.length);
+      
+      for (const element of allTranslatableElements) {
+        if (element.textContent && targetLang !== 'ar') {
+          const originalText = element.textContent;
+          const translated = await aiTranslate(originalText, targetLang);
+          element.textContent = translated;
+          element.classList.add('ai-translated');
+          
+          console.log('Translated element:', {
+            tag: element.tagName,
+            original: originalText,
+            translated: translated
+          });
+        }
+      }
+      
+      console.log('Translation completed for', targetLang);
+    };
+
     // إضافة أنماط CSS بسيطة للترجمة
     const style = document.createElement('style');
     style.textContent = `
@@ -121,6 +165,9 @@ const AITranslation = {
       }
     `;
     document.head.appendChild(style);
+
+    // جعل الدالة متاحة عالمياً
+    window.translateAllElements = translateAllElements;
   }
 };
 

@@ -7,11 +7,15 @@
       :aria-expanded="showLanguageMenu"
       :aria-label="$t('chooseLanguage')"
     >
-      <i class="fa-solid fa-globe" aria-hidden="true"></i>
+      <v-icon icon="mdi-translate" size="14" aria-hidden="true"></v-icon>
       <span class="lang-text">{{
-        currentLang === 'ar' ? 'AR' : currentLang === 'en' ? 'EN' : (currentLang === 'fr' ? 'FR' : currentLang.toUpperCase())
+        currentLang === 'ar' ? 'AR' : 
+        currentLang === 'en' ? 'EN' : 
+        currentLang === 'fr' ? 'FR' : 
+        currentLang === 'ch' ? '中文' : 
+        currentLang.toUpperCase()
       }}</span>
-      <i class="fa-solid fa-chevron-down" :class="{ 'rotate': showLanguageMenu }"></i>
+      <v-icon icon="mdi-chevron-down" :class="{ 'rotate': showLanguageMenu }" size="12"></v-icon>
     </button>
     
     <transition name="slide-up">
@@ -20,7 +24,7 @@
         v-if="showLanguageMenu"
         role="menu"
       >
-        <div
+        <div 
           v-for="lang in languages"
           :key="lang.code"
           class="lang-option"
@@ -30,10 +34,24 @@
           tabindex="0"
         >
           <div class="lang-info">
-            <i class="fa-solid fa-language" aria-hidden="true"></i>
+            <span class="flag-icon" :class="`flag-${lang.code}`"></span>
             <span>{{ lang.name }}</span>
           </div>
-          <i v-if="currentLang === lang.code" class="fa-solid fa-check check-icon"></i>
+          <i v-if="currentLang === lang.code" class="mdi mdi-check check-icon"></i>
+        </div>
+
+        <!-- Reset to Arabic Button -->
+        <div 
+          v-if="currentLang !== 'ar'"
+          class="lang-option reset-option"
+          @click="resetToArabic"
+          role="menuitem"
+          tabindex="0"
+        >
+          <div class="lang-info">
+            <v-icon icon="mdi-refresh" size="16" aria-hidden="true"></v-icon>
+            <span>إعادة تعيين العربية</span>
+          </div>
         </div>
 
         <div class="dropdown-divider"></div>
@@ -46,7 +64,7 @@
           tabindex="0"
         >
           <div class="lang-info">
-            <i class="fa-solid fa-robot ai-icon" aria-hidden="true"></i>
+            <v-icon icon="mdi-robot" size="16" aria-hidden="true"></v-icon>
             <span>{{ $t('aiTranslate') || 'ترجمة بالذكاء الاصطناعي' }}</span>
           </div>
           <div class="ai-badge">AI</div>
@@ -71,6 +89,7 @@ const languages = [
   { code: 'ar', name: 'العربية' },
   { code: 'en', name: 'English' },
   { code: 'fr', name: 'Français' },
+  { code: 'ch', name: '中文' },
 ];
 
 const currentLang = computed(() => locale.value);
@@ -84,32 +103,79 @@ const closeMenu = () => {
 };
 
 const changeLanguage = (lang) => {
-  locale.value = lang;
-  localStorage.setItem('language', lang);
-  document.documentElement.lang = lang;
-  document.body.dir = lang === 'ar' ? 'rtl' : 'ltr';
-  showLanguageMenu.value = false;
+  // Validate language code
+  if (!['ar', 'en', 'fr', 'ch'].includes(lang)) {
+    console.error('Invalid language code:', lang);
+    return;
+  }
   
-  // Dispatch a global event for language change if needed
-  window.dispatchEvent(new CustomEvent('language-changed', { detail: lang }));
+  try {
+    locale.value = lang;
+    localStorage.setItem('language', lang);
+    // Update document direction based on language
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = lang;
+    showLanguageMenu.value = false;
+    
+    // Reset AI translation when switching back to Arabic
+    if (lang === 'ar') {
+      isTranslating.value = false;
+      aiState.isAITranslateEnabled = false;
+      localStorage.setItem('ai_translate_enabled', 'false');
+      console.log('AI Translation disabled for Arabic locale');
+    }
+    
+    // Dispatch a global event for language change if needed
+    window.dispatchEvent(new CustomEvent('language-changed', { detail: lang }));
+    
+    // Trigger AI translation for non-Arabic languages
+    if (lang !== 'ar') {
+      setTimeout(() => {
+        handleAITranslate();
+        // Also trigger comprehensive translation
+        if (window.translateAllElements) {
+          window.translateAllElements(lang);
+        }
+      }, 500);
+    }
+  } catch (error) {
+    console.error('Language change error:', error);
+    // Show user-friendly error message
+    alert(t('languageChangeError') || 'حدث خطأ أثناء تغيير اللغة. يرجى المحاولة مرة أخرى.');
+  }
 };
 
 const handleAITranslate = async () => {
   showLanguageMenu.value = false;
   
-  if (currentLang.value === 'ar') {
-    alert(t('aiSelectLanguageFirst') || 'يرجى اختيار لغة غير العربية أولاً للترجمة');
-    return;
-  }
-
+  // Allow AI translation for all languages
   isTranslating.value = true;
   console.log('AI Translation requested for locale:', currentLang.value);
+  console.log('Current language code:', currentLang.value);
+  console.log('Available languages:', ['ar', 'en', 'fr', 'ch']);
   
   try {
     // ترجمة العناصر التي تحمل توجيه v-ai-t تلقائياً
     // بالإضافة إلى ذلك، سنبحث عن أي نص غير مترجم في الصفحة (اختياري)
     const elementsToTranslate = document.querySelectorAll('[v-ai-t]');
-    // Note: directives handle this automatically through state change
+    console.log('Elements found to translate:', elementsToTranslate.length);
+    
+    // ترجمة العناصر الموجودة إلى اللغة الحالية
+    for (const element of elementsToTranslate) {
+      if (element.textContent) {
+        // إزالة البادئات القديمة
+        let cleanText = element.textContent.replace(/^\[(AI Translated|Traduit par IA|AI翻译)\]/, '');
+        
+        // ترجمة النص إلى اللغة الحالية
+        if (currentLang.value !== 'ar') {
+          console.log('Translating text:', cleanText);
+          console.log('To language:', currentLang.value);
+          const translatedText = await AIService.translate(cleanText, currentLang.value);
+          console.log('Translation result:', translatedText);
+          element.textContent = translatedText;
+        }
+      }
+    }
     
     // We can also trigger a global "AI Mode" that component can react to
     aiState.isAITranslateEnabled = true;
@@ -177,22 +243,17 @@ const vClickOutside = {
 
 .lang-dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 8px);
   right: 0;
-  margin-top: 10px;
-  background: var(--bg-card, #1a1a2e);
-  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
-  border-radius: 16px;
   min-width: 200px;
+  background: var(--bg-surface, rgba(26, 26, 46, 0.95));
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   padding: 8px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
-  z-index: 1000;
-  backdrop-filter: blur(15px);
-}
-
-[dir="rtl"] .lang-dropdown {
-  right: auto;
-  left: 0;
+  z-index: 9999;
+  overflow: hidden;
 }
 
 .lang-option {
@@ -223,11 +284,62 @@ const vClickOutside = {
 .lang-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
-.check-icon {
-  font-size: 0.8rem;
+.flag-icon {
+  width: 20px;
+  height: 16px;
+  margin-right: 8px;
+  border-radius: 2px;
+  display: inline-block;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
+  font-weight: bold;
+  color: white;
+}
+
+.flag-ar {
+  background: linear-gradient(135deg, #009639 0%, #00d4ff 100%);
+}
+
+.flag-ar::before {
+  content: "🇩🇦";
+}
+
+.flag-en {
+  background: linear-gradient(135deg, #012169 0%, #1e3a8a 100%);
+}
+
+.flag-en::before {
+  content: "🇬🇧";
+}
+
+.flag-fr {
+  background: linear-gradient(135deg, #002395 0%, #0055a4 100%);
+}
+
+.flag-fr::before {
+  content: "🇫🇷";
+}
+
+.flag-ch {
+  background: linear-gradient(135deg, #de2910 0%, #ff6b35 100%);
+}
+
+.flag-ch::before {
+  content: "🇨🇳";
+}
+
+.lang-option:hover .flag-icon {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
+}
+
+.lang-option.active .flag-icon {
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.3);
+  transform: scale(1.05);
 }
 
 .dropdown-divider {
@@ -254,6 +366,24 @@ const vClickOutside = {
   color: #1a1a2e;
 }
 
+.reset-option {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, rgba(212, 175, 55, 0.1) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+}
+
+.reset-option:hover {
+  background: var(--gold-gradient, linear-gradient(135deg, #d4af37 0%, #ffd700 100%));
+  color: #1a1a2e;
+}
+
+.reset-option:hover .ai-icon {
+  color: #1a1a2e;
+}
+
+.reset-option:hover .v-icon {
+  color: #1a1a2e;
+}
+
 .ai-badge {
   font-size: 0.65rem;
   background: var(--gold-primary, #d4af37);
@@ -264,6 +394,11 @@ const vClickOutside = {
 }
 
 .ai-option:hover .ai-badge {
+  background: #1a1a2e;
+  color: var(--gold-primary, #d4af37);
+}
+
+.reset-option:hover .ai-badge {
   background: #1a1a2e;
   color: var(--gold-primary, #d4af37);
 }

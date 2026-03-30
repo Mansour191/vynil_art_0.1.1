@@ -1,86 +1,128 @@
 <template>
   <div class="gallery-page">
     <!-- Hero Section -->
-    <section class="gallery-hero">
-      <div class="container">
-        <h1 class="page-title">{{ $t('gallery') }}</h1>
-        <div class="title-decoration">
-          <span class="gold-bar"></span>
-          <i class="fa-solid fa-images"></i>
-          <span class="gold-bar"></span>
-        </div>
-        <!-- مقدمة الصفحة -->
-        <p class="gallery-intro">{{ $t('galleryIntro') }}</p>
+    <v-container class="py-16 text-center">
+      <h1 class="text-h2 font-weight-bold text-warning mb-4">{{ $t('gallery') }}</h1>
+      <div class="d-flex align-center justify-center gap-4 mb-6">
+        <v-divider color="warning" thickness="2" length="60"></v-divider>
+        <v-icon size="36" color="warning">mdi-image-multiple</v-icon>
+        <v-divider color="warning" thickness="2" length="60"></v-divider>
       </div>
-    </section>
+      <p class="text-h6 text-medium-emphasis">{{ $t('galleryIntro') }}</p>
+    </v-container>
 
     <!-- Filter Tabs -->
-    <section class="filter-section">
-      <div class="container">
-        <div class="filter-tabs">
-          <button
-            v-for="(category, index) in categories"
-            :key="index"
-            :class="['filter-btn', { active: activeCategory === category.value }]"
-            @click="activeCategory = category.value"
-          >
-            <i :class="category.icon"></i>
-            <span>{{ $t(category.nameKey) }}</span>
-          </button>
-        </div>
-      </div>
-    </section>
+    <v-container class="mb-8">
+      <v-chip-group
+        v-model="activeCategory"
+        mandatory
+        center-active
+        class="justify-center"
+      >
+        <v-chip
+          v-for="category in categories"
+          :key="category.value"
+          :value="category.value"
+          :prepend-icon="category.icon"
+          color="warning"
+          variant="outlined"
+          class="text-none"
+        >
+          {{ $t(category.nameKey) }}
+        </v-chip>
+      </v-chip-group>
+    </v-container>
 
     <!-- Gallery Grid -->
-    <section class="gallery-grid-section">
-      <div class="container">
-        <transition-group name="fade" tag="div" class="gallery-grid">
-          <div
-            v-for="item in filteredItems"
-            :key="item.id"
-            class="gallery-item"
-            @click="openLightbox(item)"
-          >
-            <div class="item-image">
-              <img :src="item.image" :alt="$t(item.titleKey)" />
-              <div class="item-overlay">
-                <i class="fa-solid fa-search-plus"></i>
-                <h3>{{ $t(item.titleKey) }}</h3>
-                <span class="item-category">{{ $t(item.categoryKey) }}</span>
-              </div>
+    <v-container>
+      <v-row>
+        <v-col
+          v-for="item in filteredItems"
+          :key="item.id"
+          cols="12"
+          sm="6"
+          md="4"
+          lg="3"
+        <v-card elevation="4" class="gallery-item cursor-pointer" @click="openLightbox(item)">
+            <v-img
+              :src="item.image"
+              :alt="$t(item.titleKey)"
+              aspect-ratio="1"
+              cover
+              class="gallery-image"
+            >
+              <template #placeholder>
+                <v-skeleton-loader type="image"></v-skeleton-loader>
+              </template>
+            </v-img>
+            <div class="item-overlay">
+              <v-icon size="32" color="white">mdi-magnify-plus</v-icon>
+              <h3 class="text-h6 font-weight-bold text-white">{{ $t(item.titleKey) }}</h3>
+              <span class="text-caption text-white opacity-90">{{ $t(item.categoryKey) }}</span>
+            </div>
+          </v-card>
+        </v-col>
+      </v-row>
             </div>
           </div>
         </transition-group>
 
         <!-- Load More Button -->
-        <div v-if="hasMore" class="load-more">
-          <button class="load-more-btn" @click="loadMore">
-            <i class="fa-solid fa-plus"></i>
+        <div v-if="hasMore" class="text-center mt-8">
+          <v-btn
+            @click="loadMore"
+            variant="elevated"
+            color="warning"
+            prepend-icon="mdi-plus"
+            class="text-none"
+          >
             {{ $t('loadMore') }}
-          </button>
+          </v-btn>
         </div>
-      </div>
-    </section>
+      </v-container>
 
     <!-- Lightbox -->
-    <div v-if="lightbox.show" class="lightbox" @click.self="closeLightbox">
-      <div class="lightbox-content">
-        <button class="lightbox-close" @click="closeLightbox">
-          <i class="fa-solid fa-times"></i>
-        </button>
-        <button class="lightbox-prev" @click="prevImage" :disabled="!hasPrev">
-          <i class="fa-solid fa-chevron-left"></i>
-        </button>
-        <img :src="lightbox.image" :alt="$t(lightbox.titleKey)" />
-        <button class="lightbox-next" @click="nextImage" :disabled="!hasNext">
-          <i class="fa-solid fa-chevron-right"></i>
-        </button>
-        <div class="lightbox-info">
-          <h3>{{ $t(lightbox.titleKey) }}</h3>
-          <p>{{ $t(lightbox.descKey) }}</p>
-        </div>
-      </div>
-    </div>
+    <v-dialog
+      v-model="lightbox.show"
+      max-width="800"
+      @click:outside="closeLightbox"
+    >
+      <v-card>
+        <v-card-text class="pa-0">
+          <v-img
+            :src="lightbox.image"
+            :alt="$t(lightbox.titleKey)"
+            aspect-ratio="1"
+            cover
+          ></v-img>
+          <div class="pa-4">
+            <h3 class="text-h5 font-weight-bold mb-2">{{ $t(lightbox.titleKey) }}</h3>
+            <p class="text-body-1 text-medium-emphasis">{{ $t(lightbox.descKey) }}</p>
+          </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn
+            @click="prevImage"
+            :disabled="!hasPrev"
+            variant="text"
+            icon="mdi-chevron-left"
+          ></v-btn>
+          <v-spacer></v-spacer>
+          <v-btn
+            @click="closeLightbox"
+            variant="text"
+            icon="mdi-close"
+          ></v-btn>
+          <v-spacer></v-spacer>
+          <v-btn
+            @click="nextImage"
+            :disabled="!hasNext"
+            variant="text"
+            icon="mdi-chevron-right"
+          ></v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
@@ -93,14 +135,14 @@ const itemsPerPage = ref(12);
 const currentPage = ref(1);
 
 const categories = [
-  { value: 'all', nameKey: 'allCategories', icon: 'fa-solid fa-th-large' },
-  { value: 'furniture', nameKey: 'furniture', icon: 'fa-solid fa-couch' },
-  { value: 'doors', nameKey: 'doors', icon: 'fa-solid fa-door-open' },
-  { value: 'walls', nameKey: 'walls', icon: 'fa-solid fa-paint-roller' },
-  { value: 'ceilings', nameKey: 'ceilings', icon: 'fa-solid fa-arrow-up' },
-  { value: 'tiles', nameKey: 'tiles', icon: 'fa-solid fa-border-all' },
-  { value: 'kitchens', nameKey: 'kitchens', icon: 'fa-solid fa-utensils' },
-  { value: 'cars', nameKey: 'cars', icon: 'fa-solid fa-car' },
+  { value: 'all', nameKey: 'allCategories', icon: 'mdi-view-grid' },
+  { value: 'furniture', nameKey: 'furniture', icon: 'mdi-sofa' },
+  { value: 'doors', nameKey: 'doors', icon: 'mdi-door' },
+  { value: 'walls', nameKey: 'walls', icon: 'mdi-roller-brush' },
+  { value: 'ceilings', nameKey: 'ceilings', icon: 'mdi-arrow-up-bold' },
+  { value: 'tiles', nameKey: 'tiles', icon: 'mdi-border-all' },
+  { value: 'kitchens', nameKey: 'kitchens', icon: 'mdi-silverware' },
+  { value: 'cars', nameKey: 'cars', icon: 'mdi-car' },
 ];
 
 const allItems = ref([

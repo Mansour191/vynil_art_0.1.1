@@ -366,7 +366,9 @@ const apolloClient = new ApolloClient({
   },
   
   // Performance optimizations
-  connectToDevTools: process.env.NODE_ENV === 'development',
+  devtools: {
+    enabled: process.env.NODE_ENV === 'development'
+  },
   
   // Query deduplication
   queryDeduplication: true,

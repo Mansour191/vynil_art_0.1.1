@@ -30,6 +30,20 @@ from api.schema import schema
 # from api.views_simple import api_root
 
 urlpatterns = [
+    # Home page - redirect to frontend or serve API info
+    path('', lambda request: JsonResponse({
+        'message': 'Vynil Art API Server',
+        'version': '1.0.0',
+        'endpoints': {
+            'graphql': '/graphql/',
+            'admin': '/admin/',
+            'health': '/health/',
+            'api': '/api/'
+        },
+        'frontend': 'http://localhost:8080',
+        'status': 'running'
+    }), name='home'),
+    
     # GraphQL endpoint - PRIMARY API with simple schema
     path('graphql/', csrf_exempt(GraphQLView.as_view(graphiql=settings.DEBUG, schema=schema)), name='graphql'),
     
@@ -48,6 +62,6 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
-print("🚀 Production URLs configured with GraphQL only")
-print("⚠️  REST API completely removed - only GraphQL available")
-print("📈 Using optimized schema with environment-based debug setting")
+print("Production URLs configured with GraphQL only")
+print("REST API completely removed - only GraphQL available")
+print("Using optimized schema with environment-based debug setting")

@@ -1,122 +1,640 @@
 <template>
-  <div class="payments-page">
+  <v-main class="payments-page">
+    <!-- Background Effects -->
     <div class="bg-effects">
-      <div class="gradient-overlay"></div>
+      <v-overlay 
+        v-model="overlayActive" 
+        class="gradient-overlay" 
+        persistent 
+        opacity="0.1"
+      />
       <div class="floating-orb orb-1"></div>
       <div class="floating-orb orb-2"></div>
       <div class="floating-orb orb-3"></div>
     </div>
 
-    <div class="payments-container">
-      <div class="glass-card">
+    <v-container>
+      <v-card class="glass-card" elevation="8">
         <!-- Header -->
-        <div class="payments-header">
-          <div class="header-content">
-            <h1 class="page-title">
-              <i class="fa-solid fa-credit-card"></i>
-              طرق الدفع
-            </h1>
-            <p class="page-subtitle">إدارة بطاقات الدفع وطرق الدفع المحفوظة</p>
-          </div>
-          <button class="add-payment-btn" @click="showAddForm = true">
-            <i class="fa-solid fa-plus"></i>
-            إضافة طريقة دفع
-          </button>
-        </div>
+        <v-card-title class="pa-6">
+          <v-row align="center" justify="space-between">
+            <v-col>
+              <div class="header-content">
+                <h1 class="text-h4 font-weight-bold mb-2">
+                  <v-icon class="me-2">mdi-credit-card</v-icon>
+                  طرق الدفع
+                </h1>
+                <p class="text-body-1 text-medium-emphasis">إدارة بطاقات الدفع وطرق الدفع المحفوظة</p>
+              </div>
+            </v-col>
+            <v-col cols="auto">
+              <v-btn
+                color="primary"
+                prepend-icon="mdi-plus"
+                @click="showAddForm = true"
+              >
+                إضافة طريقة دفع
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-card-title>
+
+        <v-divider />
 
         <!-- Payment Methods List -->
-        <div class="payments-list">
-          <div v-if="loading" class="loading-state">
-            <div class="loading-spinner">
-              <i class="fa-solid fa-spinner fa-spin"></i>
-            </div>
-            <p class="loading-text">جاري تحميل طرق الدفع...</p>
+        <v-card-text class="pa-6">
+          <!-- Loading State -->
+          <div v-if="loading" class="text-center py-12">
+            <v-progress-circular
+              indeterminate
+              color="primary"
+              size="48"
+              class="mb-4"
+            />
+            <p class="text-body-1 text-medium-emphasis">جاري تحميل طرق الدفع...</p>
           </div>
 
-          <div v-else-if="paymentMethods.length === 0" class="empty-state">
-            <div class="empty-icon">
-              <i class="fa-solid fa-credit-card"></i>
-            </div>
-            <h3 class="empty-title">لا توجد طرق دفع</h3>
-            <p class="empty-text">لم تقم بإضافة أي طرق دفع بعد</p>
-            <button class="add-first-btn" @click="showAddForm = true">
-              <i class="fa-solid fa-plus"></i>
+          <!-- Empty State -->
+          <div v-else-if="paymentMethods.length === 0" class="text-center py-12">
+            <v-icon size="80" color="primary" class="mb-4">mdi-credit-card</v-icon>
+            <h3 class="text-h5 mb-2">لا توجد طرق دفع</h3>
+            <p class="text-body-1 text-medium-emphasis mb-4">لم تقم بإضافة أي طرق دفع بعد</p>
+            <v-btn
+              color="primary"
+              prepend-icon="mdi-plus"
+              @click="showAddForm = true"
+            >
               إضافة أول طريقة دفع
-            </button>
+            </v-btn>
           </div>
 
-          <div v-else class="payment-methods-grid">
-            <div 
+          <!-- Payment Methods Grid -->
+          <v-row v-else>
+            <v-col 
               v-for="method in paymentMethods" 
               :key="method.id" 
-              class="payment-card"
-              :class="{ default: method.isDefault }"
+              cols="12" 
+              md="6"
+              lg="4"
             >
-              <div class="payment-header">
-                <div class="payment-info">
-                  <div class="payment-type">
-                    <i :class="getPaymentIcon(method.type)"></i>
-                    <span>{{ getPaymentTypeName(method.type) }}</span>
+              <v-card 
+                class="payment-card h-100"
+                :class="{ 'default-payment': method.isDefault }"
+                elevation="2"
+                hover
+              >
+                <v-card-title class="d-flex align-center justify-space-between">
+                  <div>
+                    <div class="d-flex align-center mb-2">
+                      <v-icon :icon="getPaymentIcon(method.type)" class="me-2" />
+                      <span class="text-body-2">{{ getPaymentTypeName(method.type) }}</span>
+                    </div>
+                    <h3 class="text-h6">{{ method.title }}</h3>
                   </div>
-                  <h3 class="payment-title">{{ method.title }}</h3>
-                </div>
-                <div class="payment-actions">
-                  <button 
-                    v-if="!method.isDefault" 
-                    class="default-btn" 
-                    @click="setDefault(method.id)"
-                  >
-                    <i class="fa-solid fa-star"></i>
-                    افتراضي
-                  </button>
-                  <div class="action-buttons">
-                    <button class="edit-btn" @click="editPaymentMethod(method)">
-                      <i class="fa-solid fa-edit"></i>
-                    </button>
-                    <button class="delete-btn" @click="deletePaymentMethod(method.id)">
-                      <i class="fa-solid fa-trash"></i>
-                    </button>
+                  <div class="d-flex gap-1">
+                    <v-btn
+                      v-if="!method.isDefault"
+                      size="small"
+                      variant="text"
+                      color="warning"
+                      @click="setDefault(method.id)"
+                    >
+                      <v-icon>mdi-star</v-icon>
+                      افتراضي
+                    </v-btn>
+                    <v-btn
+                      size="small"
+                      variant="text"
+                      @click="editPaymentMethod(method)"
+                    >
+                      <v-icon>mdi-pencil</v-icon>
+                    </v-btn>
+                    <v-btn
+                      size="small"
+                      variant="text"
+                      color="error"
+                      @click="deletePaymentMethod(method.id)"
+                    >
+                      <v-icon>mdi-delete</v-icon>
+                    </v-btn>
                   </div>
-                </div>
-              </div>
+                </v-card-title>
 
-              <div class="payment-details">
-                <div v-if="method.type === 'card'" class="card-details">
-                  <div class="card-number">
-                    <i class="fa-solid fa-credit-card"></i>
-                    <span>**** **** **** {{ method.last4 }}</span>
-                  </div>
-                  <div class="card-info">
-                    <div class="card-row">
-                      <span class="label">صاحب البطاقة:</span>
-                      <span class="value">{{ method.cardholderName }}</span>
-                    </div>
-                    <div class="card-row">
-                      <span class="label">تاريخ الانتهاء:</span>
-                      <span class="value">{{ method.expiryMonth }}/{{ method.expiryYear }}</span>
-                    </div>
-                  </div>
-                </div>
+                <v-divider />
 
-                <div v-else-if="method.type === 'bank'" class="bank-details">
-                  <div class="bank-info">
-                    <div class="bank-row">
-                      <span class="label">البنك:</span>
-                      <span class="value">{{ method.bankName }}</span>
-                    </div>
-                    <div class="bank-row">
-                      <span class="label">اسم الحساب:</span>
-                      <span class="value">{{ method.accountName }}</span>
-                    </div>
-                    <div class="bank-row">
-                      <span class="label">رقم الحساب:</span>
-                      <span class="value">****{{ method.last4 }}</span>
-                    </div>
+                <v-card-text>
+                  <!-- Card Details -->
+                  <div v-if="method.type === 'card'" class="card-details">
+                    <v-list density="compact">
+                      <v-list-item>
+                        <template v-slot:prepend>
+                          <v-icon>mdi-credit-card</v-icon>
+                        </template>
+                        <v-list-item-title>**** **** **** {{ method.last4 }}</v-list-item-title>
+                      </v-list-item>
+                      <v-list-item>
+                        <template v-slot:prepend>
+                          <v-icon>mdi-account</v-icon>
+                        </template>
+                        <v-list-item-title>{{ method.cardholderName }}</v-list-item-title>
+                        <v-list-item-subtitle>صاحب البطاقة</v-list-item-subtitle>
+                      </v-list-item>
+                      <v-list-item>
+                        <template v-slot:prepend>
+                          <v-icon>mdi-calendar</v-icon>
+                        </template>
+                        <v-list-item-title>{{ method.expiryMonth }}/{{ method.expiryYear }}</v-list-item-title>
+                        <v-list-item-subtitle>تاريخ الانتهاء</v-list-item-subtitle>
+                      </v-list-item>
+                    </v-list>
                   </div>
-                </div>
 
-                <div v-else-if="method.type === 'wallet'" class="wallet-details">
-                  <div class="wallet-info">
+                  <!-- Bank Details -->
+                  <div v-else-if="method.type === 'bank'" class="bank-details">
+                    <v-list density="compact">
+                      <v-list-item>
+                        <template v-slot:prepend>
+                          <v-icon>mdi-bank</v-icon>
+                        </template>
+                        <v-list-item-title>{{ method.bankName }}</v-list-item-title>
+                        <v-list-item-subtitle>اسم البنك</v-list-item-subtitle>
+                      </v-list-item>
+                      <v-list-item>
+                        <template v-slot:prepend>
+                          <v-icon>mdi-account</v-icon>
+                        </template>
+                        <v-list-item-title>{{ method.accountName }}</v-list-item-title>
+                        <v-list-item-subtitle>اسم الحساب</v-list-item-subtitle>
+                      </v-list-item>
+                      <v-list-item>
+                        <template v-slot:prepend>
+                          <v-icon>mdi-numeric</v-icon>
+                        </template>
+                        <v-list-item-title>{{ method.accountNumber }}</v-list-item-title>
+                        <v-list-item-subtitle>رقم الحساب</v-list-item-subtitle>
+                      </v-list-item>
+                      <v-list-item v-if="method.iban">
+                        <template v-slot:prepend>
+                          <v-icon>mdi-bank-transfer</v-icon>
+                        </template>
+                        <v-list-item-title>{{ method.iban }}</v-list-item-title>
+                        <v-list-item-subtitle>IBAN</v-list-item-subtitle>
+                      </v-list-item>
+                    </v-list>
+                  </div>
+
+                  <!-- Wallet Details -->
+                  <div v-else-if="method.type === 'wallet'" class="wallet-details">
+                    <v-list density="compact">
+                      <v-list-item>
+                        <template v-slot:prepend>
+                          <v-icon>mdi-wallet</v-icon>
+                        </template>
+                        <v-list-item-title>{{ method.walletProvider }}</v-list-item-title>
+                        <v-list-item-subtitle>المحفظة</v-list-item-subtitle>
+                      </v-list-item>
+                      <v-list-item>
+                        <template v-slot:prepend>
+                          <v-icon>mdi-phone</v-icon>
+                        </template>
+                        <v-list-item-title>{{ method.phoneNumber }}</v-list-item-title>
+                        <v-list-item-subtitle>رقم الهاتف</v-list-item-subtitle>
+                      </v-list-item>
+                    </v-list>
+                  </div>
+                </v-card-text>
+
+                <v-card-actions v-if="method.isDefault">
+                  <v-chip color="warning" variant="tonal" size="small">
+                    <v-icon start>mdi-star</v-icon>
+                    طريقة الدفع الافتراضية
+                  </v-chip>
+                </v-card-actions>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+    </v-container>
+
+    <!-- Add/Edit Payment Method Dialog -->
+    <v-dialog v-model="showAddForm" max-width="600" persistent>
+      <v-card>
+        <v-card-title>
+          <span class="text-h5">{{ editingPaymentMethod ? 'تعديل طريقة الدفع' : 'إضافة طريقة دفع جديدة' }}</span>
+        </v-card-title>
+        
+        <v-card-text>
+          <v-form ref="paymentForm" v-model="formValid">
+            <!-- Payment Type Selection -->
+            <v-select
+              v-model="paymentForm.type"
+              :items="paymentTypes"
+              label="نوع طريقة الدفع"
+              variant="outlined"
+              :rules="[v => !!v || 'هذا الحقل مطلوب']"
+              required
+            />
+
+            <!-- Card Fields -->
+            <div v-if="paymentForm.type === 'card'">
+              <v-text-field
+                v-model="paymentForm.title"
+                label="اسم البطاقة"
+                placeholder="مثلاً: البطاقة الشخصية"
+                variant="outlined"
+                :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                required
+              />
+              <v-text-field
+                v-model="paymentForm.cardholderName"
+                label="الاسم على البطاقة"
+                variant="outlined"
+                :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                required
+              />
+              <v-text-field
+                v-model="paymentForm.cardNumber"
+                label="رقم البطاقة"
+                variant="outlined"
+                :rules="[v => !!v || 'هذا الحقل مطلوب', v => v.length === 16 || 'رقم بطاقة غير صالح']"
+                maxlength="16"
+                required
+              />
+              <v-row>
+                <v-col cols="6">
+                  <v-text-field
+                    v-model="paymentForm.expiryMonth"
+                    label="الشهر"
+                    variant="outlined"
+                    :rules="[v => !!v || 'هذا الحقل مطلوب', v => (v >= 1 && v <= 12) || 'شهر غير صالح']"
+                    maxlength="2"
+                    required
+                  />
+                </v-col>
+                <v-col cols="6">
+                  <v-text-field
+                    v-model="paymentForm.expiryYear"
+                    label="السنة"
+                    variant="outlined"
+                    :rules="[v => !!v || 'هذا الحقل مطلوب', v => v.length === 2 || 'سنة غير صالحة']"
+                    maxlength="2"
+                    required
+                  />
+                </v-col>
+              </v-row>
+              <v-text-field
+                v-model="paymentForm.cvv"
+                label="CVV"
+                variant="outlined"
+                :rules="[v => !!v || 'هذا الحقل مطلوب', v => v.length === 3 || 'CVV غير صالح']"
+                maxlength="3"
+                type="password"
+                required
+              />
+            </div>
+
+            <!-- Bank Fields -->
+            <div v-else-if="paymentForm.type === 'bank'">
+              <v-text-field
+                v-model="paymentForm.title"
+                label="اسم الحساب"
+                placeholder="مثلاً: حساب البنك الوطني"
+                variant="outlined"
+                :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                required
+              />
+              <v-text-field
+                v-model="paymentForm.bankName"
+                label="اسم البنك"
+                variant="outlined"
+                :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                required
+              />
+              <v-text-field
+                v-model="paymentForm.accountName"
+                label="اسم صاحب الحساب"
+                variant="outlined"
+                :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                required
+              />
+              <v-text-field
+                v-model="paymentForm.accountNumber"
+                label="رقم الحساب"
+                variant="outlined"
+                :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                required
+              />
+              <v-text-field
+                v-model="paymentForm.iban"
+                label="IBAN"
+                variant="outlined"
+              />
+            </div>
+
+            <!-- Wallet Fields -->
+            <div v-else-if="paymentForm.type === 'wallet'">
+              <v-text-field
+                v-model="paymentForm.title"
+                label="اسم المحفظة"
+                placeholder="مثلاً: محفظة CIB"
+                variant="outlined"
+                :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                required
+              />
+              <v-select
+                v-model="paymentForm.walletProvider"
+                :items="walletProviders"
+                label="مزود المحفظة"
+                variant="outlined"
+                :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                required
+              />
+              <v-text-field
+                v-model="paymentForm.phoneNumber"
+                label="رقم الهاتف"
+                variant="outlined"
+                :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                required
+              />
+            </div>
+          </v-form>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer />
+          <v-btn @click="closeForm">إلغاء</v-btn>
+          <v-btn 
+            color="primary" 
+            @click="savePaymentMethod"
+            :loading="saving"
+            :disabled="!formValid"
+          >
+            {{ editingPaymentMethod ? 'تحديث' : 'حفظ' }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-main>
+<script setup>
+import { ref, reactive, computed, onMounted } from 'vue';
+import PaymentService from '@/integration/services/PaymentService';
+
+// Reactive data
+const overlayActive = ref(true);
+const loading = ref(false);
+const saving = ref(false);
+const showAddForm = ref(false);
+const editingPaymentMethod = ref(null);
+const formValid = ref(false);
+const paymentForm = ref(null);
+
+const paymentMethods = ref([]);
+const paymentForm = reactive({
+  type: '',
+  title: '',
+  // Card fields
+  cardholderName: '',
+  cardNumber: '',
+  expiryMonth: '',
+  expiryYear: '',
+  cvv: '',
+  // Bank fields
+  bankName: '',
+  accountName: '',
+  accountNumber: '',
+  iban: '',
+  // Wallet fields
+  walletProvider: '',
+  phoneNumber: ''
+});
+
+// Payment types from API
+const paymentTypes = computed(() => [
+  { value: 'card', label: 'بطاقة ائتمان', icon: 'mdi-credit-card' },
+  { value: 'bank', label: 'تحويل بنكي', icon: 'mdi-bank' },
+  { value: 'wallet', label: 'محفظة إلكترونية', icon: 'mdi-wallet' }
+]);
+
+// Wallet providers from API
+const walletProviders = computed(() => [
+  { value: 'cib', label: 'CIB Wallet', icon: 'mdi-cellphone' },
+  { value: 'edahabia', label: 'Edahabia', icon: 'mdi-cellphone-android' },
+  { value: 'baridimob', label: 'BaridiMob', icon: 'mdi-cellphone-text' }
+]);
+
+// Methods
+const loadPaymentMethods = async () => {
+  loading.value = true;
+  try {
+    // Fetch from API
+    const methods = await PaymentService.getPaymentMethods();
+    paymentMethods.value = methods;
+    console.log('✅ Payment methods loaded:', methods);
+  } catch (error) {
+    console.error('❌ Error loading payment methods:', error);
+    // Use fallback data if API fails
+    paymentMethods.value = PaymentService.getFallbackPaymentMethods();
+  } finally {
+    loading.value = false;
+  }
+};
+
+const editPaymentMethod = (method) => {
+  editingPaymentMethod.value = method;
+  Object.assign(paymentForm, method);
+  showAddForm.value = true;
+};
+
+const deletePaymentMethod = async (id) => {
+  if (confirm('هل أنت متأكد من حذف طريقة الدفع؟')) {
+    try {
+      await PaymentService.deletePaymentMethod(id);
+      paymentMethods.value = paymentMethods.value(method => method.id !== id);
+      console.log('✅ Payment method deleted:', id);
+    } catch (error) {
+      console.error('❌ Error deleting payment method:', error);
+    }
+  }
+};
+
+const setDefault = async (id) => {
+  try {
+    await PaymentService.setDefaultPaymentMethod(id);
+    paymentMethods.value.forEach(method => {
+      method.isDefault = method.id === id;
+    });
+    console.log('✅ Default payment method set:', id);
+  } catch (error) {
+    console.error('❌ Error setting default payment method:', error);
+  }
+};
+
+const savePaymentMethod = async () => {
+  if (!formValid.value) return;
+  
+  saving.value = true;
+  try {
+    let savedMethod;
+    
+    if (editingPaymentMethod.value) {
+      // Update existing method
+      savedMethod = await PaymentService.updatePaymentMethod(
+        editingPaymentMethod.value.id, 
+        paymentForm
+      );
+      const index = paymentMethods.value.findIndex(m => m.id === editingPaymentMethod.value.id);
+      if (index !== -1) {
+        paymentMethods.value[index] = savedMethod;
+      }
+    } else {
+      // Add new method
+      savedMethod = await PaymentService.createPaymentMethod(paymentForm);
+      paymentMethods.value.push(savedMethod);
+    }
+    
+    closeForm();
+    console.log('✅ Payment method saved:', savedMethod);
+  } catch (error) {
+    console.error('❌ Error saving payment method:', error);
+  } finally {
+    saving.value = false;
+  }
+};
+
+const closeForm = () => {
+  showAddForm.value = false;
+  editingPaymentMethod.value = null;
+  Object.assign(paymentForm, {
+    type: '',
+    title: '',
+    cardholderName: '',
+    cardNumber: '',
+    expiryMonth: '',
+    expiryYear: '',
+    cvv: '',
+    bankName: '',
+    accountName: '',
+    accountNumber: '',
+    iban: '',
+    walletProvider: '',
+    phoneNumber: ''
+  });
+  
+  // Reset form validation
+  if (paymentForm.value) {
+    paymentForm.value.reset();
+  }
+};
+
+const getPaymentIcon = (type) => {
+  const iconMap = {
+    card: 'mdi-credit-card',
+    bank: 'mdi-bank',
+    wallet: 'mdi-wallet'
+  };
+  return iconMap[type] || 'mdi-credit-card';
+};
+
+const getPaymentTypeName = (type) => {
+  const nameMap = {
+    card: 'بطاقة ائتمان',
+    bank: 'تحويل بنكي',
+    wallet: 'محفظة إلكترونية'
+  };
+  return nameMap[type] || type;
+};
+
+onMounted(() => {
+  loadPaymentMethods();
+});
+</script>
+
+<style scoped>
+.bg-effects {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.floating-orb {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, transparent 70%);
+  animation: float 6s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 300px;
+  height: 300px;
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 200px;
+  height: 200px;
+  top: 60%;
+  right: 15%;
+  animation-delay: 2s;
+}
+
+.orb-3 {
+  width: 250px;
+  height: 250px;
+  bottom: 20%;
+  left: 60%;
+  animation-delay: 4s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+.glass-card {
+  background: rgba(var(--v-theme-surface), 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(var(--v-theme-outline), 0.2);
+  border-radius: 24px;
+  margin-top: 80px;
+}
+
+.payment-card {
+  background: rgba(var(--v-theme-surface-variant), 0.05);
+  border: 1px solid rgba(var(--v-theme-outline), 0.1);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.payment-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.default-payment {
+  border-color: var(--v-theme-warning);
+  background: rgba(var(--v-theme-warning), 0.05);
+}
+
+.card-details,
+.bank-details,
+.wallet-details {
+  min-height: 120px;
+}
+
+@media (max-width: 768px) {
+  .glass-card {
+    margin-top: 20px;
+    border-radius: 16px;
+  }
+}
+</style>
                     <div class="wallet-row">
                       <span class="label">المحفظة:</span>
                       <span class="value">{{ method.walletProvider }}</span>

@@ -26,7 +26,7 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-dev-key-change-me')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [host.strip() for host in os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',') if host.strip()]
 
@@ -45,10 +45,8 @@ INSTALLED_APPS = [
     # 'rest_framework',  # REMOVED - Using GraphQL only
     # 'rest_framework_simplejwt',  # REMOVED - Using GraphQL JWT
     'graphene_django',
-    # Added for WebSocket support
-    'channels',
-    # Added for background tasks
-    'django_q',
+    # 'channels',  # DISABLED - cgi module issue
+    # 'django_q',  # DISABLED - pkg_resources issue
     # Local apps
     'api',
 ]

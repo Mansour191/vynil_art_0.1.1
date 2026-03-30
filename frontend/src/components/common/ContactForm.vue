@@ -103,6 +103,7 @@ import { reactive, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useVuelidate } from '@vuelidate/core';
 import { required, email, minLength, helpers } from '@vuelidate/validators';
+import ContactService from '@/integration/services/ContactService';
 
 const { t } = useI18n();
 
@@ -144,26 +145,39 @@ const submitContactForm = async () => {
 
   sending.value = true;
   formStatus.value = null;
+  
   try {
-    // محاكاة إرسال الطلب
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    formStatus.value = {
-      type: 'success',
-      icon: 'fa-solid fa-check-circle',
-      message: t('messageSent'),
-    };
+    // إرسال النموذج عبر API
+    const result = await ContactService.sendContactForm(contactForm);
     
-    // إعادة تعيين النموذج
-    contactForm.name = '';
-    contactForm.email = '';
-    contactForm.phone = '';
-    contactForm.message = '';
-    v$.value.$reset();
+    if (result.success) {
+      formStatus.value = {
+        type: 'success',
+        icon: 'mdi-check-circle',
+        message: result.message
+      };
+      
+      // إعادة تعيين النموذج
+      contactForm.name = '';
+      contactForm.email = '';
+      contactForm.phone = '';
+      contactForm.message = '';
+      v$.value.$reset();
+      
+      console.log('✅ Contact form sent successfully:', result.data);
+    } else {
+      formStatus.value = {
+        type: 'error',
+        icon: 'mdi-alert-circle',
+        message: result.message
+      };
+    }
   } catch (error) {
+    console.error('❌ Error sending contact form:', error);
     formStatus.value = {
       type: 'error',
-      icon: 'fa-solid fa-exclamation-circle',
-      message: t('messageError'),
+      icon: 'mdi-alert-circle',
+      message: t('messageError') || 'حدث خطأ أثناء إرسال الرسالة'
     };
   } finally {
     sending.value = false;
@@ -172,5 +186,4 @@ const submitContactForm = async () => {
     }, 5000);
   }
 };
-</script>
 

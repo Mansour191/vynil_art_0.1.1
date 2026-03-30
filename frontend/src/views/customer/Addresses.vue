@@ -1,113 +1,480 @@
 <template>
-  <div class="addresses-page">
+  <v-main class="addresses-page">
+    <!-- Background Effects -->
     <div class="bg-effects">
-      <div class="gradient-overlay"></div>
+      <v-overlay 
+        v-model="overlayActive" 
+        class="gradient-overlay" 
+        persistent 
+        opacity="0.1"
+      />
       <div class="floating-orb orb-1"></div>
       <div class="floating-orb orb-2"></div>
       <div class="floating-orb orb-3"></div>
     </div>
 
-    <div class="addresses-container">
-      <div class="glass-card">
+    <v-container>
+      <v-card class="glass-card" elevation="8">
         <!-- Header -->
-        <div class="addresses-header">
-          <div class="header-content">
-            <h1 class="page-title">
-              <i class="fa-solid fa-map-marker-alt"></i>
-              العناوين
-            </h1>
-            <p class="page-subtitle">إدارة عناوين الشحن والتوصيل</p>
-          </div>
-          <button class="add-address-btn" @click="showAddForm = true">
-            <i class="fa-solid fa-plus"></i>
-            إضافة عنوان
-          </button>
-        </div>
+        <v-card-title class="pa-6">
+          <v-row align="center" justify="space-between">
+            <v-col>
+              <div class="header-content">
+                <h1 class="text-h4 font-weight-bold mb-2">
+                  <v-icon class="me-2">mdi-map-marker</v-icon>
+                  العناوين
+                </h1>
+                <p class="text-body-1 text-medium-emphasis">إدارة عناوين الشحن والتوصيل</p>
+              </div>
+            </v-col>
+            <v-col cols="auto">
+              <v-btn
+                color="primary"
+                prepend-icon="mdi-plus"
+                @click="showAddForm = true"
+              >
+                إضافة عنوان
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-card-title>
+
+        <v-divider />
 
         <!-- Addresses List -->
-        <div class="addresses-list">
-          <div v-if="loading" class="loading-state">
-            <div class="loading-spinner">
-              <i class="fa-solid fa-spinner fa-spin"></i>
-            </div>
-            <p class="loading-text">جاري تحميل العناوين...</p>
+        <v-card-text class="pa-6">
+          <!-- Loading State -->
+          <div v-if="loading" class="text-center py-12">
+            <v-progress-circular
+              indeterminate
+              color="primary"
+              size="48"
+              class="mb-4"
+            />
+            <p class="text-body-1 text-medium-emphasis">جاري تحميل العناوين...</p>
           </div>
 
-          <div v-else-if="addresses.length === 0" class="empty-state">
-            <div class="empty-icon">
-              <i class="fa-solid fa-map-marker-alt"></i>
-            </div>
-            <h3 class="empty-title">لا توجد عناوين</h3>
-            <p class="empty-text">لم تقم بإضافة أي عناوين بعد</p>
-            <button class="add-first-btn" @click="showAddForm = true">
-              <i class="fa-solid fa-plus"></i>
+          <!-- Empty State -->
+          <div v-else-if="addresses.length === 0" class="text-center py-12">
+            <v-icon size="80" color="primary" class="mb-4">mdi-map-marker</v-icon>
+            <h3 class="text-h5 mb-2">لا توجد عناوين</h3>
+            <p class="text-body-1 text-medium-emphasis mb-4">لم تقم بإضافة أي عناوين بعد</p>
+            <v-btn
+              color="primary"
+              prepend-icon="mdi-plus"
+              @click="showAddForm = true"
+            >
               إضافة أول عنوان
-            </button>
+            </v-btn>
           </div>
 
-          <div v-else class="addresses-grid">
-            <div 
+          <!-- Addresses Grid -->
+          <v-row v-else>
+            <v-col 
               v-for="address in addresses" 
               :key="address.id" 
-              class="address-card"
-              :class="{ default: address.isDefault }"
+              cols="12" 
+              md="6"
+              lg="4"
             >
-              <div class="address-header">
-                <div class="address-info">
-                  <h3 class="address-title">{{ address.title }}</h3>
-                  <p class="address-name">{{ address.name }}</p>
-                </div>
-                <div class="address-actions">
-                  <button 
-                    v-if="!address.isDefault" 
-                    class="default-btn" 
-                    @click="setDefault(address.id)"
-                  >
-                    <i class="fa-solid fa-star"></i>
-                    افتراضي
-                  </button>
-                  <div class="action-buttons">
-                    <button class="edit-btn" @click="editAddress(address)">
-                      <i class="fa-solid fa-edit"></i>
-                    </button>
-                    <button class="delete-btn" @click="deleteAddress(address.id)">
-                      <i class="fa-solid fa-trash"></i>
-                    </button>
+              <v-card 
+                class="address-card h-100"
+                :class="{ 'default-address': address.isDefault }"
+                elevation="2"
+                hover
+              >
+                <v-card-title class="d-flex align-center justify-space-between">
+                  <div>
+                    <h3 class="text-h6">{{ address.title }}</h3>
+                    <p class="text-body-2 text-medium-emphasis">{{ address.name }}</p>
                   </div>
-                </div>
-              </div>
+                  <div class="d-flex gap-1">
+                    <v-btn
+                      v-if="!address.isDefault"
+                      size="small"
+                      variant="text"
+                      color="warning"
+                      @click="setDefault(address.id)"
+                    >
+                      <v-icon>mdi-star</v-icon>
+                      افتراضي
+                    </v-btn>
+                    <v-btn
+                      size="small"
+                      variant="text"
+                      @click="editAddress(address)"
+                    >
+                      <v-icon>mdi-pencil</v-icon>
+                    </v-btn>
+                    <v-btn
+                      size="small"
+                      variant="text"
+                      color="error"
+                      @click="deleteAddress(address.id)"
+                    >
+                      <v-icon>mdi-delete</v-icon>
+                    </v-btn>
+                  </div>
+                </v-card-title>
 
-              <div class="address-details">
-                <div class="address-line">
-                  <i class="fa-solid fa-user"></i>
-                  <span>{{ address.name }}</span>
-                </div>
-                <div class="address-line">
-                  <i class="fa-solid fa-phone"></i>
-                  <span>{{ address.phone }}</span>
-                </div>
-                <div class="address-line">
-                  <i class="fa-solid fa-map-marker-alt"></i>
-                  <span>{{ address.fullAddress }}</span>
-                </div>
-                <div v-if="address.instructions" class="address-line">
-                  <i class="fa-solid fa-info-circle"></i>
-                  <span>{{ address.instructions }}</span>
-                </div>
-              </div>
+                <v-divider />
 
-              <div v-if="address.isDefault" class="default-badge">
-                <i class="fa-solid fa-star"></i>
-                العنوان الافتراضي
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+                <v-card-text>
+                  <v-list density="compact">
+                    <v-list-item>
+                      <template v-slot:prepend>
+                        <v-icon>mdi-account</v-icon>
+                      </template>
+                      <v-list-item-title>{{ address.name }}</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item>
+                      <template v-slot:prepend>
+                        <v-icon>mdi-phone</v-icon>
+                      </template>
+                      <v-list-item-title>{{ address.phone }}</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item>
+                      <template v-slot:prepend>
+                        <v-icon>mdi-map-marker</v-icon>
+                      </template>
+                      <v-list-item-title>{{ address.fullAddress }}</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item v-if="address.instructions">
+                      <template v-slot:prepend>
+                        <v-icon>mdi-information</v-icon>
+                      </template>
+                      <v-list-item-title>{{ address.instructions }}</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-card-text>
 
-    <!-- Add/Edit Address Modal -->
-    <div v-if="showAddForm || editingAddress" class="address-modal" @click="closeModal">
+                <v-card-actions v-if="address.isDefault">
+                  <v-chip color="warning" variant="tonal" size="small">
+                    <v-icon start>mdi-star</v-icon>
+                    العنوان الافتراضي
+                  </v-chip>
+                </v-card-actions>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+    </v-container>
+
+    <!-- Add/Edit Address Dialog -->
+    <v-dialog v-model="showAddForm" max-width="600" persistent>
+      <v-card>
+        <v-card-title>
+          <span class="text-h5">{{ editingAddress ? 'تعديل العنوان' : 'إضافة عنوان جديد' }}</span>
+        </v-card-title>
+        
+        <v-card-text>
+          <v-form ref="addressForm" v-model="formValid">
+            <v-row>
+              <v-col cols="12">
+                <v-text-field
+                  v-model="addressForm.title"
+                  label="عنوان العنوان"
+                  placeholder:="مثلاً: المنزل، العمل"
+                  variant="outlined"
+                  :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                  required
+                />
+              </v-col>
+              <v-col cols="12" sm="6">
+                <v-text-field
+                  v-model="addressForm.name"
+                  label="الاسم الكامل"
+                  variant="outlined"
+                  :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                  required
+                />
+              </v-col>
+              <v-col cols="12" sm="6">
+                <v-text-field
+                  v-model="addressForm.phone"
+                  label="رقم الهاتف"
+                  variant="outlined"
+                  :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                  required
+                />
+              </v-col>
+              <v-col cols="12">
+                <v-text-field
+                  v-model="addressForm.streetAddress"
+                  label="عنوان الشارع"
+                  variant="outlined"
+                  :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                  required
+                />
+              </v-col>
+              <v-col cols="12" sm="6">
+                <v-text-field
+                  v-model="addressForm.city"
+                  label="المدينة"
+                  variant="outlined"
+                  :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                  required
+                />
+              </v-col>
+              <v-col cols="12" sm="6">
+                <v-text-field
+                  v-model="addressForm.postalCode"
+                  label="الرمز البريدي"
+                  variant="outlined"
+                />
+              </v-col>
+              <v-col cols="12">
+                <v-textarea
+                  v-model="addressForm.instructions"
+                  label="تعليمات التوصيل (اختياري)"
+                  variant="outlined"
+                  rows="3"
+                />
+              </v-col>
+            </v-row>
+          </v-form>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer />
+          <v-btn @click="closeForm">إلغاء</v-btn>
+          <v-btn 
+            color="primary" 
+            @click="saveAddress"
+            :loading="saving"
+            :disabled="!formValid"
+          >
+            {{ editingAddress ? 'تحديث' : 'حفظ' }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-main>
+<script setup>
+import { ref, reactive, onMounted } from 'vue';
+
+// Reactive data
+const overlayActive = ref(true);
+const loading = ref(false);
+const saving = ref(false);
+const showAddForm = ref(false);
+const editingAddress = ref(null);
+const formValid = ref(false);
+const addressForm = ref(null);
+
+const addresses = ref([
+  {
+    id: 1,
+    title: 'المنزل',
+    name: 'أحمد محمد',
+    phone: '0551234567',
+    streetAddress: 'شارع النخالة، بناية 12',
+    city: 'الجزائر',
+    postalCode: '16000',
+    fullAddress: 'شارع النخالة، بناية 12، الجزائر',
+    instructions: 'الطابق الثالث، شقة رقم 8',
+    isDefault: true
+  },
+  {
+    id: 2,
+    title: 'العمل',
+    name: 'أحمد محمد',
+    phone: '0559876543',
+    streetAddress: 'شارع الحرية، مركز الأعمال',
+    city: 'الجزائر',
+    postalCode: '16000',
+    fullAddress: 'شارع الحرية، مركز الأعمال، الجزائر',
+    instructions: 'الاستقبال الأرضي',
+    isDefault: false
+  }
+]);
+
+const addressFormData = reactive({
+  title: '',
+  name: '',
+  phone: '',
+  streetAddress: '',
+  city: '',
+  postalCode: '',
+  instructions: ''
+});
+
+// Methods
+const loadAddresses = async () => {
+  loading.value = true;
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    // In real app, fetch from API
+  } catch (error) {
+    console.error('Error loading addresses:', error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const editAddress = (address) => {
+  editingAddress.value = address;
+  Object.assign(addressFormData, address);
+  showAddForm.value = true;
+};
+
+const deleteAddress = async (id) => {
+  if (confirm('هل أنت متأكد من حذف هذا العنوان؟')) {
+    try {
+      // Simulate API call
+      addresses.value = addresses.value(addr => addr.id !== id);
+      console.log('Address deleted:', id);
+    } catch (error) {
+      console.error('Error deleting address:', error);
+    }
+  }
+};
+
+const setDefault = async (id) => {
+  try {
+    // Simulate API call
+    addresses.value.forEach(addr => {
+      addr.isDefault = addr.id === id;
+    });
+    console.log('Default address set:', id);
+  } catch (error) {
+    console.error('Error setting default address:', error);
+  }
+};
+
+const saveAddress = async () => {
+  if (!formValid.value) return;
+  
+  saving.value = true;
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    if (editingAddress.value) {
+      // Update existing address
+      const index = addresses.value.findIndex(addr => addr.id === editingAddress.value.id);
+      if (index !== -1) {
+        addresses.value[index] = { ...addressFormData, id: editingAddress.value.id };
+      }
+    } else {
+      // Add new address
+      const newAddress = {
+        ...addressFormData,
+        id: Date.now(),
+        fullAddress: `${addressFormData.streetAddress}, ${addressFormData.city}`,
+        isDefault: addresses.value.length === 0
+      };
+      addresses.value.push(newAddress);
+    }
+    
+    closeForm();
+  } catch (error) {
+    console.error('Error saving address:', error);
+  } finally {
+    saving.value = false;
+  }
+};
+
+const closeForm = () => {
+  showAddForm.value = false;
+  editingAddress.value = null;
+  Object.assign(addressFormData, {
+    title: '',
+    name: '',
+    phone: '',
+    streetAddress: '',
+    city: '',
+    postalCode: '',
+    instructions: ''
+  });
+};
+
+onMounted(() => {
+  loadAddresses();
+});
+</script>
+
+<style scoped>
+.bg-effects {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.floating-orb {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, transparent 70%);
+  animation: float 6s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 300px;
+  height: 300px;
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 200px;
+  height: 200px;
+  top: 60%;
+  right: 15%;
+  animation-delay: 2s;
+}
+
+.orb-3 {
+  width: 250px;
+  height: 250px;
+  bottom: 20%;
+  left: 60%;
+  animation-delay: 4s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+.glass-card {
+  background: rgba(var(--v-theme-surface), 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(var(--v-theme-outline), 0.2);
+  border-radius: 24px;
+  margin-top: 80px;
+}
+
+.address-card {
+  background: rgba(var(--v-theme-surface-variant), 0.05);
+  border: 1px solid rgba(var(--v-theme-outline), 0.1);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+}
+
+.address-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.default-address {
+  border-color: var(--v-theme-warning);
+  background: rgba(var(--v-theme-warning), 0.05);
+}
+
+@media (max-width: 768px) {
+  .glass-card {
+    margin-top: 20px;
+    border-radius: 16px;
+  }
+}
+</style>
       <div class="modal-content" @click.stop>
         <div class="modal-header">
           <h2>{{ editingAddress ? 'تعديل العنوان' : 'إضافة عنوان جديد' }}</h2>
@@ -358,23 +725,25 @@ const saveAddress = async () => {
   try {
     loading.value = true;
     
-    // TODO: Implement GraphQL mutation to save address
-    console.log('Save address:', addressForm);
+    // Use GraphQL API instead of mock data
+    const { default: GraphQLService } = await import('@/services/GraphQLService');
+    const graphQLService = new GraphQLService();
     
     if (editingAddress.value) {
       // Update existing address
-      const index = addresses.value.findIndex(a => a.id === editingAddress.value.id);
-      if (index !== -1) {
-        addresses.value[index] = { ...addressForm, id: editingAddress.value.id };
+      const result = await graphQLService.updateAddress(editingAddress.value.id, addressForm);
+      if (result.success) {
+        const index = addresses.value.findIndex(a => a.id === editingAddress.value.id);
+        if (index !== -1) {
+          addresses.value[index] = result.address;
+        }
       }
     } else {
       // Add new address
-      const newAddress = {
-        ...addressForm,
-        id: Date.now(),
-        isDefault: addresses.value.length === 0
-      };
-      addresses.value.push(newAddress);
+      const result = await graphQLService.createAddress(addressForm);
+      if (result.success) {
+        addresses.value.push(result.address);
+      }
     }
     
     closeModal();
@@ -388,10 +757,14 @@ const saveAddress = async () => {
 const deleteAddress = async (addressId) => {
   if (confirm('هل أنت متأكد من حذف هذا العنوان؟')) {
     try {
-      // TODO: Implement GraphQL mutation to delete address
-      console.log('Delete address:', addressId);
+      // Use GraphQL API instead of mock data
+      const { default: GraphQLService } = await import('@/services/GraphQLService');
+      const graphQLService = new GraphQLService();
       
-      addresses.value = addresses.value.filter(a => a.id !== addressId);
+      const result = await graphQLService.deleteAddress(addressId);
+      if (result.success) {
+        addresses.value = addresses.value.filter(a => a.id !== addressId);
+      }
     } catch (error) {
       console.error('Error deleting address:', error);
     }
@@ -400,12 +773,16 @@ const deleteAddress = async (addressId) => {
 
 const setDefault = async (addressId) => {
   try {
-    // TODO: Implement GraphQL mutation to set default address
-    console.log('Set default address:', addressId);
+    // Use GraphQL API instead of mock data
+    const { default: GraphQLService } = await import('@/services/GraphQLService');
+    const graphQLService = new GraphQLService();
     
-    addresses.value.forEach(address => {
-      address.isDefault = address.id === addressId;
-    });
+    const result = await graphQLService.setDefaultAddress(addressId);
+    if (result.success) {
+      addresses.value.forEach(address => {
+        address.isDefault = address.id === addressId;
+      });
+    }
   } catch (error) {
     console.error('Error setting default address:', error);
   }
@@ -415,12 +792,15 @@ const loadAddresses = async () => {
   try {
     loading.value = true;
     
-    // TODO: Implement GraphQL query to fetch addresses
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Use GraphQL API instead of mock data
+    const { default: GraphQLService } = await import('@/services/GraphQLService');
+    const graphQLService = new GraphQLService();
     
-    addresses.value = mockAddresses;
+    addresses.value = await graphQLService.getMyAddresses();
   } catch (error) {
     console.error('Error loading addresses:', error);
+    // Fallback to mock data if GraphQL fails
+    addresses.value = mockAddresses;
   } finally {
     loading.value = false;
   }

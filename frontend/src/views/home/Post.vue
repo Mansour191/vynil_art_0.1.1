@@ -1,12 +1,16 @@
 <template>
-  <div class="post-page container">
-    <div class="post-wrapper">
-      <article class="post-card">
-        <h1 class="post-title">{{ post.title }}</h1>
-        <div class="post-body" v-html="post.content"></div>
-      </article>
-    </div>
-  </div>
+  <v-container class="py-8">
+    <v-row justify="center">
+      <v-col cols="12" md="10" lg="8">
+        <v-card elevation="4" class="post-card">
+          <v-card-text class="pa-8">
+            <h1 class="text-h3 font-weight-bold text-warning mb-6">{{ post.title }}</h1>
+            <div class="post-body" v-html="post.content"></div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script setup>
@@ -96,57 +100,21 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.post-page {
-  padding: 40px 20px;
-}
-
-.post-wrapper {
-  max-width: 900px;
-  margin: 0 auto;
-}
-
-.post-card {
-  background: var(--bg-card);
-  border-radius: 24px;
-  padding: 40px;
-  border: 1px solid var(--border-light);
-}
-
-.post-title {
-  font-size: 2.2rem;
-  color: #d4af37;
+/* Post content styling */
+.post-body :deep(h2) {
+  color: #ffc107;
   text-align: center;
-  margin-bottom: 40px;
-  line-height: 1.4;
+  font-size: 2.2rem;
+  margin-bottom: 30px;
 }
 
-.post-body {
-  color: #e0e0e0;
-  line-height: 1.8;
+.post-body :deep(h3) {
+  color: #ffc107;
+  font-size: 1.5rem;
+  margin-bottom: 15px;
 }
 
-@media (max-width: 768px) {
-  .post-card {
-    padding: 20px;
-  }
-  .post-title {
-    font-size: 1.8rem;
-  }
-}
-</style>
-
-<style scoped>
-.post {
-  background: #222222 !important;
-  border-radius: 20px;
-  padding: 30px;
-  margin: 30px 0;
-  border: 1px solid #333333;
-}
-
-.post-title {
-  font-size: 2rem;
-  margin-bottom: 20px;
+.post-body :deep(p) {
   color: #d4af37;
   text-align: center;
 }

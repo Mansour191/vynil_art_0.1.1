@@ -28,7 +28,9 @@ from .models import (
     UserProfile, Material, ProductImage, Coupon, OrderTimeline, Payment,
     CartItem, Wishlist, Review, ReviewReport, DesignCategory, Design,
     Notification, Alert, ERPNextSyncLog, BehaviorTracking, Forecast,
-    CustomerSegment, PricingEngine
+    CustomerSegment, PricingEngine, MediaFile, Address, Inventory,
+    WishlistSettings, DashboardSettings, DashboardStats, ProductAnalytics,
+    RegionalAnalytics, InvestorMetrics, SalesForecast
 )
 
 User = get_user_model()
@@ -219,6 +221,74 @@ class PricingEngineType(DjangoObjectType):
     class Meta:
         model = PricingEngine
         fields = ("id", "raw_material_cost", "labor_cost", "international_shipping")
+
+# --- New Model Types ---
+
+class MediaFileType(DjangoObjectType):
+    product = graphene.Field(ProductType)
+    
+    class Meta:
+        model = MediaFile
+        fields = ("id", "title", "file", "file_type", "description", "product", "is_active", "created_at")
+
+class AddressType(DjangoObjectType):
+    user = graphene.Field(UserType)
+    
+    class Meta:
+        model = Address
+        fields = ("id", "user", "type", "title", "street_address", "city", "state", "postal_code", "country", "is_default", "created_at", "updated_at")
+
+class InventoryType(DjangoObjectType):
+    product = graphene.Field(ProductType)
+    
+    class Meta:
+        model = Inventory
+        fields = ("id", "product", "quantity", "reorder_level", "max_stock", "status", "last_restocked", "cost_per_unit", "location", "notes", "updated_at")
+
+class WishlistSettingsType(DjangoObjectType):
+    user = graphene.Field(UserType)
+    
+    class Meta:
+        model = WishlistSettings
+        fields = ("id", "user", "auto_notify", "public_wishlist", "share_link", "created_at", "updated_at")
+
+class DashboardSettingsType(DjangoObjectType):
+    user = graphene.Field(UserType)
+    
+    class Meta:
+        model = DashboardSettings
+        fields = ("id", "user", "theme", "language", "notifications_enabled", "email_notifications", "dashboard_layout", "default_view", "created_at", "updated_at")
+
+# --- Analytics Types ---
+
+class DashboardStatsType(DjangoObjectType):
+    class Meta:
+        model = DashboardStats
+        fields = ("id", "period", "date", "total_sales", "total_orders", "new_customers", "active_customers", "average_order_value", "created_at")
+
+class ProductAnalyticsType(DjangoObjectType):
+    product = graphene.Field(ProductType)
+    
+    class Meta:
+        model = ProductAnalytics
+        fields = ("id", "product", "date", "views", "sales", "revenue", "conversion_rate", "created_at")
+
+class RegionalAnalyticsType(DjangoObjectType):
+    class Meta:
+        model = RegionalAnalytics
+        fields = ("id", "wilaya", "date", "total_sales", "total_orders", "unique_customers", "created_at")
+
+class InvestorMetricsType(DjangoObjectType):
+    class Meta:
+        model = InvestorMetrics
+        fields = ("id", "period", "date", "total_revenue", "catalog_progress", "sales_growth", "active_investors", "roi", "created_at")
+
+class SalesForecastType(DjangoObjectType):
+    product = graphene.Field(ProductType)
+    
+    class Meta:
+        model = SalesForecast
+        fields = ("id", "product", "forecast_date", "predicted_sales", "predicted_revenue", "confidence_score", "model_version", "created_at", "updated_at")
 
 # --- Auth Responses ---
 
@@ -984,6 +1054,28 @@ class Query(ERPNextQuery, ObjectType):
     alerts = graphene.List(AlertType)
     myAlerts = graphene.List(AlertType)
     
+    # New Model Queries
+    mediaFiles = graphene.List(MediaFileType)
+    mediaFile = graphene.Field(MediaFileType, id=graphene.ID())
+    addresses = graphene.List(AddressType)
+    address = graphene.Field(AddressType, id=graphene.ID())
+    myAddresses = graphene.List(AddressType)
+    inventory = graphene.List(InventoryType)
+    inventoryItem = graphene.Field(InventoryType, id=graphene.ID())
+    productInventory = graphene.Field(InventoryType, product_id=graphene.ID())
+    wishlistSettings = graphene.List(WishlistSettingsType)
+    myWishlistSettings = graphene.Field(WishlistSettingsType)
+    dashboardSettings = graphene.List(DashboardSettingsType)
+    myDashboardSettings = graphene.Field(DashboardSettingsType)
+    
+    # Analytics Queries
+    dashboardStats = graphene.List(DashboardStatsType, period=graphene.String(), date_from=graphene.Date(), date_to=graphene.Date())
+    productAnalytics = graphene.List(ProductAnalyticsType, product_id=graphene.ID(), date_from=graphene.Date(), date_to=graphene.Date())
+    regionalAnalytics = graphene.List(RegionalAnalyticsType, wilaya=graphene.String(), date_from=graphene.Date(), date_to=graphene.Date())
+    investorMetrics = graphene.List(InvestorMetricsType, period=graphene.String(), date_from=graphene.Date(), date_to=graphene.Date())
+    salesForecasts = graphene.List(SalesForecastType, product_id=graphene.ID(), date_from=graphene.Date(), date_to=graphene.Date())
+    topProducts = graphene.List(ProductAnalyticsType, limit=graphene.Int(), date_from=graphene.Date(), date_to=graphene.Date())
+    
     def resolve_me(self, info):
         if info.context.user.is_authenticated:
             return info.context.user
@@ -1140,6 +1232,208 @@ class Query(ERPNextQuery, ObjectType):
         if info.context.user.is_authenticated:
             return Wishlist.objects.filter(user=info.context.user).select_related('product')
         return Wishlist.objects.none()
+    
+    # New Model Resolvers
+    def resolve_mediaFiles(self, info):
+        if info.context.user.is_authenticated and info.context.user.is_staff:
+            return MediaFile.objects.all().select_related('product')
+        return MediaFile.objects.filter(is_active=True)
+    
+    def resolve_mediaFile(self, info, **kwargs):
+        id = kwargs.get('id')
+        if not id:
+            return None
+        try:
+            if info.context.user.is_authenticated and info.context.user.is_staff:
+                return MediaFile.objects.get(pk=id).select_related('product')
+            else:
+                return MediaFile.objects.get(pk=id, is_active=True).select_related('product')
+        except MediaFile.DoesNotExist:
+            return None
+    
+    def resolve_addresses(self, info):
+        if info.context.user.is_authenticated and info.context.user.is_staff:
+            return Address.objects.all().select_related('user')
+        return Address.objects.none()
+    
+    def resolve_address(self, info, **kwargs):
+        id = kwargs.get('id')
+        if not id:
+            return None
+        try:
+            if info.context.user.is_authenticated and info.context.user.is_staff:
+                return Address.objects.get(pk=id).select_related('user')
+            else:
+                return Address.objects.get(pk=id, user=info.context.user).select_related('user')
+        except Address.DoesNotExist:
+            return None
+    
+    def resolve_myAddresses(self, info):
+        if info.context.user.is_authenticated:
+            return Address.objects.filter(user=info.context.user).select_related('user')
+        return Address.objects.none()
+    
+    def resolve_inventory(self, info):
+        if info.context.user.is_authenticated and info.context.user.is_staff:
+            return Inventory.objects.all().select_related('product')
+        return Inventory.objects.none()
+    
+    def resolve_inventoryItem(self, info, **kwargs):
+        id = kwargs.get('id')
+        if not id:
+            return None
+        try:
+            if info.context.user.is_authenticated and info.context.user.is_staff:
+                return Inventory.objects.get(pk=id).select_related('product')
+            else:
+                return None  # Regular users can't access inventory details
+        except Inventory.DoesNotExist:
+            return None
+    
+    def resolve_productInventory(self, info, **kwargs):
+        product_id = kwargs.get('product_id')
+        if not product_id:
+            return None
+        try:
+            if info.context.user.is_authenticated and info.context.user.is_staff:
+                return Inventory.objects.get(product_id=product_id).select_related('product')
+            else:
+                return None  # Regular users can't access inventory details
+        except Inventory.DoesNotExist:
+            return None
+    
+    def resolve_wishlistSettings(self, info):
+        if info.context.user.is_authenticated and info.context.user.is_staff:
+            return WishlistSettings.objects.all().select_related('user')
+        return WishlistSettings.objects.none()
+    
+    def resolve_myWishlistSettings(self, info):
+        if info.context.user.is_authenticated:
+            try:
+                return WishlistSettings.objects.get(user=info.context.user).select_related('user')
+            except WishlistSettings.DoesNotExist:
+                return None
+        return None
+    
+    def resolve_dashboardSettings(self, info):
+        if info.context.user.is_authenticated and info.context.user.is_staff:
+            return DashboardSettings.objects.all().select_related('user')
+        return DashboardSettings.objects.none()
+    
+    def resolve_myDashboardSettings(self, info):
+        if info.context.user.is_authenticated:
+            try:
+                return DashboardSettings.objects.get(user=info.context.user).select_related('user')
+            except DashboardSettings.DoesNotExist:
+                return None
+        return None
+    
+    # Analytics Resolvers
+    def resolve_dashboardStats(self, info, **kwargs):
+        if info.context.user.is_authenticated and info.context.user.is_staff:
+            queryset = DashboardStats.objects.all()
+            
+            period = kwargs.get('period')
+            date_from = kwargs.get('date_from')
+            date_to = kwargs.get('date_to')
+            
+            if period:
+                queryset = queryset.filter(period=period)
+            if date_from:
+                queryset = queryset.filter(date__gte=date_from)
+            if date_to:
+                queryset = queryset.filter(date__lte=date_to)
+                
+            return queryset.order_by('-date')
+        return DashboardStats.objects.none()
+    
+    def resolve_productAnalytics(self, info, **kwargs):
+        if info.context.user.is_authenticated and info.context.user.is_staff:
+            queryset = ProductAnalytics.objects.all().select_related('product')
+            
+            product_id = kwargs.get('product_id')
+            date_from = kwargs.get('date_from')
+            date_to = kwargs.get('date_to')
+            
+            if product_id:
+                queryset = queryset.filter(product_id=product_id)
+            if date_from:
+                queryset = queryset.filter(date__gte=date_from)
+            if date_to:
+                queryset = queryset.filter(date__lte=date_to)
+                
+            return queryset.order_by('-date')
+        return ProductAnalytics.objects.none()
+    
+    def resolve_regionalAnalytics(self, info, **kwargs):
+        if info.context.user.is_authenticated and info.context.user.is_staff:
+            queryset = RegionalAnalytics.objects.all()
+            
+            wilaya = kwargs.get('wilaya')
+            date_from = kwargs.get('date_from')
+            date_to = kwargs.get('date_to')
+            
+            if wilaya:
+                queryset = queryset.filter(wilaya=wilaya)
+            if date_from:
+                queryset = queryset.filter(date__gte=date_from)
+            if date_to:
+                queryset = queryset.filter(date__lte=date_to)
+                
+            return queryset.order_by('-date')
+        return RegionalAnalytics.objects.none()
+    
+    def resolve_investorMetrics(self, info, **kwargs):
+        if info.context.user.is_authenticated and info.context.user.is_staff:
+            queryset = InvestorMetrics.objects.all()
+            
+            period = kwargs.get('period')
+            date_from = kwargs.get('date_from')
+            date_to = kwargs.get('date_to')
+            
+            if period:
+                queryset = queryset.filter(period=period)
+            if date_from:
+                queryset = queryset.filter(date__gte=date_from)
+            if date_to:
+                queryset = queryset.filter(date__lte=date_to)
+                
+            return queryset.order_by('-date')
+        return InvestorMetrics.objects.none()
+    
+    def resolve_salesForecasts(self, info, **kwargs):
+        if info.context.user.is_authenticated and info.context.user.is_staff:
+            queryset = SalesForecast.objects.all().select_related('product')
+            
+            product_id = kwargs.get('product_id')
+            date_from = kwargs.get('date_from')
+            date_to = kwargs.get('date_to')
+            
+            if product_id:
+                queryset = queryset.filter(product_id=product_id)
+            if date_from:
+                queryset = queryset.filter(forecast_date__gte=date_from)
+            if date_to:
+                queryset = queryset.filter(forecast_date__lte=date_to)
+                
+            return queryset.order_by('-forecast_date')
+        return SalesForecast.objects.none()
+    
+    def resolve_topProducts(self, info, **kwargs):
+        if info.context.user.is_authenticated and info.context.user.is_staff:
+            queryset = ProductAnalytics.objects.all().select_related('product')
+            
+            date_from = kwargs.get('date_from')
+            date_to = kwargs.get('date_to')
+            limit = kwargs.get('limit', 10)
+            
+            if date_from:
+                queryset = queryset.filter(date__gte=date_from)
+            if date_to:
+                queryset = queryset.filter(date__lte=date_to)
+                
+            return queryset.order_by('-sales', '-revenue')[:limit]
+        return ProductAnalytics.objects.none()
     
     # Review resolvers
     def resolve_reviews(self, info, **kwargs):

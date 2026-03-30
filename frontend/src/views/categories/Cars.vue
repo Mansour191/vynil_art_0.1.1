@@ -1,49 +1,37 @@
 <template>
   <CategoryTemplate
-    icon="fa-solid fa-car"
+    :icon="categoryData?.icon || 'fa-solid fa-car'"
     titleKey="carsTitle"
     descriptionKey="carsDescription"
     labelKey="carsLabel"
     latestLabelKey="latestCarDesigns"
-    :subCategories="carCategories"
+    :subCategories="subCategories"
     badgeLabel="carWrap"
-  >
-    <!-- يمكنك إضافة أقسام مخصصة هنا إذا أردت استخدام السلوتس مستقبلاً -->
-  </CategoryTemplate>
+  />
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import CategoryTemplate from '@/components/CategoryTemplate.vue';
+import CategoryService from '@/integration/services/CategoryService';
 
-const carCategories = ref([
-  {
-    id: 1,
-    emoji: '⚫',
-    titleKey: 'matteCars',
-    descKey: 'matteCarsDesc',
-    link: '/search?q=matte',
-  },
-  {
-    id: 2,
-    emoji: '✨',
-    titleKey: 'glossyCars',
-    descKey: 'glossyCarsDesc',
-    link: '/search?q=glossy',
-  },
-  {
-    id: 3,
-    emoji: '🎨',
-    titleKey: 'satinCars',
-    descKey: 'satinCarsDesc',
-    link: '/search?q=satin',
-  },
-  {
-    id: 4,
-    emoji: '🪞',
-    titleKey: 'chromeCars',
-    descKey: 'chromeCarsDesc',
-    link: '/search?q=chrome',
-  },
-]);
+const categoryData = ref(null);
+const subCategories = ref([]);
+
+onMounted(async () => {
+  try {
+    // جلب بيانات الفئة من قاعدة البيانات
+    const category = await CategoryService.getCategoryBySlug('cars');
+    categoryData.value = category;
+    
+    // جلب الفئات الفرعية
+    const subCats = await CategoryService.getSubCategories('cars');
+    subCategories.value = subCats;
+    
+    console.log('✅ Cars category loaded:', category);
+    console.log('✅ Cars subcategories loaded:', subCats);
+  } catch (error) {
+    console.error('❌ Error loading cars category:', error);
+  }
+});
 </script>

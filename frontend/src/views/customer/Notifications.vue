@@ -1,239 +1,337 @@
 <template>
-  <div class="notifications-page">
+  <v-main class="notifications-page">
+    <!-- Background Effects -->
     <div class="bg-effects">
-      <div class="gradient-overlay"></div>
+      <v-overlay 
+        v-model="overlayActive" 
+        class="gradient-overlay" 
+        persistent 
+        opacity="0.1"
+      />
       <div class="floating-orb orb-1"></div>
       <div class="floating-orb orb-2"></div>
       <div class="floating-orb orb-3"></div>
     </div>
 
-    <div class="notifications-container">
-      <div class="glass-card">
+    <v-container>
+      <v-card class="glass-card" elevation="8">
         <!-- Header -->
-        <div class="notifications-header">
-          <div class="header-content">
-            <h1 class="page-title">
-              <i class="fa-solid fa-bell"></i>
-              الإشعارات
-            </h1>
-            <p class="page-subtitle">آخر الإشعارات والتحديثات</p>
-          </div>
-          <div class="header-actions">
-            <div class="notification-stats">
-              <span class="unread-count">{{ unreadCount }}</span>
-              <span class="stats-label">غير مقروء</span>
-            </div>
-            <button class="mark-all-btn" @click="markAllAsRead" :disabled="unreadCount === 0">
-              <i class="fa-solid fa-check-double"></i>
-              قراءة الكل
-            </button>
-          </div>
-        </div>
+        <v-card-title class="pa-6">
+          <v-row align="center" justify="space-between">
+            <v-col>
+              <div class="header-content">
+                <h1 class="text-h4 font-weight-bold mb-2">
+                  <v-icon class="me-2">mdi-bell</v-icon>
+                  الإشعارات
+                </h1>
+                <p class="text-body-1 text-medium-emphasis">آخر الإشعارات والتحديثات</p>
+              </div>
+            </v-col>
+            <v-col cols="auto">
+              <div class="d-flex align-center gap-3">
+                <div class="notification-stats">
+                  <v-chip color="primary" variant="tonal">
+                    <v-icon start>mdi-email</v-icon>
+                    {{ unreadCount }} غير مقروء
+                  </v-chip>
+                </div>
+                <v-btn
+                  variant="outlined"
+                  prepend-icon="mdi-check-all"
+                  @click="markAllAsRead"
+                  :disabled="unreadCount === 0"
+                >
+                  قراءة الكل
+                </v-btn>
+              </div>
+            </v-col>
+          </v-row>
+        </v-card-title>
 
         <!-- Filter Tabs -->
-        <div class="filter-tabs">
-          <button 
-            v-for="filter in filters" 
-            :key="filter.value"
-            :class="['filter-tab', { active: activeFilter === filter.value }]"
-            @click="activeFilter = filter.value"
+        <v-divider />
+        <v-card-text class="pa-0">
+          <v-tabs
+            v-model="activeFilter"
+            color="primary"
+            align-tabs="center"
+            class="filter-tabs"
           >
-            <i :class="filter.icon"></i>
-            <span>{{ filter.label }}</span>
-            <span v-if="filter.count > 0" class="filter-count">{{ filter.count }}</span>
-          </button>
-        </div>
+            <v-tab
+              v-for="filter in filters"
+              :key="filter.value"
+              :value="filter.value"
+            >
+              <v-icon :icon="filter.icon" class="me-2" />
+              {{ filter.label }}
+              <v-chip
+                v-if="filter.count > 0"
+                size="small"
+                color="primary"
+                variant="tonal"
+                class="ms-2"
+              >
+                {{ filter.count }}
+              </v-chip>
+            </v-tab>
+          </v-tabs>
+        </v-card-text>
+
+        <v-divider />
 
         <!-- Notifications List -->
-        <div class="notifications-list">
-          <div v-if="loading" class="loading-state">
-            <div class="loading-spinner">
-              <i class="fa-solid fa-spinner fa-spin"></i>
-            </div>
-            <p class="loading-text">جاري تحميل الإشعارات...</p>
+        <v-card-text class="pa-6">
+          <!-- Loading State -->
+          <div v-if="loading" class="text-center py-12">
+            <v-progress-circular
+              indeterminate
+              color="primary"
+              size="48"
+              class="mb-4"
+            />
+            <p class="text-body-1 text-medium-emphasis">جاري تحميل الإشعارات...</p>
           </div>
 
-          <div v-else-if="filteredNotifications.length === 0" class="empty-state">
-            <div class="empty-icon">
-              <i class="fa-solid fa-bell-slash"></i>
-            </div>
-            <h3 class="empty-title">لا توجد إشعارات</h3>
-            <p class="empty-text">لا توجد إشعارات في هذه الفئة</p>
+          <!-- Empty State -->
+          <div v-else-if="filteredNotifications.length === 0" class="text-center py-12">
+            <v-icon size="80" color="primary" class="mb-4">mdi-bell-off</v-icon>
+            <h3 class="text-h5 mb-2">لا توجد إشعارات</h3>
+            <p class="text-body-1 text-medium-emphasis">لا توجد إشعارات في هذه الفئة</p>
           </div>
 
-          <div v-else class="notifications-grid">
-            <div 
+          <!-- Notifications Grid -->
+          <v-row v-else>
+            <v-col 
               v-for="notification in filteredNotifications" 
               :key="notification.id" 
-              :class="['notification-item', { unread: !notification.read }]"
-              @click="markAsRead(notification.id)"
+              cols="12"
             >
-              <div class="notification-icon">
-                <i :class="getNotificationIcon(notification.type)"></i>
-              </div>
-              
-              <div class="notification-content">
-                <div class="notification-header">
-                  <h3 class="notification-title">{{ notification.title }}</h3>
-                  <span class="notification-time">{{ formatTime(notification.createdAt) }}</span>
-                </div>
+              <v-card 
+                class="notification-item"
+                :class="{ 'unread-notification': !notification.read }"
+                elevation="2"
+                hover
+                @click="markAsRead(notification.id)"
+              >
+                <v-card-text class="pa-4">
+                  <v-row align="center">
+                    <v-col cols="auto">
+                      <v-avatar 
+                        :color="getNotificationColor(notification.type)"
+                        class="notification-avatar"
+                      >
+                        <v-icon :icon="getNotificationIcon(notification.type)" />
+                      </v-avatar>
+                    </v-col>
+                    
+                    <v-col class="flex-grow-1">
+                      <div class="notification-header">
+                        <h3 class="text-h6 mb-1">{{ notification.title }}</h3>
+                        <p class="text-caption text-medium-emphasis">
+                          {{ formatTime(notification.createdAt) }}
+                        </p>
+                      </div>
+                      
+                      <p class="text-body-2 mb-2">{{ notification.message }}</p>
+                      
+                      <div v-if="notification.action" class="notification-action">
+                        <v-btn
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                          @click.stop="handleAction(notification.action)"
+                        >
+                          {{ notification.action.label }}
+                        </v-btn>
+                      </div>
+                    </v-col>
+                    
+                    <v-col cols="auto">
+                      <div class="d-flex flex-column align-center">
+                        <v-btn
+                          v-if="!notification.read"
+                          icon
+                          size="small"
+                          variant="text"
+                          color="primary"
+                          @click.stop="markAsRead(notification.id)"
+                        >
+                          <v-icon>mdi-email-open</v-icon>
+                        </v-btn>
+                        <v-btn
+                          icon
+                          size="small"
+                          variant="text"
+                          color="error"
+                          @click.stop="deleteNotification(notification.id)"
+                        >
+                          <v-icon>mdi-close</v-icon>
+                        </v-btn>
+                      </div>
+                    </v-col>
+                  </v-row>
+                </v-card-text>
                 
-                <p class="notification-message">{{ notification.message }}</p>
-                
-                <div v-if="notification.action" class="notification-action">
-                  <button 
-                    class="action-btn"
-                    @click.stop="handleAction(notification.action)"
-                  >
-                    {{ notification.action.label }}
-                  </button>
-                </div>
-              </div>
-
-              <div class="notification-status">
-                <div v-if="!notification.read" class="unread-dot"></div>
-                <button class="delete-btn" @click.stop="deleteNotification(notification.id)">
-                  <i class="fa-solid fa-times"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Load More -->
-        <div v-if="hasMore" class="load-more">
-          <button class="load-more-btn" @click="loadMore" :disabled="loading">
-            <i class="fa-solid fa-chevron-down"></i>
-            <span v-if="!loading">تحميل المزيد</span>
-            <span v-else class="loading-text">
-              <i class="fa-solid fa-spinner fa-spin"></i>
-              جاري التحميل...
-            </span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+                <div v-if="!notification.read" class="unread-indicator"></div>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+    </v-container>
+  </v-main>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted } from 'vue';
+import NotificationService from '@/integration/services/NotificationService';
 
-const router = useRouter();
-
+// Reactive data
+const overlayActive = ref(true);
 const loading = ref(false);
 const activeFilter = ref('all');
-const hasMore = ref(true);
-const page = ref(1);
-
 const notifications = ref([]);
 
-const filters = [
-  { value: 'all', label: 'الكل', icon: 'fa-solid fa-inbox', count: 0 },
-  { value: 'unread', label: 'غير مقروء', icon: 'fa-solid fa-envelope', count: 0 },
-  { value: 'orders', label: 'الطلبات', icon: 'fa-solid fa-shopping-bag', count: 0 },
-  { value: 'payments', label: 'المدفوعات', icon: 'fa-solid fa-credit-card', count: 0 },
-  { value: 'promotions', label: 'العروض', icon: 'fa-solid fa-tag', count: 0 },
-  { value: 'system', label: 'النظام', icon: 'fa-solid fa-cog', count: 0 }
-];
-
-// Mock data - في الواقع سيتم جلبها من GraphQL
-const mockNotifications = [
+const notificationTypes = ref([
   {
-    id: 1,
-    type: 'order',
-    title: 'تم شحن طلبك',
-    message: 'طلبك #ORD001 تم شحنه وهو في طريقه إليك. يمكنك تتبع حالة الطلب عبر حسابك.',
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-    read: false,
-    action: {
-      type: 'track_order',
-      label: 'تتبع الطلب',
-      orderId: 'ORD001'
-    }
+    value: 'all',
+    label: 'الكل',
+    icon: 'mdi-inbox-all',
+    count: computed(() => notifications.value.length)
   },
   {
-    id: 2,
-    type: 'payment',
-    title: 'تم استلام الدفعة',
-    message: 'تم استلام دفعتك بنجاح بقيمة 1,250 دج. سيتم تأكيد طلبك قريباً.',
-    createdAt: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
-    read: false,
-    action: {
-      type: 'view_order',
-      label: 'عرض الطلب',
-      orderId: 'ORD002'
-    }
+    value: 'unread',
+    label: 'غير مقروء',
+    icon: 'mdi-email',
+    count: computed(() => notifications.value.filter(n => !n.read).length)
   },
   {
-    id: 3,
-    type: 'promotion',
-    title: 'عرض خاص لك!',
-    message: 'احصل على خصم 20% على جميع منتجات الديكور. العرض صالح لمدة 48 ساعة فقط.',
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-    read: true,
-    action: {
-      type: 'view_promotion',
-      label: 'عرض العروض'
-    }
+    value: 'orders',
+    label: 'الطلبات',
+    icon: 'mdi-shopping-bag',
+    count: computed(() => notifications.value.filter(n => n.type === 'order' || n.type === 'delivery').length)
   },
   {
-    id: 4,
-    type: 'system',
-    title: 'تحديث النظام',
-    message: 'تم تحديث النظام مع ميزات جديدة ومحسّنة. تحقق من الميزات الجديدة.',
-    createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000), // 2 days ago
-    read: true,
-    action: null
-  },
-  {
-    id: 5,
-    type: 'order',
-    title: 'تم تأكيد طلبك',
-    message: 'طلبك #ORD003 تم تأكيده بنجاح. سنقوم بتحضير طلبك للشحن قريباً.',
-    createdAt: new Date(Date.now() - 72 * 60 * 60 * 1000), // 3 days ago
-    read: true,
-    action: {
-      type: 'view_order',
-      label: 'عرض الطلب',
-      orderId: 'ORD003'
-    }
+    value: 'promotions',
+    label: 'العروض',
+    icon: 'mdi-tag',
+    count: computed(() => notifications.value.filter(n => n.type === 'promotion').length)
   }
-];
+]);
+
+// Computed
+const filteredNotifications = computed(() => {
+  if (activeFilter.value === 'all') {
+    return notifications.value;
+  }
+  if (activeFilter.value === 'unread') {
+    return notifications.value.filter(n => !n.read);
+  }
+  if (activeFilter.value === 'orders') {
+    return notifications.value.filter(n => n.type === 'order' || n.type === 'delivery');
+  }
+  if (activeFilter.value === 'promotions') {
+    return notifications.value.filter(n => n.type === 'promotion');
+  }
+  return notifications.value;
+});
 
 const unreadCount = computed(() => {
   return notifications.value.filter(n => !n.read).length;
 });
 
-const filteredNotifications = computed(() => {
-  let filtered = notifications.value;
-  
-  if (activeFilter.value === 'unread') {
-    filtered = filtered.filter(n => !n.read);
-  } else if (activeFilter.value !== 'all') {
-    filtered = filtered.filter(n => n.type === activeFilter.value);
+// Methods
+const loadNotifications = async () => {
+  loading.value = true;
+  try {
+    // Fetch from API
+    const fetchedNotifications = await NotificationService.getNotifications();
+    notifications.value = fetchedNotifications;
+    console.log('✅ Notifications loaded from API:', fetchedNotifications);
+  } catch (error) {
+    console.error('❌ Error loading notifications:', error);
+    // Use fallback data if API fails
+    notifications.value = NotificationService.getFallbackNotifications();
+  } finally {
+    loading.value = false;
   }
-  
-  return filtered;
-});
+};
 
-const getNotificationIcon = (type) => {
-  const icons = {
-    order: 'fa-solid fa-shopping-bag',
-    payment: 'fa-solid fa-credit-card',
-    promotion: 'fa-solid fa-tag',
-    system: 'fa-solid fa-cog',
-    review: 'fa-solid fa-star',
-    message: 'fa-solid fa-envelope',
-    security: 'fa-solid fa-shield-alt'
-  };
-  return icons[type] || 'fa-solid fa-bell';
+const markAsRead = async (notificationId) => {
+  try {
+    await NotificationService.markAsRead(notificationId);
+    const notification = notifications.value.find(n => n.id === notificationId);
+    if (notification && !notification.read) {
+      notification.read = true;
+    }
+    console.log('✅ Notification marked as read:', notificationId);
+  } catch (error) {
+    console.error('❌ Error marking notification as read:', error);
+    // Fallback to local update
+    const notification = notifications.value.find(n => n.id === notificationId);
+    if (notification && !notification.read) {
+      notification.read = true;
+    }
+  }
+};
+
+const markAllAsRead = async () => {
+  try {
+    await NotificationService.markAllAsRead();
+    notifications.value.forEach(notification => {
+      notification.read = true;
+    });
+    console.log('✅ All notifications marked as read');
+  } catch (error) {
+    console.error('❌ Error marking all notifications as read:', error);
+    // Fallback to local update
+    notifications.value.forEach(notification => {
+      notification.read = true;
+    });
+  }
+};
+
+const deleteNotification = async (notificationId) => {
+  try {
+    await NotificationService.deleteNotification(notificationId);
+    const index = notifications.value.findIndex(n => n.id === notificationId);
+    if (index !== -1) {
+      notifications.value.splice(index, 1);
+    }
+    console.log('✅ Notification deleted:', notificationId);
+  } catch (error) {
+    console.error('❌ Error deleting notification:', error);
+    // Fallback to local update
+    const index = notifications.value.findIndex(n => n.id === notificationId);
+    if (index !== -1) {
+      notifications.value.splice(index, 1);
+    }
+  }
+};
+
+const handleAction = async (action) => {
+  try {
+    console.log('Handle action:', action);
+    
+    // Mark as read when action is clicked
+    if (action.notificationId) {
+      await markAsRead(action.notificationId);
+    }
+    
+    // Navigate to action.url if provided
+    if (action.url) {
+      // router.push(action.url);
+      console.log('Navigate to:', action.url);
+    }
+  } catch (error) {
+    console.error('❌ Error handling action:', error);
+  }
 };
 
 const formatTime = (date) => {
   const now = new Date();
-  const diff = now - date;
+  const notificationDate = new Date(date);
+  const diff = now - notificationDate;
   const minutes = Math.floor(diff / (1000 * 60));
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -243,109 +341,34 @@ const formatTime = (date) => {
   if (hours < 24) return `منذ ${hours} ساعة`;
   if (days < 7) return `منذ ${days} يوم`;
   
-  return date.toLocaleDateString('ar-SA');
+  return notificationDate.toLocaleDateString('ar-DZ', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
 };
 
-const markAsRead = async (notificationId) => {
-  try {
-    const notification = notifications.value.find(n => n.id === notificationId);
-    if (notification && !notification.read) {
-      notification.read = true;
-      // TODO: Implement GraphQL mutation to mark as read
-      console.log('Mark as read:', notificationId);
-    }
-  } catch (error) {
-    console.error('Error marking notification as read:', error);
-  }
+const getNotificationIcon = (type) => {
+  const iconMap = {
+    order: 'mdi-shopping-bag',
+    delivery: 'mdi-truck',
+    delivery: 'mdi-truck-delivery',
+    promotion: 'mdi-tag',
+    system: 'mdi-cog',
+    review: 'mdi-star'
+  };
+  return iconMap[type] || 'mdi-bell';
 };
 
-const markAllAsRead = async () => {
-  try {
-    // TODO: Implement GraphQL mutation to mark all as read
-    console.log('Mark all as read');
-    
-    notifications.value.forEach(notification => {
-      notification.read = true;
-    });
-  } catch (error) {
-    console.error('Error marking all notifications as read:', error);
-  }
-};
-
-const deleteNotification = async (notificationId) => {
-  try {
-    // TODO: Implement GraphQL mutation to delete notification
-    console.log('Delete notification:', notificationId);
-    
-    notifications.value = notifications.value.filter(n => n.id !== notificationId);
-  } catch (error) {
-    console.error('Error deleting notification:', error);
-  }
-};
-
-const handleAction = (action) => {
-  switch (action.type) {
-    case 'track_order':
-      router.push(`/profile/orders/${action.orderId}`);
-      break;
-    case 'view_order':
-      router.push(`/profile/orders/${action.orderId}`);
-      break;
-    case 'view_promotion':
-      router.push('/products?promotion=true');
-      break;
-    case 'view_product':
-      router.push(`/products/${action.productId}`);
-      break;
-    default:
-      console.log('Unknown action:', action);
-  }
-};
-
-const loadMore = async () => {
-  try {
-    loading.value = true;
-    page.value++;
-    
-    // TODO: Implement GraphQL query to load more notifications
-    console.log('Load more notifications, page:', page.value);
-    
-    // Mock loading
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // In real implementation, append new notifications
-    hasMore.value = false; // No more for demo
-  } catch (error) {
-    console.error('Error loading more notifications:', error);
-  } finally {
-    loading.value = false;
-  }
-};
-
-const loadNotifications = async () => {
-  try {
-    loading.value = true;
-    
-    // TODO: Implement GraphQL query to fetch notifications
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    notifications.value = mockNotifications;
-    
-    // Update filter counts
-    filters.forEach(filter => {
-      if (filter.value === 'all') {
-        filter.count = notifications.value.length;
-      } else if (filter.value === 'unread') {
-        filter.count = notifications.value.filter(n => !n.read).length;
-      } else {
-        filter.count = notifications.value.filter(n => n.type === filter.value).length;
-      }
-    });
-  } catch (error) {
-    console.error('Error loading notifications:', error);
-  } finally {
-    loading.value = false;
-  }
+const getNotificationColor = (type) => {
+  const colorMap = {
+    order: 'primary',
+    delivery: 'success',
+    promotion: 'warning',
+    system: 'info',
+    review: 'secondary'
+  };
+  return colorMap[type] || 'primary';
 };
 
 onMounted(() => {
@@ -354,525 +377,116 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* ===== Notifications Page ===== */
-.notifications-page {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-  padding: 20px;
-}
-
-/* Background Effects */
 .bg-effects {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 1;
-}
-
-.gradient-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle at 30% 20%, rgba(212, 175, 55, 0.15) 0%, transparent 50%),
-              radial-gradient(circle at 70% 80%, rgba(212, 175, 55, 0.12) 0%, transparent 50%);
+  z-index: 0;
 }
 
 .floating-orb {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, rgba(212, 175, 55, 0.1) 50%, transparent 100%);
-  filter: blur(2px);
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, transparent 70%);
   animation: float 6s ease-in-out infinite;
 }
 
 .orb-1 {
-  width: 200px;
-  height: 200px;
+  width: 300px;
+  height: 300px;
   top: 10%;
   left: 10%;
   animation-delay: 0s;
 }
 
 .orb-2 {
-  width: 150px;
-  height: 150px;
+  width: 200px;
+  height: 200px;
   top: 60%;
   right: 15%;
   animation-delay: 2s;
 }
 
 .orb-3 {
-  width: 100px;
-  height: 100px;
+  width: 250px;
+  height: 250px;
   bottom: 20%;
-  left: 20%;
+  left: 60%;
   animation-delay: 4s;
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px) scale(1); }
-  50% { transform: translateY(-20px) scale(1.05); }
-}
-
-/* Notifications Container */
-.notifications-container {
-  position: relative;
-  z-index: 10;
-  width: 100%;
-  max-width: 800px;
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(var(--v-theme-surface), 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(var(--v-theme-outline), 0.2);
   border-radius: 24px;
-  padding: 40px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4),
-              0 0 0 1px rgba(255, 255, 255, 0.08),
-              inset 0 0 30px rgba(255, 255, 255, 0.08);
-  position: relative;
-  overflow: hidden;
-}
-
-.glass-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.5), transparent);
-}
-
-/* Header */
-.notifications-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.header-content {
-  flex: 1;
-}
-
-.page-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #ffffff;
-  font-size: 32px;
-  font-weight: 700;
-  margin: 0 0 8px 0;
-}
-
-.page-title i {
-  color: #d4af37;
-}
-
-.page-subtitle {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 16px;
-  margin: 0;
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.notification-stats {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 8px 16px;
-  background: rgba(212, 175, 55, 0.1);
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  border-radius: 8px;
-}
-
-.unread-count {
-  color: #d4af37;
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.stats-label {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 12px;
-  margin-top: 2px;
-}
-
-.mark-all-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.mark-all-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
-  color: #d4af37;
-  border-color: rgba(212, 175, 55, 0.3);
-}
-
-.mark-all-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Filter Tabs */
-.filter-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 30px;
-  overflow-x: auto;
-  padding-bottom: 10px;
-}
-
-.filter-tab {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  white-space: nowrap;
-  position: relative;
-}
-
-.filter-tab:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
-}
-
-.filter-tab.active {
-  background: rgba(212, 175, 55, 0.2);
-  border-color: rgba(212, 175, 55, 0.3);
-  color: #d4af37;
-}
-
-.filter-tab i {
-  font-size: 14px;
-}
-
-.filter-count {
-  min-width: 20px;
-  height: 20px;
-  background: rgba(212, 175, 55, 0.3);
-  border-radius: 50%;
-  color: #1a1a2e;
-  font-size: 12px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Loading State */
-.loading-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.loading-spinner {
-  font-size: 48px;
-  color: #d4af37;
-  margin-bottom: 16px;
-}
-
-.loading-text {
-  font-size: 18px;
-  margin: 0;
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.empty-icon {
-  font-size: 64px;
-  color: rgba(255, 255, 255, 0.3);
-  margin-bottom: 24px;
-}
-
-.empty-title {
-  color: #ffffff;
-  font-size: 24px;
-  font-weight: 600;
-  margin: 0 0 12px 0;
-}
-
-.empty-text {
-  font-size: 16px;
-  margin: 0;
-}
-
-/* Notifications List */
-.notifications-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  margin-top: 80px;
 }
 
 .notification-item {
-  display: flex;
-  gap: 16px;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  cursor: pointer;
+  background: rgba(var(--v-theme-surface-variant), 0.05);
+  border: 1px solid rgba(var(--v-theme-outline), 0.1);
+  border-radius: 16px;
   transition: all 0.3s ease;
   position: relative;
+  cursor: pointer;
 }
 
 .notification-item:hover {
-  background: rgba(255, 255, 255, 0.08);
   transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.notification-item.unread {
-  background: rgba(212, 175, 55, 0.05);
-  border-color: rgba(212, 175, 55, 0.2);
+.unread-notification {
+  border-color: var(--v-theme-primary);
+  background: rgba(var(--v-theme-primary), 0.05);
 }
 
-.notification-icon {
-  width: 48px;
-  height: 48px;
-  background: rgba(212, 175, 55, 0.1);
-  border: 1px solid rgba(212, 175, 55, 0.2);
+.unread-indicator {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  background: var(--v-theme-primary);
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #d4af37;
-  font-size: 20px;
-  flex-shrink: 0;
 }
 
-.notification-content {
-  flex: 1;
+.notification-avatar {
+  transition: all 0.3s ease;
+}
+
+.notification-item:hover .notification-avatar {
+  transform: scale(1.1);
 }
 
 .notification-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 8px;
-}
-
-.notification-title {
-  color: #ffffff;
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0;
-  line-height: 1.4;
-}
-
-.notification-time {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.notification-message {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
-  line-height: 1.5;
-  margin: 0 0 12px 0;
+  margin-bottom: 4px;
 }
 
 .notification-action {
   margin-top: 8px;
 }
 
-.action-btn {
-  padding: 6px 12px;
-  background: rgba(212, 175, 55, 0.2);
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  border-radius: 6px;
-  color: #d4af37;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.action-btn:hover {
-  background: rgba(212, 175, 55, 0.3);
-  color: #ffffff;
-}
-
-.notification-status {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.unread-dot {
-  width: 8px;
-  height: 8px;
-  background: #d4af37;
-  border-radius: 50%;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(212, 175, 55, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0);
-  }
-}
-
-.delete-btn {
-  width: 32px;
-  height: 32px;
-  background: rgba(220, 53, 69, 0.2);
-  border: none;
-  border-radius: 6px;
-  color: #dc3545;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.delete-btn:hover {
-  background: rgba(220, 53, 69, 0.3);
-  color: #ffffff;
-}
-
-/* Load More */
-.load-more {
-  text-align: center;
-  margin-top: 30px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.load-more-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: #ffffff;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.load-more-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
-  color: #d4af37;
-  border-color: rgba(212, 175, 55, 0.3);
-}
-
-.load-more-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.loading-text {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
-  .notifications-page {
-    padding: 10px;
-  }
-  
   .glass-card {
-    padding: 20px;
-  }
-  
-  .notifications-header {
-    flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
-  }
-  
-  .page-title {
-    font-size: 24px;
-  }
-  
-  .filter-tabs {
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-  
-  .filter-tab {
-    padding: 8px 12px;
-    font-size: 12px;
+    margin-top: 20px;
+    border-radius: 16px;
   }
   
   .notification-item {
-    padding: 16px;
-    gap: 12px;
-  }
-  
-  .notification-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
-  }
-  
-  .notification-header {
-    flex-direction: column;
-    gap: 4px;
-    align-items: flex-start;
-  }
-  
-  .notification-time {
-    align-self: flex-start;
+    padding: 12px;
   }
 }
 </style>

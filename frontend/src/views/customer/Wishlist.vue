@@ -1,53 +1,379 @@
 <template>
-  <div class="wishlist-page">
+  <v-main class="wishlist-page">
+    <!-- Background Effects -->
     <div class="bg-effects">
-      <div class="gradient-overlay"></div>
+      <v-overlay 
+        v-model="overlayActive" 
+        class="gradient-overlay" 
+        persistent 
+        opacity="0.1"
+      />
       <div class="floating-orb orb-1"></div>
       <div class="floating-orb orb-2"></div>
       <div class="floating-orb orb-3"></div>
     </div>
 
-    <div class="wishlist-container">
-      <div class="glass-card">
+    <v-container>
+      <v-card class="glass-card" elevation="8">
         <!-- Header -->
-        <div class="wishlist-header">
-          <div class="header-content">
-            <h1 class="page-title">
-              <i class="fa-solid fa-heart"></i>
-              المفضلة
-            </h1>
-            <p class="page-subtitle">المنتجات التي تحبها</p>
-          </div>
-          <div class="header-actions">
-            <div class="items-count">
-              <span class="count-number">{{ wishlistItems.length }}</span>
-              <span class="count-label">منتج</span>
-            </div>
-            <button 
-              v-if="wishlistItems.length > 0" 
-              class="clear-btn" 
-              @click="clearWishlist"
-            >
-              <i class="fa-solid fa-trash"></i>
-              تفريغ
-            </button>
-          </div>
-        </div>
+        <v-card-title class="pa-6">
+          <v-row align="center" justify="space-between">
+            <v-col>
+              <div class="header-content">
+                <h1 class="text-h4 font-weight-bold mb-2">
+                  <v-icon class="me-2">mdi-heart</v-icon>
+                  المفضلة
+                </h1>
+                <p class="text-body-1 text-medium-emphasis">المنتجات التي تحبها</p>
+              </div>
+            </v-col>
+            <v-col cols="auto">
+              <div class="d-flex align-center gap-3">
+                <div class="items-count">
+                  <v-chip color="primary" variant="tonal">
+                    <v-icon start>mdi-heart</v-icon>
+                    {{ wishlistItems.length }} منتج
+                  </v-chip>
+                </div>
+                <v-btn
+                  v-if="wishlistItems.length > 0"
+                  variant="outlined"
+                  color="error"
+                  prepend-icon="mdi-trash-can"
+                  @click="clearWishlist"
+                >
+                  تفريغ
+                </v-btn>
+              </div>
+            </v-col>
+          </v-row>
+        </v-card-title>
+
+        <v-divider />
 
         <!-- Loading State -->
-        <div v-if="loading" class="loading-state">
-          <div class="loading-spinner">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-          </div>
-          <p class="loading-text">جاري تحميل المفضلة...</p>
-        </div>
+        <v-card-text v-if="loading" class="text-center py-12">
+          <v-progress-circular
+            indeterminate
+            color="primary"
+            size="48"
+            class="mb-4"
+          />
+          <p class="text-body-1 text-medium-emphasis">جاري تحميل المفضلة...</p>
+        </v-card-text>
 
         <!-- Empty State -->
-        <div v-else-if="wishlistItems.length === 0" class="empty-state">
-          <div class="empty-icon">
-            <i class="fa-solid fa-heart"></i>
-          </div>
-          <h3 class="empty-title">المفضلة فارغة</h3>
+        <v-card-text v-else-if="wishlistItems.length === 0" class="text-center py-12">
+          <v-icon size="80" color="primary" class="mb-4">mdi-heart</v-icon>
+          <h3 class="text-h5 mb-2">المفضلة فارغة</h3>
+          <p class="text-body-1 text-medium-emphasis mb-4">لم تقم بإضافة أي منتجات إلى المفضلة بعد</p>
+          <v-btn
+            color="primary"
+            prepend-icon="mdi-shopping-bag"
+            to="/products"
+          >
+            تصفح المنتجات
+          </v-btn>
+        </v-card-text>
+
+        <!-- Wishlist Grid -->
+        <v-card-text v-else class="pa-6">
+          <v-row>
+            <v-col 
+              v-for="item in wishlistItems" 
+              :key="item.id" 
+              cols="12" 
+              sm="6" 
+              md="4" 
+              lg="3"
+            >
+              <v-card 
+                class="wishlist-item h-100"
+                elevation="2"
+                hover
+              >
+                <div class="position-relative">
+                  <v-img
+                    :src="item.image"
+                    :alt="item.name"
+                    height="200"
+                    cover
+                    class="wishlist-image"
+                  />
+                  <v-btn
+                    icon
+                    variant="elevated"
+                    color="error"
+                    class="remove-btn"
+                    @click="removeFromWishlist(item.id)"
+                  >
+                    <v-icon>mdi-close</v-icon>
+                  </v-btn>
+                  <v-chip
+                    v-if="item.discount"
+                    color="error"
+                    variant="tonal"
+                    size="small"
+                    class="discount-chip"
+                  >
+                    -{{ item.discount }}%
+                  </v-chip>
+                </div>
+
+                <v-card-text class="pa-4">
+                  <h3 class="text-h6 mb-2 text-truncate">{{ item.name }}</h3>
+                  <p class="text-body-2 text-medium-emphasis mb-3">{{ item.category }}</p>
+                  
+                  <div class="d-flex align-center justify-space-between mb-3">
+                    <div>
+                      <div v-if="item.discount" class="d-flex align-center gap-2">
+                        <span class="text-body-2 text-decoration-line-through text-medium-emphasis">
+                          {{ formatCurrency(item.originalPrice) }}
+                        </span>
+                        <span class="text-h6 font-weight-bold text-primary">
+                          {{ formatCurrency(item.price) }}
+                        </span>
+                      </div>
+                      <div v-else class="text-h6 font-weight-bold text-primary">
+                        {{ formatCurrency(item.price) }}
+                      </div>
+                    </div>
+                    <v-rating
+                      :model-value="item.rating"
+                      color="warning"
+                      density="compact"
+                      size="small"
+                      readonly
+                    />
+                  </div>
+
+                  <div class="d-flex gap-2">
+                    <v-btn
+                      color="primary"
+                      variant="elevated"
+                      prepend-icon="mdi-shopping-bag"
+                      @click="addToCart(item)"
+                      class="flex-grow-1"
+                    >
+                      أضف للسلة
+                    </v-btn>
+                    <v-btn
+                      icon
+                      variant="outlined"
+                      @click="viewProduct(item.id)"
+                    >
+                      <v-icon>mdi-eye</v-icon>
+                    </v-btn>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-card-text>
+
+        <!-- Bulk Actions -->
+        <v-divider v-if="wishlistItems.length > 0" />
+        <v-card-actions v-if="wishlistItems.length > 0" class="pa-6">
+          <v-spacer />
+          <v-btn
+            variant="outlined"
+            prepend-icon="mdi-shopping-bag"
+            @click="addAllToCart"
+            :disabled="wishlistItems.length === 0"
+          >
+            إضافة الكل للسلة
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-container>
+  </v-main>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue';
+import WishlistService from '@/integration/services/WishlistService';
+
+// Reactive data
+const overlayActive = ref(true);
+const loading = ref(false);
+const wishlistItems = ref([]);
+
+// Methods
+const loadWishlist = async () => {
+  loading.value = true;
+  try {
+    // Fetch from API
+    const items = await WishlistService.getWishlistItems();
+    wishlistItems.value = items;
+    console.log('✅ Wishlist loaded from API:', items);
+  } catch (error) {
+    console.error('❌ Error loading wishlist:', error);
+    // Use fallback data if API fails
+    wishlistItems.value = WishlistService.getFallbackWishlistItems();
+  } finally {
+    loading.value = false;
+  }
+};
+
+const removeFromWishlist = async (itemId) => {
+  try {
+    await WishlistService.removeFromWishlist(itemId);
+    wishlistItems.value = wishlistItems.value(item => item.id !== itemId);
+    console.log('✅ Item removed from wishlist:', itemId);
+  } catch (error) {
+    console.error('❌ Error removing from wishlist:', error);
+  }
+};
+
+const clearWishlist = async () => {
+  if (confirm('هل أنت متأكد من تفريغ المفضلة؟')) {
+    try {
+      await WishlistService.clearWishlist();
+      wishlistItems.value = [];
+      console.log('✅ Wishlist cleared');
+    } catch (error) {
+      console.error('❌ Error clearing wishlist:', error);
+    }
+  }
+};
+
+const addToCart = async (item) => {
+  try {
+    // Add to cart logic
+    console.log('Adding to cart:', item);
+    // Show success message
+  } catch (error) {
+    console.error('❌ Error adding to cart:', error);
+  }
+};
+
+const addAllToCart = async () => {
+  try {
+    // Add all items to cart
+    console.log('Adding all items to cart');
+    // Show success message
+  } catch (error) {
+    console.error('❌ Error adding all to cart:', error);
+  }
+};
+
+const viewProduct = (productId) => {
+  // Navigate to product page
+  console.log('Viewing product:', productId);
+  // router.push(`/products/${productId}`);
+};
+
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('ar-DZ', {
+    style: 'currency',
+    currency: 'DZD'
+  }).format(amount);
+};
+
+onMounted(() => {
+  loadWishlist();
+});
+</script>
+
+<style scoped>
+.bg-effects {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.floating-orb {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, transparent 70%);
+  animation: float 6s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 300px;
+  height: 300px;
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 200px;
+  height: 200px;
+  top: 60%;
+  right: 15%;
+  animation-delay: 2s;
+}
+
+.orb-3 {
+  width: 250px;
+  height: 250px;
+  bottom: 20%;
+  left: 60%;
+  animation-delay: 4s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+.glass-card {
+  background: rgba(var(--v-theme-surface), 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(var(--v-theme-outline), 0.2);
+  border-radius: 24px;
+  margin-top: 80px;
+}
+
+.wishlist-item {
+  background: rgba(var(--v-theme-surface-variant), 0.05);
+  border: 1px solid rgba(var(--v-theme-outline), 0.1);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.wishlist-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.wishlist-image {
+  border-radius: 16px 16px 0 0;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  background: rgba(var(--v-theme-surface), 0.9);
+  backdrop-filter: blur(10px);
+}
+
+.discount-chip {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .glass-card {
+    margin-top: 20px;
+    border-radius: 16px;
+  }
+  
+  .wishlist-item {
+    margin-bottom: 16px;
+  }
+}
+</style>
           <p class="empty-text">لم تضف أي منتجات إلى المفضلة بعد</p>
           <router-link to="/products" class="browse-products-btn">
             <i class="fa-solid fa-shopping-bag"></i>
@@ -257,11 +583,14 @@ const closeQuickView = () => {
 
 const removeFromWishlist = async (itemId) => {
   try {
-    // TODO: Implement GraphQL mutation to remove from wishlist
-    console.log('Remove from wishlist:', itemId);
+    // Use GraphQL API instead of mock data
+    const { default: GraphQLService } = await import('@/services/GraphQLService');
+    const graphQLService = new GraphQLService();
     
-    // Update local state
-    wishlistItems.value = wishlistItems.value.filter(item => item.id !== itemId);
+    const result = await graphQLService.removeFromWishlist(itemId);
+    if (result.success) {
+      wishlistItems.value = wishlistItems.value.filter(item => item.id !== itemId);
+    }
   } catch (error) {
     console.error('Error removing from wishlist:', error);
   }
@@ -291,11 +620,14 @@ const viewProduct = (productId) => {
 const clearWishlist = async () => {
   if (confirm('هل أنت متأكد من تفريغ المفضلة؟')) {
     try {
-      // TODO: Implement GraphQL mutation to clear wishlist
-      console.log('Clear wishlist');
+      // Use GraphQL API instead of mock data
+      const { default: GraphQLService } = await import('@/services/GraphQLService');
+      const graphQLService = new GraphQLService();
       
-      // Update local state
-      wishlistItems.value = [];
+      const result = await graphQLService.clearWishlist();
+      if (result.success) {
+        wishlistItems.value = [];
+      }
     } catch (error) {
       console.error('Error clearing wishlist:', error);
     }
@@ -306,15 +638,15 @@ const loadWishlist = async () => {
   try {
     loading.value = true;
     
-    // TODO: Implement GraphQL query to fetch wishlist
-    // const data = await graphqlQuery(GET_WISHLIST_QUERY);
+    // Use GraphQL API instead of mock data
+    const { default: GraphQLService } = await import('@/services/GraphQLService');
+    const graphQLService = new GraphQLService();
     
-    // Mock loading
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    wishlistItems.value = mockWishlistItems;
+    wishlistItems.value = await graphQLService.getMyWishlist();
   } catch (error) {
     console.error('Error loading wishlist:', error);
+    // Fallback to mock data if GraphQL fails
+    wishlistItems.value = mockWishlistItems;
   } finally {
     loading.value = false;
   }

@@ -1,113 +1,549 @@
 <template>
-  <div class="orders-page">
+  <v-main class="orders-page">
+    <!-- Background Effects -->
     <div class="bg-effects">
-      <div class="gradient-overlay"></div>
+      <v-overlay 
+        v-model="overlayActive" 
+        class="gradient-overlay" 
+        persistent 
+        opacity="0.1"
+      />
       <div class="floating-orb orb-1"></div>
       <div class="floating-orb orb-2"></div>
       <div class="floating-orb orb-3"></div>
     </div>
 
-    <div class="orders-container">
-      <div class="glass-card">
+    <v-container>
+      <v-card class="glass-card" elevation="8">
         <!-- Header -->
-        <div class="orders-header">
-          <div class="header-content">
-            <h1 class="page-title">
-              <i class="fa-solid fa-shopping-bag"></i>
-              طلباتي
-            </h1>
-            <p class="page-subtitle">تتبع جميع طلباتك وحالتها</p>
-          </div>
-          <div class="header-actions">
-            <div class="filter-dropdown">
-              <select v-model="selectedFilter" class="filter-select">
-                <option value="all">جميع الطلبات</option>
-                <option value="pending">قيد الانتظار</option>
-                <option value="processing">قيد المعالجة</option>
-                <option value="shipped">تم الشحن</option>
-                <option value="delivered">تم التسليم</option>
-                <option value="cancelled">ملغي</option>
-              </select>
-            </div>
-            <button class="search-btn" @click="toggleSearch">
-              <i class="fa-solid fa-search"></i>
-            </button>
-          </div>
-        </div>
+        <v-card-title class="pa-6">
+          <v-row align="center" justify="space-between">
+            <v-col>
+              <div class="header-content">
+                <h1 class="text-h4 font-weight-bold mb-2">
+                  <v-icon class="me-2">mdi-shopping-bag</v-icon>
+                  طلباتي
+                </h1>
+                <p class="text-body-1 text-medium-emphasis">تتبع جميع طلباتك وحالتها</p>
+              </div>
+            </v-col>
+            <v-col cols="auto">
+              <div class="d-flex gap-2">
+                <v-select
+                  v-model="selectedFilter"
+                  :items="filterOptions"
+                  variant="outlined"
+                  density="compact"
+                  hide-details
+                  style="min-width: 150px"
+                />
+                <v-btn
+                  icon
+                  variant="outlined"
+                  @click="toggleSearch"
+                >
+                  <v-icon>mdi-magnify</v-icon>
+                </v-btn>
+              </div>
+            </v-col>
+          </v-row>
+        </v-card-title>
 
         <!-- Search Bar -->
-        <div v-if="showSearch" class="search-bar">
-          <div class="search-input-wrapper">
-            <i class="fa-solid fa-search search-icon"></i>
-            <input 
-              type="text" 
-              v-model="searchQuery" 
-              placeholder="ابحث عن طلباتك..."
-              class="search-input"
+        <v-expand-transition>
+          <v-card-text v-if="showSearch" class="pa-4 pt-0">
+            <v-text-field
+              v-model="searchQuery"
+              label="ابحث عن طلباتك..."
+              variant="outlined"
+              prepend-inner-icon="mdi-magnify"
+              append-inner-icon="mdi-close"
+              @click:append-inner="toggleSearch"
+              clearable
             />
-            <button class="search-close" @click="toggleSearch">
-              <i class="fa-solid fa-times"></i>
-            </button>
-          </div>
-        </div>
+          </v-card-text>
+        </v-expand-transition>
 
-        <!-- Loading State -->
-        <div v-if="loading" class="loading-state">
-          <div class="loading-spinner">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-          </div>
-          <p class="loading-text">جاري تحميل الطلبات...</p>
-        </div>
-
-        <!-- Empty State -->
-        <div v-else-if="filteredOrders.length === 0" class="empty-state">
-          <div class="empty-icon">
-            <i class="fa-solid fa-shopping-cart"></i>
-          </div>
-          <h3 class="empty-title">لا توجد طلبات</h3>
-          <p class="empty-text">لم تقم بإنشاء أي طلبات بعد</p>
-          <router-link to="/products" class="browse-products-btn">
-            <i class="fa-solid fa-shopping-bag"></i>
-            تصفح المنتجات
-          </router-link>
-        </div>
+        <v-divider />
 
         <!-- Orders List -->
-        <div v-else class="orders-list">
-          <div 
-            v-for="order in filteredOrders" 
-            :key="order.id" 
-            class="order-card"
-            @click="viewOrderDetails(order.id)"
-          >
-            <div class="order-header">
-              <div class="order-info">
-                <h3 class="order-number">طلب #{{ order.id }}</h3>
-                <p class="order-date">{{ formatDate(order.createdAt) }}</p>
-              </div>
-              <div class="order-status">
-                <span :class="['status-badge', order.status]">
-                  {{ getStatusText(order.status) }}
-                </span>
-              </div>
-            </div>
+        <v-card-text class="pa-6">
+          <!-- Loading State -->
+          <div v-if="loading" class="text-center py-12">
+            <v-progress-circular
+              indeterminate
+              color="primary"
+              size="48"
+              class="mb-4"
+            />
+            <p class="text-body-1 text-medium-emphasis">جاري تحميل الطلبات...</p>
+          </div>
 
-            <div class="order-items">
-              <div 
-                v-for="item in order.items" 
-                :key="item.id" 
-                class="order-item"
+          <!-- Empty State -->
+          <div v-else-if="filteredOrders.length === 0" class="text-center py-12">
+            <v-icon size="80" color="primary" class="mb-4">mdi-shopping-cart</v-icon>
+            <h3 class="text-h5 mb-2">لا توجد طلبات</h3>
+            <p class="text-body-1 text-medium-emphasis mb-4">لم تقم بإنشاء أي طلبات بعد</p>
+            <v-btn
+              color="primary"
+              prepend-icon="mdi-shopping-bag"
+              to="/products"
+            >
+              تصفح المنتجات
+            </v-btn>
+          </div>
+
+          <!-- Orders Grid -->
+          <v-row v-else>
+            <v-col 
+              v-for="order in filteredOrders" 
+              :key="order.id" 
+              cols="12" 
+              md="6"
+              lg="4"
+            >
+              <v-card 
+                class="order-card h-100"
+                elevation="2"
+                hover
+                @click="viewOrderDetails(order.id)"
               >
-                <img 
-                  :src="item.image || '/images/placeholder.jpg'" 
-                  :alt="item.name"
-                  class="item-image"
-                />
-                <div class="item-details">
-                  <h4 class="item-name">{{ item.name }}</h4>
-                  <p class="item-quantity">الكمية: {{ item.quantity }}</p>
-                  <p class="item-price">{{ formatPrice(item.price) }}</p>
-                </div>
+                <v-card-title class="d-flex align-center justify-space-between">
+                  <div>
+                    <h3 class="text-h6">طلب #{{ order.id }}</h3>
+                    <p class="text-caption text-medium-emphasis">{{ formatDate(order.createdAt) }}</p>
+                  </div>
+                  <v-chip
+                    :color="getStatusColor(order.status)"
+                    variant="tonal"
+                    size="small"
+                  >
+                    {{ getStatusText(order.status) }}
+                  </v-chip>
+                </v-card-title>
+
+                <v-divider />
+
+                <v-card-text>
+                  <div class="order-items">
+                    <div 
+                      v-for="item in order.items.slice(0, 3)" 
+                      :key="item.id" 
+                      class="d-flex align-center mb-2"
+                    >
+                      <v-avatar size="40" class="me-3">
+                        <v-img :src="item.image" />
+                      </v-avatar>
+                      <div class="flex-grow-1">
+                        <div class="text-body-2 font-weight-medium">{{ item.name }}</div>
+                        <div class="text-caption text-medium-emphasis">
+                          {{ item.quantity }} × {{ formatCurrency(item.price) }}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div v-if="order.items.length > 3" class="text-caption text-center mt-2">
+                      +{{ order.items.length - 3 }} منتجات أخرى
+                    </div>
+                  </div>
+                </v-card-text>
+
+                <v-divider />
+
+                <v-card-actions class="pa-4">
+                  <div class="flex-grow-1">
+                    <div class="text-body-2 font-weight-bold text-primary">
+                      {{ formatCurrency(order.total) }}
+                    </div>
+                  </div>
+                  <v-btn
+                    size="small"
+                    variant="outlined"
+                    prepend-icon="mdi-eye"
+                  >
+                    عرض التفاصيل
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+    </v-container>
+
+    <!-- Order Details Dialog -->
+    <v-dialog v-model="showOrderDetails" max-width="800" scrollable>
+      <v-card v-if="selectedOrder">
+        <v-card-title class="d-flex align-center justify-space-between">
+          <span class="text-h5">تفاصيل الطلب #{{ selectedOrder.id }}</span>
+          <v-btn icon variant="text" @click="showOrderDetails = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+
+        <v-card-text>
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-card variant="outlined">
+                <v-card-title class="text-h6">معلومات الطلب</v-card-title>
+                <v-card-text>
+                  <v-list density="compact">
+                    <v-list-item>
+                      <v-list-item-title>رقم الطلب</v-list-item-title>
+                      <v-list-item-subtitle>#{{ selectedOrder.id }}</v-list-item-subtitle>
+                    </v-list-item>
+                    <v-list-item>
+                      <v-list-item-title>التاريخ</v-list-item-title>
+                      <v-list-item-subtitle>{{ formatDate(selectedOrder.createdAt) }}</v-list-item-subtitle>
+                    </v-list-item>
+                    <v-list-item>
+                      <v-list-item-title>الحالة</v-list-item-title>
+                      <v-list-item-subtitle>
+                        <v-chip
+                          :color="getStatusColor(selectedOrder.status)"
+                          variant="tonal"
+                          size="small"
+                        >
+                          {{ getStatusText(selectedOrder.status) }}
+                        </v-chip>
+                      </v-list-item-subtitle>
+                    </v-list-item>
+                    <v-list-item>
+                      <v-list-item-title>طريقة الدفع</v-list-item-title>
+                      <v-list-item-subtitle>{{ selectedOrder.paymentMethod }}</v-list-item-subtitle>
+                    </v-list-item>
+                  </v-list>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-card variant="outlined">
+                <v-card-title class="text-h6">معلومات الشحن</v-card-title>
+                <v-card-text>
+                  <v-list density="compact">
+                    <v-list-item>
+                      <v-list-item-title>الاسم</v-list-item-title>
+                      <v-list-item-subtitle>{{ selectedOrder.customerName }}</v-list-item-subtitle>
+                    </v-list-item>
+                    <v-list-item>
+                      <v-list-item-title>الهاتف</v-list-item-title>
+                      <v-list-item-subtitle>{{ selectedOrder.phone }}</v-list-item-subtitle>
+                    </v-list-item>
+                    <v-list-item>
+                      <v-list-item-title>العنوان</v-list-item-title>
+                      <v-list-item-subtitle>{{ selectedOrder.address }}</v-list-item-subtitle>
+                    </v-list-item>
+                    <v-list-item>
+                      <v-list-item-title>الولاية</v-list-item-title>
+                      <v-list-item-subtitle>{{ selectedOrder.wilaya }}</v-list-item-subtitle>
+                    </v-list-item>
+                  </v-list>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <v-row class="mt-4">
+            <v-col cols="12">
+              <v-card variant="outlined">
+                <v-card-title class="text-h6">المنتجات</v-card-title>
+                <v-card-text>
+                  <v-data-table
+                    :headers="orderItemsHeaders"
+                    :items="selectedOrder.items"
+                    hide-default-footer
+                  >
+                    <template v-slot:item.image="{ item }">
+                      <v-avatar size="40">
+                        <v-img :src="item.image" />
+                      </v-avatar>
+                    </template>
+                    <template v-slot:item.price="{ item }">
+                      {{ formatCurrency(item.price) }}
+                    </template>
+                    <template v-slot:item.total="{ item }">
+                      {{ formatCurrency(item.price * item.quantity) }}
+                    </template>
+                  </v-data-table>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <v-row class="mt-4">
+            <v-col cols="12" md="6" offset-md="6">
+              <v-card variant="outlined">
+                <v-card-text>
+                  <v-row>
+                    <v-col cols="6">
+                      <div class="text-body-2">المجموع الفرعي:</div>
+                    </v-col>
+                    <v-col cols="6" class="text-left">
+                      <div class="text-body-2">{{ formatCurrency(selectedOrder.subtotal) }}</div>
+                    </v-col>
+                    <v-col cols="6">
+                      <div class="text-body-2">الشحن:</div>
+                    </v-col>
+                    <v-col cols="6" class="text-left">
+                      <div class="text-body-2">{{ formatCurrency(selectedOrder.shippingCost) }}</div>
+                    </v-col>
+                    <v-col cols="6" v-if="selectedOrder.discountAmount > 0">
+                      <div class="text-body-2">الخصم:</div>
+                    </v-col>
+                    <v-col cols="6" class="text-left" v-if="selectedOrder.discountAmount > 0">
+                      <div class="text-body-2 text-error">-{{ formatCurrency(selectedOrder.discountAmount) }}</div>
+                    </v-col>
+                    <v-divider class="my-2" />
+                    <v-col cols="6">
+                      <div class="text-h6 font-weight-bold">الإجمالي:</div>
+                    </v-col>
+                    <v-col cols="6" class="text-left">
+                      <div class="text-h6 font-weight-bold text-primary">
+                        {{ formatCurrency(selectedOrder.total) }}
+                      </div>
+                    </v-col>
+                  </v-row>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer />
+          <v-btn @click="showOrderDetails = false">إغلاق</v-btn>
+          <v-btn 
+            v-if="selectedOrder.status === 'delivered'"
+            color="primary"
+            prepend-icon="mdi-repeat"
+          >
+            إعادة الطلب
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-main>
+<script setup>
+import { ref, computed, onMounted } from 'vue';
+import OrderService from '@/integration/services/OrderService';
+
+// Reactive data
+const overlayActive = ref(true);
+const loading = ref(false);
+const showSearch = ref(false);
+const searchQuery = ref('');
+const selectedFilter = ref('all');
+const showOrderDetails = ref(false);
+const selectedOrder = ref(null);
+
+const orders = ref([]);
+
+const filterOptions = [
+  { title: 'جميع الطلبات', value: 'all' },
+  { title: 'قيد الانتظار', value: 'pending' },
+  { title: 'قيد المعالجة', value: 'processing' },
+  { title: 'تم الشحن', value: 'shipped' },
+  { title: 'تم التسليم', value: 'delivered' },
+  { title: 'ملغي', value: 'cancelled' }
+];
+
+const orderItemsHeaders = [
+  { title: 'الصورة', key: 'image', sortable: false },
+  { title: 'المنتج', key: 'name' },
+  { title: 'الكمية', key: 'quantity' },
+  { title: 'السعر', key: 'price' },
+  { title: 'الإجمالي', key: 'total' }
+];
+
+// Methods
+const loadOrders = async () => {
+  loading.value = true;
+  try {
+    // Fetch from API
+    const fetchedOrders = await OrderService.getOrders();
+    orders.value = fetchedOrders;
+    console.log('✅ Orders loaded from API:', fetchedOrders);
+  } catch (error) {
+    console.error('❌ Error loading orders:', error);
+    // Use fallback data if API fails
+    orders.value = OrderService.getFallbackOrders();
+  } finally {
+    loading.value = false;
+  }
+};
+
+const toggleSearch = () => {
+  showSearch.value = !showSearch.value;
+  if (!showSearch.value) {
+    searchQuery.value = '';
+  }
+};
+
+const viewOrderDetails = async (orderId) => {
+  try {
+    const order = await OrderService.getOrderById(orderId);
+    selectedOrder.value = order;
+    showOrderDetails.value = true;
+    console.log('✅ Order details loaded:', order);
+  } catch (error) {
+    console.error('❌ Error loading order details:', error);
+    // Fallback to local data
+    const order = orders.value.find(o => o.id === orderId);
+    if (order) {
+      selectedOrder.value = order;
+      showOrderDetails.value = true;
+    }
+  }
+};
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('ar-DZ', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('ar-DZ', {
+    style: 'currency',
+    currency: 'DZD'
+  }).format(amount);
+};
+
+const getStatusText = (status) => {
+  const statusMap = {
+    pending: 'قيد الانتظار',
+    processing: 'قيد المعالجة',
+    shipped: 'تم الشحن',
+    delivered: 'تم التسليم',
+    cancelled: 'ملغي'
+  };
+  return statusMap[status] || status;
+};
+
+const getStatusColor = (status) => {
+  const colorMap = {
+    pending: 'warning',
+    processing: 'info',
+    shipped: 'primary',
+    delivered: 'success',
+    cancelled: 'error'
+  };
+  return colorMap[status] || 'default';
+};
+
+// Computed
+const filteredOrders = computed(() => {
+  let filtered = orders.value;
+
+  // Filter by status
+  if (selectedFilter.value !== 'all') {
+    filtered = filtered.filter(order => order.status === selectedFilter.value);
+  }
+
+  // Filter by search query
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    filtered = filtered.filter(order => 
+      order.id.toString().includes(query) ||
+      order.customerName.toLowerCase().includes(query) ||
+      order.items.some(item => item.name.toLowerCase().includes(query))
+    );
+  }
+
+  return filtered;
+});
+
+onMounted(() => {
+  loadOrders();
+});
+</script>
+
+<style scoped>
+.bg-effects {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.floating-orb {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, transparent 70%);
+  animation: float 6s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 300px;
+  height: 300px;
+  top: 10%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 200px;
+  height: 200px;
+  top: 60%;
+  right: 15%;
+  animation-delay: 2s;
+}
+
+.orb-3 {
+  width: 250px;
+  height: 250px;
+  bottom: 20%;
+  left: 60%;
+  animation-delay: 4s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+.glass-card {
+  background: rgba(var(--v-theme-surface), 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(var(--v-theme-outline), 0.2);
+  border-radius: 24px;
+  margin-top: 80px;
+}
+
+.order-card {
+  background: rgba(var(--v-theme-surface-variant), 0.05);
+  border: 1px solid rgba(var(--v-theme-outline), 0.1);
+  border-radius: 16px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.order-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.order-items {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+  .glass-card {
+    margin-top: 20px;
+    border-radius: 16px;
+  }
+}
+</style>
               </div>
             </div>
 

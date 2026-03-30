@@ -1,36 +1,33 @@
 <template>
-  <div 
-    class="toast-container position-fixed bottom-0 p-3" 
-    :class="[isRtl ? 'start-0' : 'end-0']"
-    style="z-index: 10000; pointer-events: none;"
-  >
-    <transition-group name="toast-slide">
-      <div 
-        v-for="toast in toasts" 
-        :key="toast.id" 
-        class="toast show mb-2 border-0 shadow-lg overflow-hidden" 
-        :class="[`bg-${toast.type}`, 'text-white']"
-        role="alert" 
-        aria-live="assertive" 
-        aria-atomic="true"
-        style="pointer-events: auto;"
-      >
-        <div class="toast-progress" :style="{ width: toast.progress + '%' }"></div>
-        <div class="toast-header bg-transparent border-0 text-white d-flex align-items-center py-2 px-3">
-          <i :class="toast.icon" class="me-2 fs-5"></i>
-          <strong class="me-auto">{{ toast.title }}</strong>
-          <button 
-            type="button" 
-            class="btn-close btn-close-white ms-2" 
+  <div class="toast-container">
+    <v-snackbar
+      v-for="toast in toasts"
+      :key="toast.id"
+      v-model="toast.show"
+      :color="getToastColor(toast.type)"
+      :timeout="toast.duration || TOAST_DURATION"
+      :location="toast.location || 'bottom'"
+      :position="toast.position || 'right'"
+      class="toast-snackbar"
+      @update:modelValue="() => removeToast(toast.id)"
+    >
+      <div class="toast-content">
+        <div class="d-flex align-center">
+          <v-icon :icon="getToastIcon(toast.type)" class="me-3" size="20" />
+          <div class="flex-grow-1">
+            <div class="toast-title">{{ toast.title }}</div>
+            <div class="toast-message text-body-2">{{ toast.message }}</div>
+          </div>
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            size="small"
             @click="removeToast(toast.id)"
-            aria-label="Close"
-          ></button>
-        </div>
-        <div class="toast-body px-3 pb-3 pt-0 opacity-90 small">
-          {{ toast.message }}
+            class="ms-2"
+          />
         </div>
       </div>
-    </transition-group>
+    </v-snackbar>
   </div>
 </template>
 
@@ -49,30 +46,45 @@ const removeToast = (id) => {
 };
 
 const addToast = (event) => {
-  const { title, message, type, icon } = event.detail;
+  const { title, message, type, icon, duration, location, position } = event.detail;
   const id = Date.now();
   
   const newToast = {
     id,
     title,
     message,
-    type: type === 'error' ? 'danger' : (type || 'info'),
-    icon: icon || 'fa-solid fa-info-circle',
-    progress: 100
+    type: type || 'info',
+    icon: icon || 'mdi-information',
+    duration: duration || TOAST_DURATION,
+    location: location || (isRtl.value ? 'bottom' : 'bottom'),
+    position: position || (isRtl.value ? 'left' : 'right'),
+    show: true
   };
 
   toasts.value.push(newToast);
+};
 
-  const interval = 50;
-  const step = 100 / (TOAST_DURATION / interval);
-  
-  const timer = setInterval(() => {
-    newToast.progress -= step;
-    if (newToast.progress <= 0) {
-      clearInterval(timer);
-      removeToast(id);
-    }
-  }, interval);
+// Helper methods
+const getToastColor = (type) => {
+  const colorMap = {
+    success: 'success',
+    error: 'error',
+    warning: 'warning',
+    info: 'info',
+    danger: 'error'
+  };
+  return colorMap[type] || 'info';
+};
+
+const getToastIcon = (type) => {
+  const iconMap = {
+    success: 'mdi-check-circle',
+    error: 'mdi-alert-circle',
+    warning: 'mdi-alert',
+    info: 'mdi-information',
+    danger: 'mdi-alert-circle'
+  };
+  return iconMap[type] || 'mdi-information';
 };
 
 onMounted(() => {
@@ -86,59 +98,43 @@ onUnmounted(() => {
 
 <style scoped>
 .toast-container {
-  max-width: 350px;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  max-width: 400px;
+  pointer-events: none;
+}
+
+.toast-container[dir="rtl"] {
+  right: auto;
+  left: 20px;
+}
+
+.toast-snackbar {
+  pointer-events: auto;
+  margin-bottom: 8px;
+}
+
+.toast-content {
   width: 100%;
 }
 
-.toast {
-  border-radius: 12px;
-  position: relative;
-  min-width: 300px;
-  backdrop-filter: blur(10px);
+.toast-title {
+  font-weight: 600;
+  margin-bottom: 4px;
 }
 
-.toast-progress {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 3px;
-  background: rgba(255, 255, 255, 0.4);
-  transition: width 0.05s linear;
+.toast-message {
+  opacity: 0.9;
 }
 
-/* Animations */
-.toast-slide-enter-active,
-.toast-slide-leave-active {
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+@media (max-width: 600px) {
+  .toast-container {
+    left: 16px !important;
+    right: 16px !important;
+    bottom: 16px;
+    max-width: none;
+  }
 }
-
-.toast-slide-enter-from {
-  transform: translateX(100%);
-  opacity: 0;
-}
-
-[dir="rtl"] .toast-slide-enter-from {
-  transform: translateX(-100%);
-}
-
-.toast-slide-leave-to {
-  transform: scale(0.8);
-  opacity: 0;
-}
-
-/* Colors */
-.bg-success { background: linear-gradient(135deg, #28a745 0%, #34ce57 100%) !important; }
-.bg-danger { background: linear-gradient(135deg, #dc3545 0%, #f86d7d 100%) !important; }
-.bg-warning { background: linear-gradient(135deg, #ffc107 0%, #ffdb6e 100%) !important; color: #000 !important; }
-.bg-info { background: linear-gradient(135deg, #17a2b8 0%, #29d6f1 100%) !important; }
-
-.bg-warning .btn-close-white { filter: invert(1) grayscale(100%) brightness(0); }
-
-/* Custom Scrollbar for small mobile screens if many toasts */
-.toast-container {
-  max-height: 100vh;
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-.toast-container::-webkit-scrollbar { display: none; }
 </style>

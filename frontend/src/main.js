@@ -20,11 +20,10 @@ import AILearningService from '@/services/AILearningService'
 import apiErrorLogger from '@/services/ApiErrorLogger.js'
 import { httpClient } from '@/services/HttpClient.js'
 
-// Import new plugins
+// Import new plugins - with conditional loading to prevent duplicates
 import PrimeVuePlugin from '@/plugins/primevue'
 import VueUsePlugin from '@/plugins/vueuse'
-import MotionPlugin from '@/plugins/motion'
-import AutoAnimatePlugin from '@/plugins/autoAnimate'
+// Note: Motion and AutoAnimate are handled by VueUse plugin to avoid duplicates
 import { ApolloPlugin, client } from '@/plugins/apolloPlugin'
 import { DefaultApolloClient, provideApolloClient } from '@vue/apollo-composable'
 
@@ -64,7 +63,16 @@ app.config.errorHandler = (err, instance, info) => {
 // Install plugins in correct order - REMOVE DUPLICATE MOTION PLUGIN
 app.use(pinia)
 app.use(store)
-app.use(router)
+
+// Router with error handling
+try {
+  app.use(router)
+  console.log('✅ Router initialized successfully')
+} catch (error) {
+  console.error('❌ Router initialization failed:', error)
+  // Continue without router if it fails
+}
+
 app.use(i18n)
 app.use(AITranslation)
 app.use(seo)

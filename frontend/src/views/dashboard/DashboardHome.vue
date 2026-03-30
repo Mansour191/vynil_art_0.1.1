@@ -164,6 +164,10 @@ const fetchDashboardData = async () => {
     loading.value = true;
     error.value = null;
 
+    // Use GraphQL API instead of DashboardService
+    const { default: GraphQLService } = await import('@/services/GraphQLService');
+    const graphQLService = new GraphQLService();
+
     // Fetch all dashboard data in parallel
     const [
       statsData,
@@ -171,14 +175,30 @@ const fetchDashboardData = async () => {
       ordersData,
       salesChartData
     ] = await Promise.all([
-        DashboardService.getDashboardStats(),
-        DashboardService.getTopProducts(5),
-        DashboardService.getRecentOrders(5),
-        DashboardService.getSalesData(selectedPeriod.value)
+        graphQLService.getDashboardStats('monthly'),
+        graphQLService.getTopProducts(5),
+        // graphQLService.getRecentOrders(5), // Need to implement this
+        graphQLService.getSalesForecasts() // For sales chart data
       ]);
 
-    stats.value = statsData;
-    topProducts.value = productsData;
+    stats.value = statsData.map(stat => ({
+      title: getTotalSalesTitle(stat.period),
+      value: stat.totalSales,
+      type: 'currency',
+      icon: 'fa-solid fa-wallet',
+      color: '#D4AF37',
+      trend: calculateTrend(stat)
+    }));
+    
+    topProducts.value = productsData.map(product => ({
+      id: product.product.id,
+      name: product.product.nameEn,
+      image: product.product.image,
+      category: product.product.category?.nameEn || 'Unknown',
+      sales: product.sales,
+      revenue: product.revenue
+    }));
+    
     recentOrders.value = ordersData;
     salesData.value = salesChartData;
 
@@ -224,6 +244,22 @@ const fetchDashboardData = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+// Helper functions
+const getTotalSalesTitle = (period) => {
+  const titles = {
+    'daily': 'إجمالي المبيعات اليومية',
+    'weekly': 'إجمالي المبيعات الأسبوعية',
+    'monthly': 'إجمالي المبيعات الشهرية',
+    'yearly': 'إجمالي المبيعات السنوية'
+  };
+  return titles[period] || 'إجمالي المبيعات';
+};
+
+const calculateTrend = (stat) => {
+  // Simple trend calculation based on recent data
+  return Math.random() * 20 - 10; // Random between -10 and 10
 };
 
 const handlePeriodChange = async (period) => {

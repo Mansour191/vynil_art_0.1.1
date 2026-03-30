@@ -10,11 +10,10 @@
       <template v-slot:activator="{ props }">
         <v-btn
           v-bind="props"
-          icon="mdi-bell"
-          variant="text"
-          color="primary"
-          size="small"
-          class="notifications-btn"
+          icon
+          variant="outlined"
+          class="action-btn notifications-btn"
+          :title="$t('notifications')"
         >
           <v-badge
             v-if="unreadCount > 0"
@@ -23,9 +22,9 @@
             offset-x="-4"
             offset-y="-4"
           >
-            <v-icon>mdi-bell</v-icon>
+            <v-icon icon="mdi-bell" size="18" />
           </v-badge>
-          <v-icon v-else>mdi-bell</v-icon>
+          <v-icon v-else icon="mdi-bell" size="18" />
         </v-btn>
       </template>
       
@@ -193,3 +192,27 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+/* Match action button styles from Header.vue */
+.action-btn {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 50% !important;
+  border: 1px solid rgba(212, 175, 55, 0.3) !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #d4af37 !important;
+  transition: all 0.3s ease !important;
+}
+
+.action-btn:hover {
+  border-color: #d4af37 !important;
+  background: rgba(212, 175, 55, 0.1) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(212, 175, 55, 0.3) !important;
+}
+
+.notifications-btn {
+  /* Inherits all styles from action-btn */
+}
+</style>

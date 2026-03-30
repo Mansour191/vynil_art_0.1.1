@@ -1,88 +1,122 @@
 <template>
-  <div class="user-guide-page container py-5">
-    <div class="row justify-content-center">
-      <div class="col-lg-10">
+  <v-container class="py-8">
+    <v-row justify="center">
+      <v-col cols="12" lg="10">
         <!-- Header -->
-        <div class="card shadow-sm border-0 rounded-lg overflow-hidden bg-card mb-5">
-          <div class="card-header bg-surface border-bottom p-5 text-center">
-            <h1 class="display-5 text-gold mb-3 font-weight-bold">
-              <i class="fa-solid fa-book-reader me-3"></i> {{ $t('userGuide') || 'دليل المستخدم للمبتدئين' }}
+        <v-card elevation="4" class="overflow-hidden mb-8">
+          <v-card-text class="pa-8 text-center bg-surface">
+            <h1 class="text-h3 font-weight-bold text-warning mb-4 d-flex align-center justify-center gap-3">
+              <v-icon size="40" color="warning">mdi-book-open-variant</v-icon>
+              {{ $t('userGuide') || 'دليل المستخدم للمبتدئين' }}
             </h1>
-            <p class="lead text-muted">{{ $t('userGuideIntro') || 'كل ما تحتاجه لتبدأ رحلتك مع فينيل آرت باحترافية' }}</p>
-          </div>
+            <p class="text-h6 text-medium-emphasis">{{ $t('userGuideIntro') || 'كل ما تحتاجه لتبدأ رحلتك مع فينيل آرت باحترافية' }}</p>
+          </v-card-text>
+        </v-card>
 
-          <div class="card-body p-5">
-            <!-- Beginner's Steps -->
-            <section class="mb-5">
-              <h2 class="h3 text-gold mb-4 border-bottom pb-2 font-weight-bold">
-                <i class="fa-solid fa-rocket me-2"></i> البداية السريعة
-              </h2>
-              <div class="row g-4">
-                <div v-for="(step, index) in steps" :key="index" class="col-md-4">
-                  <div class="guide-step-card p-4 rounded-lg bg-light h-100 text-center shadow-sm hover-shadow transition-all">
-                    <div class="step-num mb-3">{{ index + 1 }}</div>
-                    <i :class="['fa-solid fa-2x text-gold mb-3', step.icon]"></i>
-                    <h5 class="font-weight-bold">{{ step.title }}</h5>
-                    <p class="text-secondary small mb-0">{{ step.desc }}</p>
-                  </div>
-                </div>
-              </div>
-            </section>
+        <!-- Beginner's Steps -->
+        <v-card elevation="4" class="mb-8">
+          <v-card-text class="pa-8">
+            <h2 class="text-h4 font-weight-bold text-warning mb-6 d-flex align-center gap-3">
+              <v-icon size="32" color="warning">mdi-rocket</v-icon>
+              البداية السريعة
+            </h2>
+            <v-row>
+              <v-col
+                v-for="(step, index) in steps"
+                :key="index"
+                cols="12"
+                md="4"
+              >
+                <v-card elevation="2" class="pa-6 text-center h-100">
+                  <div class="step-num mb-4">{{ index + 1 }}</div>
+                  <v-icon :icon="step.icon" size="48" color="warning" class="mb-4"></v-icon>
+                  <h5 class="text-h5 font-weight-bold mb-3">{{ step.title }}</h5>
+                  <p class="text-body-2 text-medium-emphasis mb-0">{{ step.desc }}</p>
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
 
-            <!-- Video Tutorials -->
-            <section class="mb-5 pt-4">
-              <h2 class="h3 text-gold mb-4 border-bottom pb-2 font-weight-bold">
-                <i class="fa-solid fa-play-circle me-2"></i> دروس فيديو تعليمية
-              </h2>
-              <div class="row g-4">
-                <div v-for="(video, index) in tutorials" :key="index" class="col-md-6">
-                  <div class="video-card card border-0 shadow-sm rounded-lg overflow-hidden bg-surface h-100">
-                    <div class="ratio ratio-16x9 bg-dark">
-                      <iframe 
-                        :src="video.embedUrl" 
-                        title="YouTube video player" 
-                        frameborder="0" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen
-                      ></iframe>
+        <!-- Video Tutorials -->
+        <v-card elevation="4" class="mb-8">
+          <v-card-text class="pa-8">
+            <h2 class="text-h4 font-weight-bold text-warning mb-6 d-flex align-center gap-3">
+              <v-icon size="32" color="warning">mdi-play-circle</v-icon>
+              دروس فيديو تعليمية
+            </h2>
+            <v-row>
+              <v-col
+                v-for="(video, index) in tutorials"
+                :key="index"
+                cols="12"
+                md="6"
+              >
+                <v-card elevation="2" class="h-100">
+                  <div class="video-wrapper">
+                    <v-img
+                      :src="video.thumbnail"
+                      aspect-ratio="16/9"
+                      cover
+                      class="video-thumbnail"
+                    >
+                      <template #placeholder>
+                        <v-skeleton-loader type="image"></v-skeleton-loader>
+                      </template>
+                    </v-img>
+                    <div class="play-overlay">
+                      <v-btn
+                        icon="mdi-play"
+                        size="large"
+                        color="warning"
+                        variant="elevated"
+                        class="play-button"
+                      ></v-btn>
                     </div>
-                    <div class="card-body">
-                      <h5 class="card-title text-gold font-weight-bold">{{ video.title }}</h5>
-                      <p class="card-text text-muted small mb-0">{{ video.desc }}</p>
-                    </div>
                   </div>
-                </div>
-              </div>
-            </section>
+                      <v-card-text class="pa-4">
+                    <h5 class="text-h5 font-weight-bold text-warning mb-2">{{ video.title }}</h5>
+                    <p class="text-body-2 text-medium-emphasis mb-0">{{ video.desc }}</p>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
 
-            <!-- Trusted & Quality Badges -->
-            <section class="pt-4">
-              <div class="p-5 bg-surface rounded-lg text-center shadow-gold border-gold-subtle">
-                <h3 class="text-gold mb-4 font-weight-bold"><i class="fa-solid fa-award me-2"></i> ضمان الجودة والموثوقية</h3>
-                <div class="d-flex justify-content-center gap-5 flex-wrap">
-                  <div class="badge-item">
-                    <i class="fa-solid fa-check-circle fa-3x text-success mb-3"></i>
-                    <h6 class="text-white">موثوق ومجرب</h6>
-                    <p class="small text-muted mb-0">أكثر من 5000+ عميل راضٍ</p>
-                  </div>
-                  <div class="badge-item">
-                    <i class="fa-solid fa-shield-alt fa-3x text-gold mb-3"></i>
-                    <h6 class="text-white">ضمان لمدة سنة</h6>
-                    <p class="small text-muted mb-0">على جميع أنواع الطباعة</p>
-                  </div>
-                  <div class="badge-item">
-                    <i class="fa-solid fa-hand-holding-heart fa-3x text-info mb-3"></i>
-                    <h6 class="text-white">صديق للبيئة</h6>
-                    <p class="small text-muted mb-0">خامات غير سامة وآمنة</p>
-                  </div>
-                </div>
+        <!-- Trusted & Quality Badges -->
+        <v-card elevation="6" class="pa-8 text-center bg-surface">
+          <h3 class="text-h4 font-weight-bold text-warning mb-6 d-flex align-center justify-center gap-3">
+            <v-icon size="32" color="warning">mdi-award</v-icon>
+            ضمان الجودة والموثوقية
+          </h3>
+          <v-row justify="center">
+            <v-col cols="12" sm="6" md="4">
+              <div class="badge-item text-center pa-4">
+                <v-icon size="64" color="success" class="mb-4">mdi-check-circle</v-icon>
+                <h6 class="text-h6 font-weight-bold mb-2">موثوق ومجرب</h6>
+                <p class="text-body-2 text-medium-emphasis mb-0">أكثر من 5000+ عميل راضٍ</p>
               </div>
-            </section>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+            </v-col>
+            <v-col cols="12" sm="6" md="4">
+              <div class="badge-item text-center pa-4">
+                <v-icon size="64" color="warning" class="mb-4">mdi-shield-check</v-icon>
+                <h6 class="text-h6 font-weight-bold mb-2">ضمان لمدة سنة</h6>
+                <p class="text-body-2 text-medium-emphasis mb-0">على جميع أنواع الطباعة</p>
+              </div>
+            </v-col>
+            <v-col cols="12" sm="6" md="4">
+              <div class="badge-item text-center pa-4">
+                <v-icon size="64" color="info" class="mb-4">mdi-hand-heart</v-icon>
+                <h6 class="text-h6 font-weight-bold mb-2">صديق للبيئة</h6>
+                <p class="text-body-2 text-medium-emphasis mb-0">خامات غير سامة وآمنة</p>
+              </div>
+            </v-col>
+          </v-row>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script setup>
@@ -92,55 +126,56 @@ import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 
 const steps = computed(() => [
-  { icon: 'fa-user-plus', title: 'إنشاء حساب', desc: 'قم بإنشاء حسابك لتتبع طلباتك والحصول على خصومات حصرية.' },
-  { icon: 'fa-search', title: 'تصفح التصاميم', desc: 'استخدم محرك البحث المتقدم للعثور على ما يناسب ذوقك.' },
-  { icon: 'fa-pencil-ruler', title: 'التخصيص', desc: 'أدخل مقاساتك الخاصة واختر الألوان المناسبة لمساحتك.' }
+  { icon: 'mdi-account-plus', title: 'إنشاء حساب', desc: 'قم بإنشاء حسابك لتتبع طلباتك والحصول على خصومات حصرية.' },
+  { icon: 'mdi-magnify', title: 'تصفح التصاميم', desc: 'استخدم محرك البحث المتقدم للعثور على ما يناسب ذوقك.' },
+  { icon: 'mdi-pencil-ruler', title: 'التخصيص', desc: 'أدخل مقاساتك الخاصة واختر الألوان المناسبة لمساحتك.' }
 ]);
 
 const tutorials = computed(() => [
   { 
     title: 'كيفية أخذ المقاسات بدقة', 
     desc: 'تعلم الطريقة الصحيحة لقياس الجدران والأسطح لتجنب أي أخطاء في الطلب.',
+    thumbnail: 'https://i.postimg.cc/0QKmBBJ9/kitchen2.png', // Placeholder image
     embedUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ' // رابط تجريبي
   },
   { 
     title: 'طريقة تركيب الفينيل المخصص', 
     desc: 'خطوات بسيطة وسهلة لتركيب ملصقات الفينيل على الجدران دون فقاعات هواء.',
+    thumbnail: 'https://i.postimg.cc/htCcH3cZ/table1.png', // Placeholder image
     embedUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ' // رابط تجريبي
   }
 ]);
 </script>
 
 <style scoped>
-.bg-card { background: var(--bg-card); }
-.bg-surface { background: var(--bg-surface); }
-.text-gold { color: var(--gold-primary); }
-.border-gold-subtle { border: 1px solid rgba(212, 175, 55, 0.2); }
-.shadow-gold { box-shadow: 0 10px 30px rgba(212, 175, 55, 0.1); }
-
+/* Vuetify handles most styling */
 .step-num {
-  width: 35px;
-  height: 35px;
-  background: var(--gold-gradient);
-  color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
   font-weight: 800;
+  color: #000;
+  background: linear-gradient(135deg, #ffc107 0%, #ffca28 100%);
   border-radius: 50%;
   margin: 0 auto;
 }
 
-.hover-shadow:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+.video-wrapper {
+  position: relative;
 }
 
-.transition-all {
-  transition: all 0.3s ease;
+.play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
-.badge-item {
-  width: 150px;
+.play-button:hover {
+  transform: scale(1.1);
+  transition: transform 0.3s ease;
 }
 </style>

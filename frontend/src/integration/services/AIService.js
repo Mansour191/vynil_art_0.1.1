@@ -94,7 +94,12 @@ class AIService {
 
   async _translateWithDeepL(text, targetLang) {
     // محرك DeepL (مثال سريع)
-    const langMap = { ar: 'AR', en: 'EN-US', fr: 'FR' };
+    const langMap = { 
+      ar: 'AR', 
+      en: 'EN-US', 
+      fr: 'FR',
+      ch: 'ZH' // ✅ إضافة اللغة الصينية
+    };
     const target = langMap[targetLang] || 'EN-US';
     
     const params = new URLSearchParams();
@@ -114,7 +119,8 @@ class AIService {
         const prefixes = { 
           ar: '[مترجم] ', 
           en: '[AI Translated] ', 
-          fr: '[Traduit par IA] ' 
+          fr: '[Traduit par IA] ',
+          ch: '[AI翻译] ' // ✅ إضافة اللغة الصينية
         };
         resolve(`${prefixes[targetLang] || ''}${text}`);
       }, 500);

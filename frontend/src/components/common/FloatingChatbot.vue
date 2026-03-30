@@ -1,42 +1,66 @@
 <template>
   <div class="chatbot-root">
     <!-- FAB Button (Mobile Only) -->
-    <button 
+    <v-btn
       v-if="!isSidebar && !isFullscreen && !isOpen"
-      class="chat-fab" 
+      class="chat-fab"
+      color="primary"
+      elevation="6"
+      size="large"
+      icon="mdi-message-text"
       @click="toggleChatbot"
+      position="fixed"
+      :style="{ bottom: '20px', right: isRTL ? 'auto' : '20px', left: isRTL ? '20px' : 'auto' }"
     >
-      <i class="fa-solid fa-comments"></i>
-      <span v-if="unreadCount > 0" class="unread-badge">{{ unreadCount }}</span>
-    </button>
+      <v-badge
+        v-if="unreadCount > 0"
+        :content="unreadCount"
+        color="error"
+        offset-x="2"
+        offset-y="2"
+      />
+    </v-btn>
 
     <!-- Sidebar Mode (Desktop) -->
-    <div 
+    <v-card
       v-if="isSidebar && isOpen"
       class="chat-sidebar"
       :class="{ 'rtl-sidebar': isRTL, 'ltr-sidebar': !isRTL }"
+      elevation="8"
     >
-      <div class="chat-header">
+      <v-card-title class="chat-header">
         <div class="header-info">
-          <div class="avatar-container">
-            <img src="/logo.svg" alt="Paclos Logo" class="chat-avatar" />
-          </div>
+          <v-avatar size="40" class="me-3">
+            <img src="/logo.svg" alt="Paclos Logo" />
+          </v-avatar>
           <div class="title-container">
-            <strong>Paclos Assistant</strong>
-            <span class="status-indicator" :class="{ online: isOnline, offline: !isOnline }">
-              <i class="fa-solid fa-circle"></i>
-              {{ isOnline ? 'متصل' : 'غير متصل' }}
-            </span>
+            <div class="text-h6">Paclos Assistant</div>
+            <div class="status-indicator">
+              <v-icon
+                :icon="isOnline ? 'mdi-circle' : 'mdi-circle-outline'"
+                :color="isOnline ? 'success' : 'grey'"
+                size="8"
+                class="me-1"
+              />
+              <span class="text-caption">{{ isOnline ? 'متصل' : 'غير متصل' }}</span>
+            </div>
           </div>
         </div>
-        <button class="close-btn" @click="closeChatbot">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
+        <v-btn
+          icon="mdi-close"
+          variant="text"
+          @click="closeChatbot"
+        />
+      </v-card-title>
       
-      <div class="chat-body" ref="chatBody">
-        <div v-if="isLoading" class="loading-indicator">
-          <i class="fa-solid fa-spinner fa-spin"></i>
+      <v-card-text class="chat-body pa-0" ref="chatBody">
+        <div v-if="isLoading" class="loading-indicator d-flex align-center justify-center pa-4">
+          <v-progress-circular
+            indeterminate
+            color="primary"
+            size="24"
+            class="me-2"
+          />
           <span>جاري التحميل...</span>
         </div>
         
@@ -53,91 +77,99 @@
             </div>
           </div>
         </div>
-      </div>
+      </v-card-text>
       
-      <div class="chat-input">
-        <div class="input-container">
-          <input 
-            v-model="input" 
-            @keyup.enter="sendMessage"
-            :placeholder="isTyping ? 'يكتب المساعد...' : 'اكتب رسالتك...'"
-            :disabled="loading"
-            class="message-input"
-          />
-          <button 
-            @click="sendMessage" 
-            :disabled="loading || !input.trim()"
-            class="send-btn"
-          >
-            <i class="fa-solid fa-paper-plane"></i>
-          </button>
-        </div>
-      </div>
-    </div>
+      <v-card-actions class="chat-input pa-3">
+        <v-text-field
+          v-model="input"
+          @keyup.enter="sendMessage"
+          :placeholder="isTyping ? 'يكتب المساعد...' : 'اكتب رسالتك...'"
+          :disabled="loading"
+          variant="outlined"
+          density="compact"
+          hide-details
+          append-inner-icon="mdi-send"
+          @click:append-inner="sendMessage"
+          class="message-input"
+        />
+      </v-card-actions>
+    </v-card>
 
     <!-- Full-Screen Mode (Mobile) -->
-    <div 
+    <v-dialog
       v-if="isFullscreen && isOpen"
-      class="chat-fullscreen"
+      v-model="isOpen"
+      fullscreen
+      transition="dialog-bottom-transition"
     >
-      <div class="chat-header">
-        <div class="header-info">
-          <div class="avatar-container">
-            <img src="/logo.svg" alt="Paclos Logo" class="chat-avatar" />
-          </div>
-          <div class="title-container">
-            <strong>Paclos Assistant</strong>
-            <span class="status-indicator" :class="{ online: isOnline, offline: !isOnline }">
-              <i class="fa-solid fa-circle"></i>
-              {{ isOnline ? 'متصل' : 'غير متصل' }}
-            </span>
-          </div>
-        </div>
-        <button class="close-btn" @click="closeChatbot">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-      
-      <div class="chat-body" ref="chatBody">
-        <div v-if="isLoading" class="loading-indicator">
-          <i class="fa-solid fa-spinner fa-spin"></i>
-          <span>جاري التحميل...</span>
-        </div>
-        
-        <div v-else class="messages-container">
-          <div 
-            v-for="message in messages" 
-            :key="message.timestamp"
-            class="message"
-            :class="message.role"
-          >
-            <div class="message-content">
-              <p>{{ message.text }}</p>
-              <span class="timestamp">{{ formatTime(message.timestamp) }}</span>
+      <v-card class="chat-fullscreen">
+        <v-card-title class="chat-header">
+          <div class="header-info">
+            <v-avatar size="40" class="me-3">
+              <img src="/logo.svg" alt="Paclos Logo" />
+            </v-avatar>
+            <div class="title-container">
+              <div class="text-h6">Paclos Assistant</div>
+              <div class="status-indicator">
+                <v-icon
+                  :icon="isOnline ? 'mdi-circle' : 'mdi-circle-outline'"
+                  :color="isOnline ? 'success' : 'grey'"
+                  size="8"
+                  class="me-1"
+                />
+                <span class="text-caption">{{ isOnline ? 'متصل' : 'غير متصل' }}</span>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-      
-      <div class="chat-input">
-        <div class="input-container">
-          <input 
-            v-model="input" 
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            @click="closeChatbot"
+          />
+        </v-card-title>
+        
+        <v-card-text class="chat-body pa-0" ref="chatBody">
+          <div v-if="isLoading" class="loading-indicator d-flex align-center justify-center pa-4">
+            <v-progress-circular
+              indeterminate
+              color="primary"
+              size="24"
+              class="me-2"
+            />
+            <span>جاري التحميل...</span>
+          </div>
+          
+          <div v-else class="messages-container">
+            <div 
+              v-for="message in messages" 
+              :key="message.timestamp"
+              class="message"
+              :class="message.role"
+            >
+              <div class="message-content">
+                <p>{{ message.text }}</p>
+                <span class="timestamp">{{ formatTime(message.timestamp) }}</span>
+              </div>
+            </div>
+          </div>
+        </v-card-text>
+        
+        <v-card-actions class="chat-input pa-3">
+          <v-text-field
+            v-model="input"
             @keyup.enter="sendMessage"
             :placeholder="isTyping ? 'يكتب المساعد...' : 'اكتب رسالتك...'"
             :disabled="loading"
+            variant="outlined"
+            density="compact"
+            hide-details
+            append-inner-icon="mdi-send"
+            @click:append-inner="sendMessage"
             class="message-input"
           />
-          <button 
-            @click="sendMessage" 
-            :disabled="loading || !input.trim()"
-            class="send-btn"
-          >
-            <i class="fa-solid fa-paper-plane"></i>
-          </button>
-        </div>
-      </div>
-    </div>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
   </div>
 </template>
@@ -384,104 +416,44 @@ onMounted(() => {
 /* Chatbot Root Container */
 .chatbot-root {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 1200;
 }
 
-[dir="rtl"] .chatbot-root {
-  right: auto;
-  left: 20px;
-}
-
-/* FAB Button (Mobile Only) */
+/* FAB Button */
 .chat-fab {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
-  border: none;
-  color: #0A0A0A;
-  font-size: 24px;
-  cursor: pointer;
-  box-shadow: 0 8px 32px rgba(212, 175, 55, 0.4);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1201;
-}
-
-[dir="rtl"] .chat-fab {
-  right: auto;
-  left: 20px;
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  z-index: 9999;
+  transition: all 0.3s ease;
 }
 
 .chat-fab:hover {
   transform: scale(1.1);
-  box-shadow: 0 12px 48px rgba(212, 175, 55, 0.6);
 }
 
-.unread-badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background: #FF4444;
-  color: white;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-}
-
-/* Sidebar Mode (Desktop) */
+/* Chat Sidebar */
 .chat-sidebar {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(180deg, #0A0A0A 0%, #1A1A1A 100%);
-  border-left: 1px solid #D4AF37;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.chat-sidebar.rtl-sidebar {
-  border-left: none;
-  border-right: 1px solid #D4AF37;
-}
-
-.chat-sidebar.ltr-sidebar {
-  border-right: none;
-  border-left: 1px solid #D4AF37;
-}
-
-/* Full-Screen Mode (Mobile) */
-.chat-fullscreen {
   position: fixed;
   top: 0;
-  left: 0;
   right: 0;
-  bottom: 0;
-  width: 100vw;
+  width: 400px;
   height: 100vh;
-  background: linear-gradient(180deg, #0A0A0A 0%, #1A1A1A 100%);
+  max-height: 100vh;
   display: flex;
   flex-direction: column;
   z-index: 9999;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.rtl-sidebar {
+  right: auto;
+  left: 0;
+}
+
 /* Chat Header */
 .chat-header {
-  background: linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%);
-  padding: 16px 20px;
-  border-bottom: 1px solid #D4AF37;
+  background: linear-gradient(135deg, rgb(var(--v-theme-surface-variant)) 0%, rgb(var(--v-theme-surface)) 100%);
+  border-bottom: 1px solid rgb(var(--v-theme-outline));
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -494,83 +466,37 @@ onMounted(() => {
   gap: 12px;
 }
 
-.avatar-container {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.chat-avatar {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-}
-
 .title-container {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.title-container strong {
-  color: #F5F5F5;
-  font-size: 16px;
-  font-weight: 600;
-}
-
 .status-indicator {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: #F5F5F5;
-  opacity: 0.8;
-}
-
-.status-indicator.online {
-  color: #4CAF50;
-}
-
-.status-indicator.offline {
-  color: #FF4444;
-}
-
-.close-btn {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: #F5F5F5;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.close-btn:hover {
-  background: rgba(255, 68, 68, 0.2);
-  color: #FF4444;
+  gap: 4px;
 }
 
 /* Chat Body */
 .chat-body {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
-  background: #0A0A0A;
+  padding: 16px;
+  background: rgb(var(--v-theme-surface));
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .messages-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
 .message {
@@ -594,15 +520,15 @@ onMounted(() => {
 }
 
 .message.user .message-content {
-  background: linear-gradient(135deg, #D4AF37 0%, #B8860B 100%);
-  color: #0A0A0A;
+  background: rgb(var(--v-theme-primary));
+  color: rgb(var(--v-theme-on-primary));
   border-bottom-right-radius: 4px;
 }
 
 .message.bot .message-content {
-  background: linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%);
-  color: #F5F5F5;
-  border: 1px solid #333;
+  background: rgb(var(--v-theme-surface-variant));
+  color: rgb(var(--v-theme-on-surface-variant));
+  border: 1px solid rgb(var(--v-theme-outline));
   border-bottom-left-radius: 4px;
 }
 
@@ -615,8 +541,8 @@ onMounted(() => {
 .timestamp {
   font-size: 11px;
   opacity: 0.7;
-  margin-top: 4px;
   display: block;
+  margin-top: 4px;
 }
 
 /* Chat Input */
@@ -779,48 +705,4 @@ onMounted(() => {
   border-bottom-right-radius: 4px;
 }
 
-.chat-fab {
-  width: 56px; height: 56px; border-radius: 999px; border: 0; cursor: pointer;
-  background: linear-gradient(135deg, #d4af37, #f7df90); color: #111827;
-  box-shadow: 0 10px 24px rgba(212, 175, 55, 0.35);
-}
-.chat-window {
-  width: 340px; height: 470px; margin-bottom: 10px; border-radius: 16px; overflow: hidden;
-  border: 1px solid rgba(212, 175, 55, 0.35); background: #111827; color: #f9fafb;
-  display: flex; flex-direction: column;
-}
-.chat-header {
-  padding: 10px 12px; background: linear-gradient(135deg, rgba(212,175,55,.2), rgba(120,120,120,.15));
-  display: flex; align-items: center; justify-content: space-between;
-}
-
-.header-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.avatar-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.chat-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  filter: drop-shadow(0 0 5px #D4AF37);
-  transition: filter 0.3s ease;
-}
-
-.chat-avatar:hover {
-  filter: drop-shadow(0 0 8px #D4AF37) drop-shadow(0 0 12px rgba(212, 175, 55, 0.4));
-}
-
-.title-container {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-</style>
+  

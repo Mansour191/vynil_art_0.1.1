@@ -1,122 +1,189 @@
 <template>
-  <section class="relative min-h-screen overflow-hidden bg-slate-950 py-8 text-slate-100">
-    <div class="pointer-events-none absolute -left-28 -top-28 h-64 w-64 rounded-full bg-amber-400/20 blur-3xl"></div>
-    <div class="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-sky-300/20 blur-3xl"></div>
+  <v-sheet class="bg-surface min-h-screen overflow-hidden py-8">
+    <!-- Background Decorations -->
+    <div class="pointer-events-none absolute -left-28 -top-28 h-64 w-64 rounded-full bg-warning/20 blur-3xl"></div>
+    <div class="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-info/20 blur-3xl"></div>
 
-    <div class="container relative z-10 mx-auto px-4">
+    <v-container class="relative z-10">
       <Breadcrumbs class="mb-6" />
 
-      <div v-if="loading" class="grid gap-6 lg:grid-cols-2">
-        <div class="h-[420px] animate-pulse rounded-3xl bg-slate-800/80"></div>
-        <div class="space-y-4 rounded-3xl border border-slate-700 bg-slate-900/70 p-6">
-          <div class="h-6 w-32 animate-pulse rounded bg-slate-800"></div>
-          <div class="h-9 w-2/3 animate-pulse rounded bg-slate-800"></div>
-          <div class="h-20 animate-pulse rounded bg-slate-800"></div>
-          <div class="h-12 animate-pulse rounded bg-slate-800"></div>
-        </div>
-      </div>
+      <!-- Loading State -->
+      <v-row v-if="loading">
+        <v-col cols="12" md="6">
+          <v-skeleton-loader
+            type="image"
+            height="420"
+            class="rounded-3xl"
+          ></v-skeleton-loader>
+        </v-col>
+        <v-col cols="12" md="6">
+          <v-card elevation="2" class="rounded-3xl pa-6">
+            <v-skeleton-loader
+              type="heading, text, text, button"
+              class="mb-4"
+            ></v-skeleton-loader>
+          </v-card>
+        </v-col>
+      </v-row>
 
-      <div v-else-if="error" class="rounded-3xl border border-red-400/30 bg-red-500/10 p-8 text-center">
-        <h2 class="mb-2 text-2xl font-bold">{{ $t('productDetail.errorTitle') }}</h2>
-        <p class="mb-5 text-red-100/90">{{ error }}</p>
-        <button
-          type="button"
-          class="rounded-xl bg-red-500 px-5 py-2.5 font-semibold text-white transition hover:bg-red-600"
+      <!-- Error State -->
+      <v-alert
+        v-else-if="error"
+        type="error"
+        variant="tonal"
+        class="rounded-3xl mb-6"
+        text
+      >
+        <template #prepend>
+          <v-icon>mdi-alert-circle</v-icon>
+        </template>
+        <h2 class="text-h5 font-weight-bold mb-2">{{ $t('productDetail.errorTitle') }}</h2>
+        <p class="text-body-2 mb-4">{{ error }}</p>
+        <v-btn
           @click="loadProduct"
+          color="error"
+          variant="elevated"
+          class="text-none"
         >
           {{ $t('productDetail.retry') }}
-        </button>
-      </div>
+        </v-btn>
+      </v-alert>
 
-      <div v-else-if="product" class="grid items-start gap-6 lg:grid-cols-2">
-        <div class="rounded-3xl border border-slate-700 bg-slate-900/70 p-4">
-          <img
-            :src="product.image"
-            :alt="product.name"
-            class="h-[420px] w-full rounded-2xl object-cover md:h-[560px]"
-          />
-        </div>
+      <!-- Product Content -->
+      <v-row v-else-if="product">
+        <v-col cols="12" md="6">
+          <v-card elevation="2" class="rounded-3xl pa-4">
+            <v-img
+              :src="product.image"
+              :alt="product.name"
+              height="420"
+              class="rounded-2xl"
+              cover
+            >
+              <template #placeholder>
+                <v-skeleton-loader type="image"></v-skeleton-loader>
+              </template>
+            </v-img>
+          </v-card>
+        </v-col>
 
-        <div class="sticky top-24 rounded-3xl border border-slate-700 bg-slate-900/70 p-6 md:p-8">
-          <div class="mb-3 flex flex-wrap gap-2">
-            <span class="rounded-full border border-slate-600 bg-slate-800 px-3 py-1 text-xs font-semibold">
-              {{ product.type }}
-            </span>
-            <span class="rounded-full bg-amber-300 px-3 py-1 text-xs font-bold text-slate-900">PACLOS</span>
-          </div>
-
-          <h1 class="mb-3 text-3xl font-extrabold md:text-4xl">{{ product.name }}</h1>
-          <p class="mb-6 leading-7 text-slate-300">{{ product.description }}</p>
-
-          <div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div class="rounded-xl border border-slate-700 bg-slate-800/60 p-3">
-              <div class="text-xs text-slate-400">{{ $t('productDetail.code') }}</div>
-              <div class="font-semibold">{{ product.code }}</div>
+        <v-col cols="12" md="6">
+          <v-card elevation="4" class="rounded-3xl pa-6 pa-md-8 sticky top-24">
+          <v-card-text>
+            <!-- Product Tags -->
+            <div class="d-flex flex-wrap gap-2 mb-4">
+              <v-chip
+                variant="outlined"
+                color="grey-lighten-2"
+                size="small"
+                class="text-none"
+              >
+                {{ product.type }}
+              </v-chip>
+              <v-chip
+                color="warning"
+                variant="elevated"
+                size="small"
+                class="text-none font-weight-bold"
+              >
+                PACLOS
+              </v-chip>
             </div>
-            <div class="rounded-xl border border-slate-700 bg-slate-800/60 p-3">
-              <div class="text-xs text-slate-400">{{ $t('productDetail.type') }}</div>
-              <div class="font-semibold">{{ product.type }}</div>
-            </div>
-          </div>
 
-          <div class="mb-6 rounded-xl bg-gradient-to-r from-amber-300/20 to-slate-700/20 p-4">
-            <div class="text-xs text-slate-400">{{ $t('productDetail.price') }}</div>
-            <div class="text-2xl font-extrabold text-amber-300">{{ formatPrice(product.price) }}</div>
-          </div>
+            <!-- Product Title and Description -->
+            <h1 class="text-h3 text-md-h2 font-weight-black mb-4">{{ product.name }}</h1>
+            <p class="text-body-1 text-medium-emphasis mb-6">{{ product.description }}</p>
 
-          <div class="mb-6 rounded-xl border border-slate-700 bg-slate-800/60 p-4">
-            <h3 class="mb-3 text-sm font-bold text-amber-300">{{ $t('productDetail.aiSmartMeasurement') }}</h3>
-            <div class="mb-3">
-              <label class="mb-1 block text-xs text-slate-300">{{ $t('productDetail.referenceDimensionCm') }}</label>
-              <input
+            <!-- Product Details Grid -->
+            <v-row class="mb-6">
+              <v-col cols="6">
+                <v-card variant="outlined" class="pa-3">
+                  <div class="text-caption text-medium-emphasis">{{ $t('productDetail.code') }}</div>
+                  <div class="font-weight-bold">{{ product.code }}</div>
+                </v-card>
+              </v-col>
+              <v-col cols="6">
+                <v-card variant="outlined" class="pa-3">
+                  <div class="text-caption text-medium-emphasis">{{ $t('productDetail.type') }}</div>
+                  <div class="font-weight-bold">{{ product.type }}</div>
+                </v-card>
+              </v-col>
+            </v-row>
+
+            <!-- Price -->
+            <v-card elevation="2" class="mb-6 pa-4 bg-gradient-to-r from-warning/20 to-surface">
+              <div class="text-caption text-medium-emphasis mb-1">{{ $t('productDetail.price') }}</div>
+              <div class="text-h3 font-weight-black text-warning">{{ formatPrice(product.price) }}</div>
+            </v-card>
+
+            <!-- AI Smart Measurement -->
+            <v-card elevation="2" class="mb-6 pa-4">
+              <h3 class="text-h6 font-weight-bold text-warning mb-3">{{ $t('productDetail.aiSmartMeasurement') }}</h3>
+              <v-text-field
                 v-model="referenceDimensionCm"
                 type="number"
+                :label="$t('productDetail.referenceDimensionCm')"
+                variant="outlined"
+                color="warning"
                 min="10"
-                class="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white outline-none"
-              />
-            </div>
-            <div class="mb-3">
-              <input
-                type="file"
+                class="mb-3"
+              ></v-text-field>
+              <v-file-input
                 accept="image/*"
-                class="w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-xs text-slate-300"
+                :label="$t('productDetail.uploadImage')"
+                variant="outlined"
+                color="warning"
+                prepend-icon="mdi-camera"
                 @change="onImageChange"
-              />
-            </div>
-            <button
-              type="button"
-              class="mb-3 w-full rounded-lg border border-amber-300/50 bg-amber-300/20 px-3 py-2 text-sm font-semibold text-amber-200 hover:bg-amber-300/30"
+                class="mb-3"
+              ></v-file-input>
+              <v-btn
+                @click="runSmartMeasurement"
+                color="warning"
+                variant="tonal"
+                prepend-icon="mdi-brain"
+                class="w-100 mb-3 text-none"
+              >
               :disabled="aiLoading || !aiImageFile"
-              @click="runSmartMeasurement"
-            >
-              {{ aiLoading ? $t('loading') : $t('productDetail.calculateWithAi') }}
-            </button>
+                class="text-none"
+              >
+                {{ aiLoading ? $t('loading') : $t('productDetail.calculateWithAi') }}
+              </v-btn>
 
-            <div class="rounded-lg border border-slate-600 bg-slate-900/70 p-3 text-sm">
-              <div class="mb-1 text-slate-300">
+            <!-- AI Results -->
+            <v-card variant="outlined" class="pa-3">
+              <div class="text-body-2 text-medium-emphasis mb-1">
                 {{ $t('productDetail.estimatedArea') }}:
                 <strong class="text-white">{{ estimatedAreaM2.toFixed(2) }} m²</strong>
               </div>
-              <div class="text-slate-300">
+              <div class="text-body-2 text-medium-emphasis">
                 {{ $t('productDetail.estimatedTotal') }}:
-                <strong class="text-amber-300">{{ formatPrice(calculatedTotalPrice) }}</strong>
+                <strong class="text-warning">{{ formatPrice(calculatedTotalPrice) }}</strong>
               </div>
-              <p v-if="aiError" class="mt-2 text-xs text-red-300">{{ aiError }}</p>
-              <p v-if="fallbackMode" class="mt-1 text-xs text-slate-400">{{ $t('productDetail.fallbackPrice') }}</p>
-            </div>
-          </div>
+              <v-alert v-if="aiError" type="error" variant="tonal" class="mt-2" density="compact">
+                {{ aiError }}
+              </v-alert>
+              <p v-if="fallbackMode" class="text-caption text-medium-emphasis mt-1">{{ $t('productDetail.fallbackPrice') }}</p>
+            </v-card>
+          </v-card-text>
 
-          <button
-            type="button"
-            class="w-full rounded-xl bg-gradient-to-r from-amber-400 to-amber-300 px-4 py-3 font-bold text-slate-900 transition hover:brightness-110"
-            @click="confirmOrder"
-          >
-            {{ $t('productDetail.orderNow') }}
-          </button>
-        </div>
-      </div>
-    </div>
-  </section>
+          <!-- Order Button -->
+          <v-card-actions class="pa-6">
+            <v-btn
+              @click="confirmOrder"
+              color="warning"
+              variant="elevated"
+              size="large"
+              class="w-100 text-none font-weight-bold"
+              prepend-icon="mdi-shopping"
+            >
+              {{ $t('productDetail.orderNow') }}
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-row>
+    </v-container>
+  </v-sheet>
 </template>
 
 <script setup>

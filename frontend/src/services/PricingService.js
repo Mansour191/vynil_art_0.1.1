@@ -28,12 +28,12 @@ class PricingService {
         }
       }
 
-      // Use GraphQL for pricing analysis - Live Connection
+      // Use GraphQL only - no REST fallback since we're GraphQL-only
       const { PRICING_ANALYSIS } = await import('@/graphql/queries');
       
-      // Handle case where productId is 'test' or not found - but be less aggressive about service status
+      // Handle case where productId is 'test' or not found
       if (productId === 'test' || !productId) {
-        console.log('⚠️ Test productId detected, using realistic fallback but not marking service as failed');
+        console.log('⚠️ Test productId detected, using realistic fallback');
         return this.fallbackPricing(productId, 'test_mode');
       }
       

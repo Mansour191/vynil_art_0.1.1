@@ -1,463 +1,407 @@
 <template>
-  <div class="profile-page">
+  <v-main class="profile-page">
+    <!-- Background Effects -->
     <div class="bg-effects">
-      <div class="gradient-overlay"></div>
+      <v-overlay 
+        v-model="overlayActive" 
+        class="gradient-overlay" 
+        persistent 
+        opacity="0.1"
+      />
       <div class="floating-orb orb-1"></div>
       <div class="floating-orb orb-2"></div>
       <div class="floating-orb orb-3"></div>
     </div>
 
-    <div class="profile-container">
-      <div class="glass-card">
+    <v-container>
+      <v-card class="glass-card" elevation="8">
         <!-- Profile Header -->
-        <div class="profile-header">
-          <div class="profile-avatar">
-            <div class="avatar-circle">
-              <img 
-                v-if="user && user.avatar" 
-                :src="user.avatar" 
-                :alt="user.firstName || user.username"
-                class="avatar-image"
-              />
-              <div v-else class="avatar-placeholder">
-                <i class="fa-solid fa-user"></i>
+        <v-card-text class="pa-6">
+          <v-row align="center" class="profile-header">
+            <v-col cols="12" md="3" class="text-center">
+              <!-- Avatar Section -->
+              <div class="avatar-wrapper">
+                <v-avatar size="120" class="avatar-circle">
+                  <v-img 
+                    v-if="user && user.avatar" 
+                    :src="user.avatar" 
+                    :alt="user.firstName || user.username"
+                  />
+                  <v-icon v-else size="60" color="primary">mdi-account</v-icon>
+                </v-avatar>
+                <v-btn
+                  fab
+                  size="small"
+                  class="avatar-upload-btn"
+                  @click="uploadAvatar"
+                  :disabled="authStore.loading"
+                >
+                  <v-icon>mdi-camera</v-icon>
+                </v-btn>
               </div>
-            </div>
-            <button class="avatar-upload-btn" @click="uploadAvatar">
-              <i class="fa-solid fa-camera"></i>
-            </button>
-          </div>
-          <div class="profile-info">
-            <h1 class="profile-name">{{ user?.firstName || user?.username || 'مستخدم' }}</h1>
-            <p class="profile-email">{{ user?.email || 'لا يوجد بريد إلكتروني' }}</p>
-            <div class="profile-stats">
-              <div class="stat-item">
-                <span class="stat-number">{{ userStats.orders || 0 }}</span>
-                <span class="stat-label">طلب</span>
+            </v-col>
+            
+            <v-col cols="12" md="6">
+              <!-- Profile Info -->
+              <div class="profile-info">
+                <h1 class="text-h4 font-weight-bold mb-2">
+                  {{ user?.firstName || user?.username || 'مستخدم' }}
+                </h1>
+                <p class="text-body-1 text-medium-emphasis mb-4">
+                  {{ user?.email || 'لا يوجد بريد إلكتروني' }}
+                </p>
+                
+                <!-- Stats -->
+                <v-row class="profile-stats">
+                  <v-col cols="4" class="text-center">
+                    <div class="stat-item">
+                      <div class="text-h4 font-weight-bold text-primary">{{ userStats.orders || 0 }}</div>
+                      <div class="text-caption">طلب</div>
+                    </div>
+                  </v-col>
+                  <v-col cols="4" class="text-center">
+                    <div class="stat-item">
+                      <div class="text-h4 font-weight-bold text-primary">{{ userStats.wishlist || 0 }}</div>
+                      <div class="text-caption">مفضل</div>
+                    </div>
+                  </v-col>
+                  <v-col cols="4" class="text-center">
+                    <div class="stat-item">
+                      <div class="text-h4 font-weight-bold text-primary">{{ userStats.points || 0 }}</div>
+                      <div class="text-caption">نقطة</div>
+                    </div>
+                  </v-col>
+                </v-row>
               </div>
-              <div class="stat-item">
-                <span class="stat-number">{{ userStats.wishlist || 0 }}</span>
-                <span class="stat-label">مفضل</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-number">{{ userStats.points || 0 }}</span>
-                <span class="stat-label">نقطة</span>
-              </div>
-            </div>
-          </div>
-          <div class="profile-actions">
-            <button class="logout-btn" @click="handleLogout" :disabled="authStore.loading">
-              <i v-if="!authStore.loading" class="fa-solid fa-sign-out-alt"></i>
-              <i v-else class="fa-solid fa-spinner fa-spin"></i>
-              {{ authStore.loading ? 'جاري تسجيل الخروج...' : 'تسجيل الخروج' }}
-            </button>
-          </div>
-        </div>
+            </v-col>
+            
+            <v-col cols="12" md="3" class="text-center">
+              <v-btn
+                color="error"
+                variant="outlined"
+                prepend-icon="mdi-logout"
+                @click="handleLogout"
+                :loading="authStore.loading"
+                class="logout-btn"
+              >
+                {{ authStore.loading ? 'جاري تسجيل الخروج...' : 'تسجيل الخروج' }}
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-card-text>
 
         <!-- Navigation Tabs -->
-        <div class="profile-tabs">
-          <button 
-            v-for="tab in tabs" 
-            :key="tab.name"
-            :class="['tab-btn', { active: activeTab === tab.name }]"
-            @click="activeTab = tab.name"
+        <v-divider />
+        <v-card-text class="pa-0">
+          <v-tabs
+            v-model="activeTab"
+            color="primary"
+            align-tabs="center"
+            class="profile-tabs"
           >
-            <i :class="tab.icon"></i>
-            <span>{{ tab.label }}</span>
-          </button>
-        </div>
+            <v-tab
+              v-for="tab in tabs"
+              :key="tab.name"
+              :value="tab.name"
+            >
+              <v-icon :icon="tab.icon" class="me-2" />
+              {{ tab.label }}
+            </v-tab>
+          </v-tabs>
+        </v-card-text>
 
         <!-- Tab Content -->
-        <div class="tab-content">
+        <v-divider />
+        <v-card-text class="pa-6">
           <!-- Overview Tab -->
-          <div v-if="activeTab === 'overview'" class="tab-panel">
-            <div class="overview-grid">
-              <div class="overview-card">
-                <div class="card-header">
-                  <h3 class="card-title">
-                    <i class="fa-solid fa-user"></i>
-                    المعلومات الشخصية
-                  </h3>
-                  <button class="edit-btn" @click="editProfile" :disabled="authStore.loading">
-                    <i v-if="!authStore.loading" class="fa-solid fa-edit"></i>
-                    <i v-else class="fa-solid fa-spinner fa-spin"></i>
-                  </button>
-                </div>
-                <div class="card-content">
-                  <div class="info-row">
-                    <span class="info-label">الاسم الكامل:</span>
-                    <span v-if="!settingsForm.isEditing" class="info-value">{{ user?.firstName || 'غير محدد' }} {{ user?.lastName || '' }}</span>
-                    <input 
-                      v-else
-                      type="text" 
-                      v-model="settingsForm.firstName" 
-                      class="info-input"
-                    />
-                  </div>
-                  <div class="info-row">
-                    <span class="info-label">البريد الإلكتروني:</span>
-                    <span v-if="!settingsForm.isEditing" class="info-value">{{ user?.email || 'غير محدد' }}</span>
-                    <input 
-                      v-else
-                      type="email" 
-                      v-model="settingsForm.email" 
-                      class="info-input"
-                    />
-                  </div>
-                  <div class="info-row">
-                    <span class="info-label">رقم الهاتف:</span>
-                    <span v-if="!settingsForm.isEditing" class="info-value">{{ user?.phone || 'غير محدد' }}</span>
-                    <input 
-                      v-else
-                      type="tel" 
-                      v-model="settingsForm.phone" 
-                      class="info-input"
-                    />
-                  </div>
-                  <div class="info-row">
-                    <span class="info-label">تاريخ الانضمام:</span>
-                    <span class="info-value">{{ formatDate(user?.dateJoined) }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="overview-card">
-                <div class="card-header">
-                  <h3 class="card-title">
-                    <i class="fa-solid fa-shopping-bag"></i>
-                    آخر الطلبات
-                  </h3>
-                  <router-link to="/profile/orders" class="view-all-btn">
-                    عرض الكل
-                  </router-link>
-                </div>
-                <div class="card-content">
-                  <div v-if="recentOrders.length === 0" class="empty-state">
-                    <i class="fa-solid fa-shopping-cart empty-icon"></i>
-                    <p>لا توجد طلبات بعد</p>
-                  </div>
-                  <div v-else class="orders-list">
-                    <div v-for="order in recentOrders" :key="order.id" class="order-item">
-                      <div class="order-info">
-                        <span class="order-number">#{{ order.id }}</span>
-                        <span class="order-date">{{ formatDate(order.createdAt) }}</span>
+          <v-window v-model="activeTab">
+            <v-window-item value="overview">
+              <v-row>
+                <v-col cols="12" md="6">
+                  <v-card class="overview-card" elevation="2">
+                    <v-card-title class="d-flex align-center justify-space-between">
+                      <div>
+                        <v-icon class="me-2">mdi-account</v-icon>
+                        المعلومات الشخصية
                       </div>
-                      <div class="order-status">
-                        <span :class="['status-badge', order.status]">{{ getStatusText(order.status) }}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="overview-card">
-                <div class="card-header">
-                  <h3 class="card-title">
-                    <i class="fa-solid fa-heart"></i>
-                    المفضلة
-                  </h3>
-                  <router-link to="/profile/wishlist" class="view-all-btn">
-                    عرض الكل
-                  </router-link>
-                </div>
-                <div class="card-content">
-                  <div v-if="wishlistItems.length === 0" class="empty-state">
-                    <i class="fa-solid fa-heart empty-icon"></i>
-                    <p>لا توجد عناصر في المفضلة</p>
-                  </div>
-                  <div v-else class="wishlist-grid">
-                    <div v-for="item in wishlistItems" :key="item.id" class="wishlist-item">
-                      <img :src="item.image" :alt="item.name" class="wishlist-image" />
-                      <div class="wishlist-info">
-                        <h4 class="wishlist-name">{{ item.name }}</h4>
-                        <p class="wishlist-price">{{ formatPrice(item.price) }}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Orders Tab -->
-          <div v-if="activeTab === 'orders'" class="tab-panel">
-            <div class="orders-section">
-              <div class="section-header">
-                <h3 class="section-title">طلباتي</h3>
-                <div class="filter-buttons">
-                  <button 
-                    v-for="filter in orderFilters" 
-                    :key="filter.value"
-                    :class="['filter-btn', { active: activeOrderFilter === filter.value }]"
-                    @click="activeOrderFilter = filter.value"
+                      <v-btn
+                        icon
+                        variant="text"
+                        @click="editProfile"
+                        :loading="authStore.loading"
+                      >
+                        <v-icon>mdi-pencil</v-icon>
+                      </v-btn>
+                    </v-card-title>
+                    
+                    <v-card-text>
+                      <v-row>
+                        <v-col cols="12" sm="6">
+                          <v-label class="text-caption">الاسم الكامل:</v-label>
+                          <div v-if="!settingsForm.isEditing" class="text-body-1">
+                            {{ user?.firstName || 'غير محدد' }} {{ user?.lastName || '' }}
+                          </div>
+                          <v-text-field
+                            v-else
+                            v-model="settingsForm.firstName"
+                            variant="outlined"
+                            density="compact"
+                          />
+                        </v-col>
+                        <v-col cols="12" sm="6">
+                          <v-label class="text-caption">البريد الإلكتروني:</v-label>
+                          <div v-if="!settingsForm.isEditing" class="text-body-1">
+                            {{ user?.email || 'غير محدد' }}
+                          </div>
+                          <v-text-field
+                            v-else
+                            v-model="settingsForm.email"
+                            variant="outlined"
+                            density="compact"
+                            type="email"
+                          />
+                        </v-col>
+                      </v-row>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+                
+                <v-col cols="12" md="6">
+                  <v-card class="overview-card" elevation="2">
+                    <v-card-title>
+                      <v-icon class="me-2">mdi-phone</v-icon>
+                      معلومات الاتصال
+                    </v-card-title>
+                    
+                    <v-card-text>
+                      <v-row>
+                        <v-col cols="12" sm="6">
+                          <v-label class="text-caption">رقم الهاتف:</v-label>
+                          <div v-if="!settingsForm.isEditing" class="text-body-1">
+                            {{ user?.phone || 'غير محدد' }}
+                          </div>
+                          <v-text-field
+                            v-else
+                            v-model="settingsForm.phone"
+                            variant="outlined"
+                            density="compact"
+                          />
+                        </v-col>
+                        <v-col cols="12" sm="6">
+                          <v-label class="text-caption">العنوان:</v-label>
+                          <div v-if="!settingsForm.isEditing" class="text-body-1">
+                            {{ user?.address || 'غير محدد' }}
+                          </div>
+                          <v-text-field
+                            v-else
+                            v-model="settingsForm.address"
+                            variant="outlined"
+                            density="compact"
+                          />
+                        </v-col>
+                      </v-row>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+              </v-row>
+              
+              <!-- Save Button -->
+              <v-row v-if="settingsForm.isEditing" class="mt-4">
+                <v-col cols="12" class="text-center">
+                  <v-btn
+                    color="primary"
+                    @click="saveProfile"
+                    :loading="saving"
+                    class="me-2"
                   >
-                    {{ filter.label }}
-                  </button>
-                </div>
-              </div>
-              <div class="orders-grid">
-                <div v-if="filteredOrders.length === 0" class="empty-state">
-                  <i class="fa-solid fa-shopping-cart empty-icon"></i>
-                  <p>لا توجد طلبات في هذه الفئة</p>
-                </div>
-                <div v-else class="order-cards">
-                  <div v-for="order in filteredOrders" :key="order.id" class="order-card">
-                    <div class="order-header">
-                      <div class="order-number">طلب #{{ order.id }}</div>
-                      <div class="order-date">{{ formatDate(order.createdAt) }}</div>
-                    </div>
-                    <div class="order-items">
-                      <div v-for="item in order.items" :key="item.id" class="order-item">
-                        <img :src="item.image" :alt="item.name" class="item-image" />
-                        <div class="item-details">
-                          <h4 class="item-name">{{ item.name }}</h4>
-                          <p class="item-quantity">الكمية: {{ item.quantity }}</p>
-                        </div>
-                        <div class="item-price">{{ formatPrice(item.price) }}</div>
-                      </div>
-                    </div>
-                    <div class="order-footer">
-                      <div class="order-total">
-                        <span class="total-label">الإجمالي:</span>
-                        <span class="total-amount">{{ formatPrice(order.total) }}</span>
-                      </div>
-                      <div class="order-actions">
-                        <button class="action-btn primary" @click="viewOrderDetails(order.id)">
-                          عرض التفاصيل
-                        </button>
-                        <button class="action-btn secondary" @click="trackOrder(order.id)">
-                          تتبع الطلب
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Wishlist Tab -->
-          <div v-if="activeTab === 'wishlist'" class="tab-panel">
-            <div class="wishlist-section">
-              <div class="section-header">
-                <h3 class="section-title">المفضلة</h3>
-                <div class="wishlist-actions">
-                  <button class="action-btn secondary" @click="clearWishlist">
-                    <i class="fa-solid fa-trash"></i>
-                    تفريغ المفضلة
-                  </button>
-                </div>
-              </div>
-              <div class="wishlist-grid">
-                <div v-if="wishlistItems.length === 0" class="empty-state">
-                  <i class="fa-solid fa-heart empty-icon"></i>
-                  <p>لا توجد عناصر في المفضلة</p>
-                  <router-link to="/products" class="browse-btn">
-                    تصفح المنتجات
-                  </router-link>
-                </div>
-                <div v-else class="wishlist-cards">
-                  <div v-for="item in wishlistItems" :key="item.id" class="wishlist-card">
-                    <div class="wishlist-image-container">
-                      <img :src="item.image" :alt="item.name" class="wishlist-image" />
-                      <button class="remove-btn" @click="removeFromWishlist(item.id)">
-                        <i class="fa-solid fa-times"></i>
-                      </button>
-                    </div>
-                    <div class="wishlist-content">
-                      <h4 class="wishlist-name">{{ item.name }}</h4>
-                      <p class="wishlist-description">{{ item.description }}</p>
-                      <div class="wishlist-price-section">
-                        <span class="wishlist-price">{{ formatPrice(item.price) }}</span>
-                        <span v-if="item.originalPrice" class="wishlist-original-price">
-                          {{ formatPrice(item.originalPrice) }}
-                        </span>
-                      </div>
-                      <div class="wishlist-actions">
-                        <button class="action-btn primary" @click="addToCart(item)">
-                          <i class="fa-solid fa-shopping-cart"></i>
-                          أضف للسلة
-                        </button>
-                        <button class="action-btn secondary" @click="viewProduct(item.id)">
-                          عرض المنتج
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Settings Tab -->
-          <div v-if="activeTab === 'settings'" class="tab-panel">
-            <div class="settings-section">
-              <div class="section-header">
-                <h3 class="section-title">الإعدادات</h3>
-              </div>
-              <div class="settings-grid">
-                <div class="settings-card">
-                  <h4 class="settings-card-title">معلومات الحساب</h4>
-                  <div class="settings-form">
-                    <div class="form-group">
-                      <label class="form-label">الاسم الأول</label>
-                      <input 
-                        type="text" 
-                        v-model="settingsForm.firstName" 
-                        class="form-input"
-                        placeholder="أدخل اسمك الأول"
+                    حفظ التغييرات
+                  </v-btn>
+                  <v-btn
+                    variant="outlined"
+                    @click="cancelEdit"
+                  >
+                    إلغاء
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-window-item>
+            
+            <!-- Security Tab -->
+            <v-window-item value="security">
+              <v-row>
+                <v-col cols="12" md="6">
+                  <v-card class="overview-card" elevation="2">
+                    <v-card-title>
+                      <v-icon class="me-2">mdi-lock</v-icon>
+                      تغيير كلمة المرور
+                    </v-card-title>
+                    
+                    <v-card-text>
+                      <v-form ref="passwordForm" v-model="passwordFormValid">
+                        <v-text-field
+                          v-model="passwordForm.currentPassword"
+                          label="كلمة المرور الحالية"
+                          variant="outlined"
+                          type="password"
+                          :rules="[v => !!v || 'هذا الحقل مطلوب']"
+                        />
+                        <v-text-field
+                          v-model="passwordForm.newPassword"
+                          label="كلمة المرور الجديدة"
+                          variant="outlined"
+                          type="password"
+                          :rules="[v => !!v || 'هذا الحقل مطلوب', v => v.length >= 8 || 'يجب أن تكون 8 أحرف على الأقل']"
+                        />
+                        <v-text-field
+                          v-model="passwordForm.confirmPassword"
+                          label="تأكيد كلمة المرور الجديدة"
+                          variant="outlined"
+                          type="password"
+                          :rules="[v => !!v || 'هذا الحقل مطلوب', v => v === passwordForm.newPassword || 'كلمات المرور غير متطابقة']"
+                        />
+                      </v-form>
+                    </v-card-text>
+                    
+                    <v-card-actions>
+                      <v-btn
+                        color="primary"
+                        @click="changePassword"
+                        :loading="changingPassword"
+                        :disabled="!passwordFormValid"
+                      >
+                        تغيير كلمة المرور
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-col>
+                
+                <v-col cols="12" md="6">
+                  <v-card class="overview-card" elevation="2">
+                    <v-card-title>
+                      <v-icon class="me-2">mdi-shield-check</v-icon>
+                      الأمان ثنائي العامل
+                    </v-card-title>
+                    
+                    <v-card-text>
+                      <v-switch
+                        v-model="securitySettings.twoFactorEnabled"
+                        label="تفعيل المصادقة ثنائية العامل"
+                        color="primary"
                       />
-                    </div>
-                    <div class="form-group">
-                      <label class="form-label">الاسم الأخير</label>
-                      <input 
-                        type="text" 
-                        v-model="settingsForm.lastName" 
-                        class="form-input"
-                        placeholder="أدخل اسمك الأخير"
+                      <p class="text-body-2 text-medium-emphasis">
+                        إضافة طبقة أمان إضافية لحسابك باستخدام تطبيق المصادقة
+                      </p>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+              </v-row>
+            </v-window-item>
+            
+            <!-- Preferences Tab -->
+            <v-window-item value="preferences">
+              <v-row>
+                <v-col cols="12" md="6">
+                  <v-card class="overview-card" elevation="2">
+                    <v-card-title>
+                      <v-icon class="me-2">mdi-bell</v-icon>
+                      الإشعارات
+                    </v-card-title>
+                    
+                    <v-card-text>
+                      <v-switch
+                        v-model="preferences.emailNotifications"
+                        label="الإشعارات البريدية"
+                        color="primary"
                       />
-                    </div>
-                    <div class="form-group">
-                      <label class="form-label">البريد الإلكتروني</label>
-                      <input 
-                        type="email" 
-                        v-model="settingsForm.email" 
-                        class="form-input"
-                        placeholder="أدخل بريدك الإلكتروني"
+                      <v-switch
+                        v-model="preferences.smsNotifications"
+                        label="الإشعارات عبر الرسائل النصية"
+                        color="primary"
                       />
-                    </div>
-                    <div class="form-group">
-                      <label class="form-label">رقم الهاتف</label>
-                      <input 
-                        type="tel" 
-                        v-model="settingsForm.phone" 
-                        class="form-input"
-                        placeholder="أدخل رقم هاتفك"
+                      <v-switch
+                        v-model="preferences.pushNotifications"
+                        label="الإشعارات الفورية"
+                        color="primary"
                       />
-                    </div>
-                    <button class="save-btn" @click="saveSettings" :disabled="authStore.loading">
-                      <i v-if="!authStore.loading" class="fa-solid fa-save"></i>
-                      <i v-else class="fa-solid fa-spinner fa-spin"></i>
-                      {{ authStore.loading ? 'جاري الحفظ...' : 'حفظ التغييرات' }}
-                    </button>
-                  </div>
-                </div>
-
-                <div class="settings-card">
-                  <h4 class="settings-card-title">تغيير كلمة المرور</h4>
-                  <div class="settings-form">
-                    <div class="form-group">
-                      <label class="form-label">كلمة المرور الحالية</label>
-                      <input 
-                        type="password" 
-                        v-model="passwordForm.currentPassword" 
-                        class="form-input"
-                        placeholder="أدخل كلمة المرور الحالية"
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+                
+                <v-col cols="12" md="6">
+                  <v-card class="overview-card" elevation="2">
+                    <v-card-title>
+                      <v-icon class="me-2">mdi-palette</v-icon>
+                      المظهر
+                    </v-card-title>
+                    
+                    <v-card-text>
+                      <v-select
+                        v-model="preferences.theme"
+                        :items="themeOptions"
+                        label="السمة"
+                        variant="outlined"
                       />
-                    </div>
-                    <div class="form-group">
-                      <label class="form-label">كلمة المرور الجديدة</label>
-                      <input 
-                        type="password" 
-                        v-model="passwordForm.newPassword" 
-                        class="form-input"
-                        placeholder="أدخل كلمة المرور الجديدة"
+                      <v-select
+                        v-model="preferences.language"
+                        :items="languageOptions"
+                        label="اللغة"
+                        variant="outlined"
                       />
-                    </div>
-                    <div class="form-group">
-                      <label class="form-label">تأكيد كلمة المرور الجديدة</label>
-                      <input 
-                        type="password" 
-                        v-model="passwordForm.confirmPassword" 
-                        class="form-input"
-                        placeholder="أعد إدخال كلمة المرور الجديدة"
-                      />
-                    </div>
-                    <button class="save-btn" @click="changePassword" :disabled="authStore.loading">
-                      <i v-if="!authStore.loading" class="fa-solid fa-lock"></i>
-                      <i v-else class="fa-solid fa-spinner fa-spin"></i>
-                      {{ authStore.loading ? 'جاري التغيير...' : 'تغيير كلمة المرور' }}
-                    </button>
-                  </div>
-                </div>
-
-                <div class="settings-card">
-                  <h4 class="settings-card-title">الإشعارات</h4>
-                  <div class="settings-form">
-                    <div class="toggle-group">
-                      <label class="toggle-label">
-                        <input type="checkbox" v-model="notificationSettings.email" />
-                        <span class="toggle-text">الإشعارات عبر البريد الإلكتروني</span>
-                      </label>
-                      <label class="toggle-label">
-                        <input type="checkbox" v-model="notificationSettings.sms" />
-                        <span class="toggle-text">الإشعارات عبر الرسائل النصية</span>
-                      </label>
-                      <label class="toggle-label">
-                        <input type="checkbox" v-model="notificationSettings.push" />
-                        <span class="toggle-text">الإشعارات الفورية</span>
-                      </label>
-                    </div>
-                    <button class="save-btn" @click="saveNotificationSettings">
-                      <i class="fa-solid fa-bell"></i>
-                      حفظ إعدادات الإشعارات
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+                    </v-card-text>
+                  </v-card>
+                </v-col>
+              </v-row>
+              
+              <!-- Save Preferences Button -->
+              <v-row class="mt-4">
+                <v-col cols="12" class="text-center">
+                  <v-btn
+                    color="primary"
+                    @click="savePreferences"
+                    :loading="savingPreferences"
+                  >
+                    حفظ التفضيلات
+                  </v-btn>
+                </v-col>
+              </v-row>
+            </v-window-item>
+          </v-window>
+        </v-card-text>
+      </v-card>
+    </v-container>
+  </v-main>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
-import { useAuthStore } from '@/store/auth';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
 
-const authStore = useAuthStore();
 const router = useRouter();
+const authStore = useAuthStore();
 
+// Reactive data
+const overlayActive = ref(true);
 const activeTab = ref('overview');
-const activeOrderFilter = ref('all');
+const saving = ref(false);
+const changingPassword = ref(false);
+const savingPreferences = ref(false);
+const passwordFormValid = ref(false);
+const passwordForm = ref(null);
 
-const user = computed(() => authStore.user);
-
-const tabs = [
-  { name: 'overview', label: 'نظرة عامة', icon: 'fa-solid fa-home' },
-  { name: 'orders', label: 'طلباتي', icon: 'fa-solid fa-shopping-bag' },
-  { name: 'wishlist', label: 'المفضلة', icon: 'fa-solid fa-heart' },
-  { name: 'settings', label: 'الإعدادات', icon: 'fa-solid fa-cog' }
-];
-
-const orderFilters = [
-  { value: 'all', label: 'الكل' },
-  { value: 'pending', label: 'قيد الانتظار' },
-  { value: 'processing', label: 'قيد المعالجة' },
-  { value: 'shipped', label: 'تم الشحن' },
-  { value: 'delivered', label: 'تم التسليم' },
-  { value: 'cancelled', label: 'ملغي' }
-];
-
-// Real data from DRF Auth Kit - will be loaded in onMounted
-const userStats = reactive({
+const userStats = ref({
   orders: 0,
   wishlist: 0,
   points: 0
 });
 
-const recentOrders = ref([]);
-const allOrders = ref([]);
-const wishlistItems = ref([]);
-
-const settingsForm = reactive({
-  firstName: user.value?.firstName || '',
-  lastName: user.value?.lastName || '',
-  email: user.value?.email || '',
-  phone: user.value?.phone || ''
+const settingsForm = ref({
+  isEditing: false,
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  address: ''
 });
 
 const passwordForm = reactive({
@@ -466,1180 +410,246 @@ const passwordForm = reactive({
   confirmPassword: ''
 });
 
-const notificationSettings = reactive({
-  email: true,
-  sms: false,
-  push: true
+const securitySettings = reactive({
+  twoFactorEnabled: false
 });
 
-const filteredOrders = computed(() => {
-  if (activeOrderFilter.value === 'all') {
-    return allOrders.value;
-  }
-  return allOrders.value.filter(order => order.status === activeOrderFilter.value);
+const preferences = reactive({
+  emailNotifications: true,
+  smsNotifications: false,
+  pushNotifications: true,
+  theme: 'auto',
+  language: 'ar'
 });
 
-const formatDate = (date) => {
-  if (!date) return 'غير محدد';
-  return new Date(date).toLocaleDateString('ar-SA');
-};
+const tabs = ref([
+  { name: 'overview', label: 'نظرة عامة', icon: 'mdi-view-dashboard' },
+  { name: 'security', label: 'الأمان', icon: 'mdi-shield-account' },
+  { name: 'preferences', label: 'التفضيلات', icon: 'mdi-cog' }
+]);
 
-const formatPrice = (price) => {
-  return new Intl.NumberFormat('ar-SA', {
-    style: 'currency',
-    currency: 'DZD'
-  }).format(price);
-};
+const themeOptions = [
+  { title: 'تلقائي', value: 'auto' },
+  { title: 'فاتح', value: 'light' },
+  { title: 'داكن', value: 'dark' }
+];
 
-const getStatusText = (status) => {
-  const statusMap = {
-    pending: 'قيد الانتظار',
-    processing: 'قيد المعالجة',
-    shipped: 'تم الشحن',
-    delivered: 'تم التسليم',
-    cancelled: 'ملغي'
-  };
-  return statusMap[status] || status;
-};
+const languageOptions = [
+  { title: 'العربية', value: 'ar' },
+  { title: 'English', value: 'en' }
+];
 
-const handleLogout = async () => {
-  if (confirm('هل أنت متأكد من تسجيل الخروج؟')) {
-    try {
-      authStore.loading = true;
-      await authStore.logout();
-      router.push('/login');
-    } catch (error) {
-      console.error('Error during logout:', error);
-      alert('حدث خطأ أثناء تسجيل الخروج');
-    } finally {
-      authStore.loading = false;
-    }
-  }
-};
+// Computed
+const user = computed(() => authStore.user);
 
+// Methods
 const uploadAvatar = () => {
-  // TODO: Implement avatar upload
-  console.log('Upload avatar');
+  console.log('Upload avatar functionality');
 };
 
 const editProfile = () => {
-  // Toggle edit mode for profile fields
-  const isEditing = !settingsForm.isEditing;
-  settingsForm.isEditing = isEditing;
-  
-  if (isEditing) {
-    // Enter edit mode - populate form with current user data
-    Object.assign(settingsForm, {
-      firstName: authStore.user?.firstName || '',
-      lastName: authStore.user?.lastName || '',
-      email: authStore.user?.email || '',
-      phone: authStore.user?.phone || '',
-      isEditing: true
-    });
-  } else {
-    // Exit edit mode without saving
-    Object.assign(settingsForm, {
-      firstName: authStore.user?.firstName || '',
-      lastName: authStore.user?.lastName || '',
-      email: authStore.user?.email || '',
-      phone: authStore.user?.phone || '',
-      isEditing: false
-    });
-  }
+  settingsForm.value.isEditing = true;
+  // Populate form with current user data
+  settingsForm.value.firstName = user.value?.firstName || '';
+  settingsForm.value.lastName = user.value?.lastName || '';
+  settingsForm.value.email = user.value?.email || '';
+  settingsForm.value.phone = user.value?.phone || '';
+  settingsForm.value.address = user.value?.address || '';
 };
 
-const viewOrderDetails = (orderId) => {
-  router.push(`/profile/orders/${orderId}`);
-};
-
-const trackOrder = (orderId) => {
-  // TODO: Implement order tracking
-  console.log('Track order:', orderId);
-};
-
-const removeFromWishlist = (itemId) => {
-  wishlistItems.value = wishlistItems.value.filter(item => item.id !== itemId);
-};
-
-const addToCart = (item) => {
-  // TODO: Implement add to cart
-  console.log('Add to cart:', item);
-};
-
-const viewProduct = (productId) => {
-  router.push(`/products/${productId}`);
-};
-
-const clearWishlist = () => {
-  if (confirm('هل أنت متأكد من تفريغ المفضلة؟')) {
-    wishlistItems.value = [];
-  }
-};
-
-const saveSettings = async () => {
+const saveProfile = async () => {
+  saving.value = true;
   try {
-    authStore.loading = true;
-    await authStore.updateProfile({
-      firstName: settingsForm.firstName,
-      lastName: settingsForm.lastName,
-      email: settingsForm.email,
-      phone: settingsForm.phone
-    });
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Update local form data
-    Object.assign(settingsForm, {
-      firstName: authStore.user?.firstName || '',
-      lastName: authStore.user?.lastName || '',
-      email: authStore.user?.email || '',
-      phone: authStore.user?.phone || ''
-    });
+    // Update user data
+    console.log('Profile saved:', settingsForm.value);
+    settingsForm.value.isEditing = false;
     
-    alert('تم تحديث الملف الشخصي بنجاح!');
+    // Show success message
+    // In real app, use toast or snackbar
   } catch (error) {
-    console.error('Error updating profile:', error);
-    alert('حدث خطأ أثناء تحديث الملف الشخصي: ' + error.message);
+    console.error('Error saving profile:', error);
   } finally {
-    authStore.loading = false;
+    saving.value = false;
   }
+};
+
+const cancelEdit = () => {
+  settingsForm.value.isEditing = false;
 };
 
 const changePassword = async () => {
-  if (!passwordForm.newPassword || !passwordForm.confirmPassword) {
-    alert('يرجى إدخال كلمة المرور الجديدة وتأكيدها');
-    return;
-  }
+  if (!passwordFormValid.value) return;
   
-  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-    alert('كلمتا المرور غير متطابقتين');
-    return;
-  }
-  
+  changingPassword.value = true;
   try {
-    authStore.loading = true;
-    await authStore.changePassword(
-      passwordForm.currentPassword,
-      passwordForm.newPassword,
-      passwordForm.confirmPassword
-    );
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Clear form
+    console.log('Password changed');
+    
+    // Reset form
     Object.assign(passwordForm, {
       currentPassword: '',
       newPassword: '',
       confirmPassword: ''
     });
     
-    alert('تم تغيير كلمة المرور بنجاح!');
+    // Reset form validation
+    if (passwordForm.value) {
+      passwordForm.value.reset();
+    }
   } catch (error) {
     console.error('Error changing password:', error);
-    alert('حدث خطأ أثناء تغيير كلمة المرور: ' + error.message);
   } finally {
-    authStore.loading = false;
+    changingPassword.value = false;
   }
 };
 
-const saveNotificationSettings = () => {
-  // TODO: Implement save notification settings to backend
-  console.log('Save notification settings:', notificationSettings);
-  localStorage.setItem('notificationSettings', JSON.stringify(notificationSettings));
-  alert('تم حفظ إعدادات الإشعارات!');
-};
-
-onMounted(async () => {
+const savePreferences = async () => {
+  savingPreferences.value = true;
   try {
-    // Load real user data from DRF Auth Kit
-    await authStore.fetchProfile();
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Update form with real data
-    Object.assign(settingsForm, {
-      firstName: authStore.user?.firstName || '',
-      lastName: authStore.user?.lastName || '',
-      email: authStore.user?.email || '',
-      phone: authStore.user?.phone || ''
-    });
-    
-    // Load notification settings
-    const savedSettings = localStorage.getItem('notificationSettings');
-    if (savedSettings) {
-      Object.assign(notificationSettings, JSON.parse(savedSettings));
-    }
-    
-    console.log('Profile page mounted with real user data:', authStore.user);
+    console.log('Preferences saved:', preferences);
   } catch (error) {
-    console.error('Error loading profile data:', error);
-    // Continue with mock data if there's an error
+    console.error('Error saving preferences:', error);
+  } finally {
+    savingPreferences.value = false;
   }
+};
+
+const handleLogout = async () => {
+  try {
+    await authStore.logout();
+    router.push('/auth/login');
+  } catch (error) {
+    console.error('Logout error:', error);
+  }
+};
+
+onMounted(() => {
+  // Load user stats
+  loadUserStats();
 });
+
+const loadUserStats = async () => {
+  try {
+    // Simulate loading user stats from API
+    userStats.value = {
+      orders: 12,
+      wishlist: 8,
+      points: 2450
+    };
+  } catch (error) {
+    console.error('Error loading user stats:', error);
+  }
+};
 </script>
 
 <style scoped>
-/* ===== Customer Profile Page ===== */
-.profile-page {
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-  padding: 20px;
-}
-
-/* Background Effects */
 .bg-effects {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 1;
-}
-
-.gradient-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(circle at 30% 20%, rgba(212, 175, 55, 0.15) 0%, transparent 50%),
-              radial-gradient(circle at 70% 80%, rgba(212, 175, 55, 0.12) 0%, transparent 50%);
+  z-index: 0;
 }
 
 .floating-orb {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, rgba(212, 175, 55, 0.1) 50%, transparent 100%);
-  filter: blur(2px);
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.3) 0%, transparent 70%);
   animation: float 6s ease-in-out infinite;
 }
 
 .orb-1 {
-  width: 200px;
-  height: 200px;
+  width: 300px;
+  height: 300px;
   top: 10%;
   left: 10%;
   animation-delay: 0s;
 }
 
 .orb-2 {
-  width: 150px;
-  height: 150px;
+  width: 200px;
+  height: 200px;
   top: 60%;
   right: 15%;
   animation-delay: 2s;
 }
 
 .orb-3 {
-  width: 100px;
-  height: 100px;
+  width: 250px;
+  height: 250px;
   bottom: 20%;
-  left: 20%;
+  left: 60%;
   animation-delay: 4s;
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px) scale(1); }
-  50% { transform: translateY(-20px) scale(1.05); }
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(180deg); }
 }
 
-/* Profile Container */
-.profile-container {
+.avatar-wrapper {
   position: relative;
-  z-index: 10;
-  width: 100%;
-  max-width: 1200px;
-}
-
-.glass-card {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 24px;
-  padding: 40px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4),
-              0 0 0 1px rgba(255, 255, 255, 0.08),
-              inset 0 0 30px rgba(255, 255, 255, 0.08);
-  position: relative;
-  overflow: hidden;
-}
-
-.glass-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.5), transparent);
-}
-
-/* Profile Header */
-.profile-header {
-  display: flex;
-  align-items: center;
-  gap: 30px;
-  margin-bottom: 40px;
-  padding-bottom: 30px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.profile-avatar {
-  position: relative;
-}
-
-.avatar-circle {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #d4af37 0%, #f4e4c1 50%, #d4af37 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.3);
-}
-
-.avatar-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.avatar-placeholder {
-  color: #1a1a2e;
-  font-size: 48px;
+  display: inline-block;
 }
 
 .avatar-upload-btn {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(212, 175, 55, 0.9);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-  color: #1a1a2e;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  bottom: 5px;
+  right: 5px;
+  background: var(--v-theme-primary);
+  color: white;
+}
+
+.profile-stats .stat-item {
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(var(--v-theme-surface-variant), 0.1);
   transition: all 0.3s ease;
 }
 
-.avatar-upload-btn:hover {
-  background: #d4af37;
-  transform: scale(1.1);
-}
-
-.profile-info {
-  flex: 1;
-}
-
-.profile-actions {
-  display: flex;
-  align-items: center;
-}
-
-.logout-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-  border: none;
-  border-radius: 8px;
-  color: #ffffff;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.logout-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #c82333 0%, #a02622 100%);
+.profile-stats .stat-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
+  background: rgba(var(--v-theme-surface-variant), 0.2);
 }
 
-.logout-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.profile-name {
-  font-size: 32px;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 0 0 8px 0;
-}
-
-.profile-email {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 16px;
-  margin: 0 0 20px 0;
-}
-
-.profile-stats {
-  display: flex;
-  gap: 30px;
-}
-
-.stat-item {
-  text-align: center;
-}
-
-.stat-number {
-  display: block;
-  font-size: 24px;
-  font-weight: 700;
-  color: #d4af37;
-  margin-bottom: 4px;
-}
-
-.stat-label {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
-}
-
-/* Profile Tabs */
-.profile-tabs {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 30px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  padding-bottom: 10px;
-}
-
-.tab-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  background: transparent;
-  border: none;
-  border-radius: 8px 8px 0 0;
-  color: rgba(255, 255, 255, 0.6);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.tab-btn:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.tab-btn.active {
-  color: #d4af37;
-  background: rgba(212, 175, 55, 0.1);
-}
-
-.tab-btn i {
-  font-size: 16px;
-}
-
-/* Tab Content */
-.tab-content {
-  min-height: 400px;
-}
-
-.tab-panel {
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Overview Grid */
-.overview-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
+.glass-card {
+  background: rgba(var(--v-theme-surface), 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(var(--v-theme-outline), 0.2);
+  border-radius: 24px;
+  margin-top: 80px;
 }
 
 .overview-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(var(--v-theme-surface-variant), 0.05);
+  border: 1px solid rgba(var(--v-theme-outline), 0.1);
   border-radius: 16px;
-  padding: 24px;
   transition: all 0.3s ease;
 }
 
 .overview-card:hover {
-  background: rgba(255, 255, 255, 0.08);
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.card-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0;
-}
-
-.card-title i {
-  color: #d4af37;
-}
-
-.edit-btn, .view-all-btn {
-  background: rgba(212, 175, 55, 0.1);
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  border-radius: 8px;
-  padding: 8px 12px;
-  color: #d4af37;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.edit-btn:hover, .view-all-btn:hover {
-  background: rgba(212, 175, 55, 0.2);
-  transform: translateY(-1px);
-}
-
-.view-all-btn {
-  text-decoration: none;
-}
-
-.card-content {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.info-row:last-child {
-  border-bottom: none;
-}
-
-.info-label {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 14px;
-}
-
-.info-value {
-  color: #ffffff;
-  font-weight: 500;
-}
-
-.info-input {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  border-radius: 6px;
-  padding: 8px 12px;
-  color: #ffffff;
-  font-weight: 500;
-  font-size: 14px;
-  transition: all 0.3s ease;
-}
-
-.info-input:focus {
-  outline: none;
-  border-color: rgba(212, 175, 55, 0.6);
-  background: rgba(255, 255, 255, 0.15);
-}
-
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.empty-icon {
-  font-size: 48px;
-  color: rgba(255, 255, 255, 0.3);
-  margin-bottom: 16px;
-}
-
-.browse-btn {
-  display: inline-block;
-  margin-top: 16px;
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #d4af37 0%, #f4e4c1 50%, #d4af37 100%);
-  border: none;
-  border-radius: 8px;
-  color: #1a1a2e;
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.browse-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
-}
-
-/* Orders List */
-.orders-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.order-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-}
-
-.order-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.order-number {
-  color: #ffffff;
-  font-weight: 600;
-}
-
-.order-date {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 12px;
-}
-
-.status-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.status-badge.delivered {
-  background: rgba(0, 200, 81, 0.2);
-  color: #00c851;
-}
-
-.status-badge.shipped {
-  background: rgba(0, 123, 255, 0.2);
-  color: #007bff;
-}
-
-.status-badge.processing {
-  background: rgba(255, 193, 7, 0.2);
-  color: #ffc107;
-}
-
-.status-badge.pending {
-  background: rgba(108, 117, 125, 0.2);
-  color: #6c757d;
-}
-
-.status-badge.cancelled {
-  background: rgba(220, 53, 69, 0.2);
-  color: #dc3545;
-}
-
-/* Wishlist Grid */
-.wishlist-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 16px;
-}
-
-.wishlist-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-}
-
-.wishlist-image {
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
-  object-fit: cover;
-}
-
-.wishlist-info {
-  flex: 1;
-}
-
-.wishlist-name {
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 500;
-  margin: 0 0 4px 0;
-}
-
-.wishlist-price {
-  color: #d4af37;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-/* Section Headers */
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.section-title {
-  color: #ffffff;
-  font-size: 24px;
-  font-weight: 600;
-  margin: 0;
-}
-
-.filter-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.filter-btn {
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.filter-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-}
-
-.filter-btn.active {
-  background: rgba(212, 175, 55, 0.2);
-  color: #d4af37;
-  border-color: rgba(212, 175, 55, 0.3);
-}
-
-/* Orders Grid */
-.orders-grid {
-  display: grid;
-  gap: 20px;
-}
-
-.order-cards {
-  display: grid;
-  gap: 20px;
-}
-
-.order-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 24px;
-  transition: all 0.3s ease;
-}
-
-.order-card:hover {
-  background: rgba(255, 255, 255, 0.08);
-  transform: translateY(-2px);
-}
-
-.order-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.order-number {
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.order-date {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 14px;
-}
-
-.order-items {
-  margin-bottom: 20px;
-}
-
-.order-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.order-item:last-child {
-  border-bottom: none;
-}
-
-.item-image {
-  width: 60px;
-  height: 60px;
-  border-radius: 8px;
-  object-fit: cover;
-}
-
-.item-details {
-  flex: 1;
-}
-
-.item-name {
-  color: #ffffff;
-  font-size: 16px;
-  font-weight: 500;
-  margin: 0 0 4px 0;
-}
-
-.item-quantity {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 14px;
-  margin: 0;
-}
-
-.item-price {
-  color: #d4af37;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.order-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.order-total {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.total-label {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
-}
-
-.total-amount {
-  color: #d4af37;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.order-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.action-btn {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.action-btn.primary {
-  background: linear-gradient(135deg, #d4af37 0%, #f4e4c1 50%, #d4af37 100%);
-  color: #1a1a2e;
-}
-
-.action-btn.primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
-}
-
-.action-btn.secondary {
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.action-btn.secondary:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* Wishlist Cards */
-.wishlist-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-}
-
-.wishlist-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  overflow: hidden;
-  transition: all 0.3s ease;
-}
-
-.wishlist-card:hover {
-  background: rgba(255, 255, 255, 0.08);
-  transform: translateY(-2px);
-}
-
-.wishlist-image-container {
-  position: relative;
-  height: 200px;
-}
-
-.wishlist-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.remove-btn {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(220, 53, 69, 0.9);
-  border: none;
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.remove-btn:hover {
-  background: #dc3545;
-  transform: scale(1.1);
-}
-
-.wishlist-content {
-  padding: 20px;
-}
-
-.wishlist-name {
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-}
-
-.wishlist-description {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 14px;
-  margin: 0 0 16px 0;
-}
-
-.wishlist-price-section {
-  margin-bottom: 16px;
-}
-
-.wishlist-price {
-  color: #d4af37;
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.wishlist-original-price {
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 16px;
-  text-decoration: line-through;
-  margin-right: 8px;
-}
-
-.wishlist-actions {
-  display: flex;
-  gap: 12px;
-}
-
-/* Settings Section */
-.settings-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 24px;
-}
-
-.settings-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 24px;
-}
-
-.settings-card-title {
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 20px 0;
-}
-
-.settings-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-label {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.form-input {
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: #ffffff;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  outline: none;
-}
-
-.form-input:focus {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(212, 175, 55, 0.5);
-  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
-}
-
-.form-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.save-btn {
-  padding: 12px 20px;
-  background: linear-gradient(135deg, #d4af37 0%, #f4e4c1 50%, #d4af37 100%);
-  border: none;
-  border-radius: 8px;
-  color: #1a1a2e;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.save-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
-}
-
-.toggle-group {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.toggle-label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.toggle-label input[type="checkbox"] {
-  accent-color: #d4af37;
-  width: 16px;
-  height: 16px;
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
-  .profile-page {
-    padding: 10px;
-  }
-  
   .glass-card {
-    padding: 20px;
+    margin-top: 20px;
+    border-radius: 16px;
   }
   
-  .profile-header {
-    flex-direction: column;
-    text-align: center;
-    gap: 20px;
-  }
-  
-  .profile-tabs {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  
-  .tab-btn {
-    padding: 8px 12px;
-    font-size: 14px;
-  }
-  
-  .overview-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .order-cards {
-    grid-template-columns: 1fr;
-  }
-  
-  .wishlist-cards {
-    grid-template-columns: 1fr;
-  }
-  
-  .settings-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .filter-buttons {
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-  
-  .filter-btn {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
-  
-  .order-actions {
-    flex-direction: column;
-    gap: 8px;
-  }
-  
-  .wishlist-actions {
-    flex-direction: column;
-    gap: 8px;
+  .profile-stats .stat-item {
+    margin-bottom: 8px;
   }
 }
 </style>

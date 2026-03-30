@@ -16,19 +16,11 @@
     ></v-progress-linear>
 
     <!-- Header يظهر فقط في الصفحات العادية (غير Dashboard) -->
-    <v-app-bar
+    <Header
       v-if="showHeader"
-      elevation="2"
-      color="background"
-      scroll-behavior="elevate"
-      class="border-b"
-      app
-    >
-      <Header
-        @toggle-mobile-menu="mobileMenuOpen = !mobileMenuOpen"
-        @change-language="changeLanguage"
-      />
-    </v-app-bar>
+      @toggle-mobile-menu="mobileMenuOpen = !mobileMenuOpen"
+      @change-language="changeLanguage"
+    />
 
     <v-navigation-drawer
       v-model="mobileMenuOpen"
@@ -61,9 +53,6 @@
     <Footer v-if="showFooter" />
     
     <ChatBot v-if="showChatbot" />
-    <div v-if="showChatbot" style="height: 100px; background-color: #f0f0f0;"></div>
-    <div style="height: 50px;"></div>
-    <div style="height: 100px;"></div>
   </v-app>
 </template>
 
@@ -82,15 +71,15 @@ const route = useRoute();
 const router = useRouter();
 const store = useStore();
 const { locale } = useI18n();
-const { isDark, toggleTheme, themeClass } = useTheme();
+const { isDark, toggleTheme, themeClass, initTheme } = useTheme();
 
 // State
 const mobileMenuOpen = ref(false);
 const isRouteLoading = ref(false);
 
 // Computed
-const currentTheme = computed(() => isDark.value ? 'dark' : 'light');
-const isRTL = computed(() => locale.value === 'ar');
+const currentTheme = computed(() => isDark.value ? 'darkLuxuryTheme' : 'lightBeigeTheme');
+const isRTL = computed(() => locale.value === 'ar'); // Only Arabic is RTL
 const showChatbot = computed(() => store.getters['ui/showChatbot'] ?? true);
 
 // تحديد ما إذا كان المسار الحالي هو Dashboard
@@ -122,6 +111,7 @@ const mobileNavItems = computed(() => [
 const changeLanguage = (lang) => {
   locale.value = lang;
   localStorage.setItem('language', lang);
+  // Only Arabic is RTL, all others (EN/FR/ZH) are LTR
   document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
 };
 
@@ -139,12 +129,16 @@ router.afterEach(() => {
 
 // Update document direction when language changes
 watch(locale, (newLang) => {
+  // Only Arabic is RTL, all others (EN/FR/ZH) are LTR
   document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
 });
 
 onMounted(() => {
-  // Set initial direction
+  // Set initial direction - Only Arabic is RTL
   document.documentElement.dir = locale.value === 'ar' ? 'rtl' : 'ltr';
+  
+  // Initialize theme with dark mode default
+  initTheme();
 });
 </script>
 

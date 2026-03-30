@@ -48,7 +48,12 @@ export default defineConfig(({ mode }) => {
       dedupe: ['@apollo/client'],
     },
     server: {
-      port: 8080,
+      port: 8080, // Use port 8080
+      host: true, // Allow external connections
+      hmr: {
+        port: 8080, // Use same port as server
+        host: 'localhost' // Explicit host for HMR
+      },
       proxy: {
         '/graphql': {
           target: 'http://127.0.0.1:8000',
@@ -67,6 +72,19 @@ export default defineConfig(({ mode }) => {
           secure: false
         }
       }
+    },
+    optimizeDeps: {
+      include: [
+        'vue',
+        '@apollo/client',
+        'graphql',
+        'graphql-tag'
+      ],
+      exclude: [
+        '@apollo/client/react',
+        'subscriptions-transport-ws'
+      ],
+      force: true
     },
     build: {
       chunkSizeWarningLimit: 1600,

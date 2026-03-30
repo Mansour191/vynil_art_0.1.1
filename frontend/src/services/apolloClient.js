@@ -10,7 +10,7 @@ const getAuthToken = () => {
 }
 
 const httpLink = createHttpLink({
-  uri: '/api/graphql',
+  uri: '/graphql/',
 });
 
 const authLink = setContext((_, { headers }) => {
@@ -41,7 +41,18 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
 // Create Apollo Client instance for services
 export const apolloClient = new ApolloClient({
   link: from([errorLink, authLink, httpLink]),
-  cache: new InMemoryCache(),
+  cache: new InMemoryCache({
+    possibleTypes: {
+      // Add possible types to prevent FIELD errors
+      ProductType: ['ProductType'],
+      Query: ['Query'],
+      Mutation: ['Mutation'],
+      AIHealthType: ['AIHealthType']
+    }
+  }),
+  devtools: {
+    enabled: true
+  },
   defaultOptions: {
     query: {
       errorPolicy: 'all',

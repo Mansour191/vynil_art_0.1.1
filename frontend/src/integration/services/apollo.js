@@ -155,8 +155,10 @@ const apolloClient = new ApolloClient({
       fetchPolicy: 'cache-first',
     },
   },
-  // Add connectToDevTools for debugging
-  connectToDevTools: import.meta.env.DEV,
+  // Add devtools for debugging
+  devtools: {
+    enabled: import.meta.env.DEV
+  },
 });
 
 export default apolloClient;

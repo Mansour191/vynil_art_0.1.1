@@ -1,40 +1,37 @@
 <template>
   <CategoryTemplate
-    icon="fa-solid fa-border-all"
+    :icon="categoryData?.icon || 'fa-solid fa-border-all'"
     titleKey="tilesTitle"
     descriptionKey="tilesDescription"
     labelKey="tilesLabel"
     latestLabelKey="latestTileDesigns"
-    :subCategories="tileCategories"
+    :subCategories="subCategories"
     badgeLabel="tileDesign"
   />
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import CategoryTemplate from '@/components/CategoryTemplate.vue';
+import CategoryService from '@/integration/services/CategoryService';
 
-const tileCategories = ref([
-  {
-    id: 1,
-    emoji: '🧱',
-    titleKey: 'ceramicTiles',
-    descKey: 'ceramicTilesDesc',
-    link: '/search?q=ceramic',
-  },
-  {
-    id: 2,
-    emoji: '💎',
-    titleKey: 'marbleTiles',
-    descKey: 'marbleTilesDesc',
-    link: '/search?q=marble',
-  },
-  {
-    id: 3,
-    emoji: '🎨',
-    titleKey: 'patternedTiles',
-    descKey: 'patternedTilesDesc',
-    link: '/search?q=patterned',
-  },
-]);
+const categoryData = ref(null);
+const subCategories = ref([]);
+
+onMounted(async () => {
+  try {
+    // جلب بيانات الفئة من قاعدة البيانات
+    const category = await CategoryService.getCategoryBySlug('tiles');
+    categoryData.value = category;
+    
+    // جلب الفئات الفرعية
+    const subCats = await CategoryService.getSubCategories('tiles');
+    subCategories.value = subCats;
+    
+    console.log('✅ Tiles category loaded:', category);
+    console.log('✅ Tiles subcategories loaded:', subCats);
+  } catch (error) {
+    console.error('❌ Error loading tiles category:', error);
+  }
+});
 </script>

@@ -15,7 +15,7 @@ const getAuthToken = () => {
 
 // HTTP Link for GraphQL endpoint
 const httpLink = createHttpLink({
-  uri: '/api/graphql',
+  uri: '/graphql/',
 })
 
 // Auth Link - Inject JWT token into headers
