@@ -862,7 +862,9 @@ onMounted(() => {
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
+import PaymentService from '@/integration/services/PaymentService';
 
+const paymentService = PaymentService;
 const loading = ref(false);
 const showAddForm = ref(false);
 const editingPayment = ref(null);
@@ -873,37 +875,6 @@ const paymentTypes = [
   { value: 'card', label: 'بطاقة ائتمان', icon: 'fa-solid fa-credit-card' },
   { value: 'bank', label: 'تحويل بنكي', icon: 'fa-solid fa-university' },
   { value: 'wallet', label: 'محفظة إلكترونية', icon: 'fa-solid fa-wallet' }
-];
-
-// Mock data - في الواقع سيتم جلبها من GraphQL
-const mockPaymentMethods = [
-  {
-    id: 1,
-    type: 'card',
-    title: 'البطاقة الشخصية',
-    cardholderName: 'أحمد محمد',
-    last4: '1234',
-    expiryMonth: '12',
-    expiryYear: '25',
-    isDefault: true
-  },
-  {
-    id: 2,
-    type: 'bank',
-    title: 'حساب البنك الوطني',
-    bankName: 'البنك الوطني الجزائري',
-    accountName: 'أحمد محمد',
-    last4: '5678',
-    isDefault: false
-  },
-  {
-    id: 3,
-    type: 'wallet',
-    title: 'CIB Pay',
-    walletProvider: 'CIB',
-    phoneNumber: '+213 66 123 4567',
-    isDefault: false
-  }
 ];
 
 const getPaymentIcon = (type) => {
@@ -963,29 +934,23 @@ const savePaymentMethod = async () => {
   try {
     loading.value = true;
     
-    // TODO: Implement GraphQL mutation to save payment method
-    console.log('Save payment method:', paymentForm);
-    
     if (editingPayment.value) {
       // Update existing payment method
+      const method = await paymentService.updatePaymentMethod(editingPayment.value.id, paymentForm);
       const index = paymentMethods.value.findIndex(m => m.id === editingPayment.value.id);
       if (index !== -1) {
-        paymentMethods.value[index] = { ...paymentForm, id: editingPayment.value.id };
+        paymentMethods.value[index] = method;
       }
     } else {
       // Add new payment method
-      const newMethod = {
-        ...paymentForm,
-        id: Date.now(),
-        isDefault: paymentMethods.value.length === 0,
-        last4: paymentForm.cardNumber?.slice(-4) || paymentForm.accountNumber?.slice(-4) || ''
-      };
-      paymentMethods.value.push(newMethod);
+      const method = await paymentService.createPaymentMethod(paymentForm);
+      paymentMethods.value.push(method);
     }
     
     closeModal();
   } catch (error) {
     console.error('Error saving payment method:', error);
+    // Show error message to user
   } finally {
     loading.value = false;
   }
@@ -994,37 +959,31 @@ const savePaymentMethod = async () => {
 const deletePaymentMethod = async (paymentId) => {
   if (confirm('هل أنت متأكد من حذف طريقة الدفع؟')) {
     try {
-      // TODO: Implement GraphQL mutation to delete payment method
-      console.log('Delete payment method:', paymentId);
-      
+      await paymentService.deletePaymentMethod(paymentId);
       paymentMethods.value = paymentMethods.value.filter(m => m.id !== paymentId);
     } catch (error) {
       console.error('Error deleting payment method:', error);
+      // Show error message to user
     }
   }
 };
 
 const setDefault = async (paymentId) => {
   try {
-    // TODO: Implement GraphQL mutation to set default payment method
-    console.log('Set default payment method:', paymentId);
-    
+    await paymentService.setDefaultPaymentMethod(paymentId);
     paymentMethods.value.forEach(method => {
       method.isDefault = method.id === paymentId;
     });
   } catch (error) {
     console.error('Error setting default payment method:', error);
+    // Show error message to user
   }
 };
 
 const loadPaymentMethods = async () => {
   try {
     loading.value = true;
-    
-    // TODO: Implement GraphQL query to fetch payment methods
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    paymentMethods.value = mockPaymentMethods;
+    paymentMethods.value = await paymentService.getPaymentMethods();
   } catch (error) {
     console.error('Error loading payment methods:', error);
   } finally {

@@ -506,59 +506,17 @@ onMounted(() => {
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
+import { default as GraphQLService } from '@/services/GraphQLService';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const graphQLService = new GraphQLService();
 
 const loading = ref(true);
 const showQuickView = ref(false);
 const quickViewItem = ref(null);
 
 const wishlistItems = ref([]);
-
-// Mock data - في الواقع سيتم جلبها من GraphQL
-const mockWishlistItems = [
-  {
-    id: 1,
-    name: 'خلفية فنية ذهبية',
-    description: 'خلفية فنية عالية الجودة مع لمسات ذهبية أنيقة',
-    price: 1250.00,
-    originalPrice: 1500.00,
-    discountPercent: 17,
-    image: '/images/products/product1.jpg',
-    category: 'خلفيات',
-    rating: 4.5,
-    reviewCount: 23,
-    stock: 3,
-    isNew: true
-  },
-  {
-    id: 2,
-    name: 'ديكور حائط أزرق',
-    description: 'ديكور حائط أزرق أنيق مع تصميمات عصرية',
-    price: 890.00,
-    image: '/images/products/product2.jpg',
-    category: 'ديكور',
-    rating: 4.2,
-    reviewCount: 18,
-    stock: 7,
-    isNew: false
-  },
-  {
-    id: 3,
-    name: 'ورق جدران كلاسيكي',
-    description: 'ورق جدران كلاسيكي فاخر بتصاميم مميزة',
-    price: 2100.00,
-    originalPrice: 2500.00,
-    discountPercent: 16,
-    image: '/images/products/product3.jpg',
-    category: 'ورق جدران',
-    rating: 4.8,
-    reviewCount: 31,
-    stock: 0,
-    isNew: false
-  }
-];
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat('ar-SA', {
@@ -583,16 +541,13 @@ const closeQuickView = () => {
 
 const removeFromWishlist = async (itemId) => {
   try {
-    // Use GraphQL API instead of mock data
-    const { default: GraphQLService } = await import('@/services/GraphQLService');
-    const graphQLService = new GraphQLService();
-    
     const result = await graphQLService.removeFromWishlist(itemId);
     if (result.success) {
       wishlistItems.value = wishlistItems.value.filter(item => item.id !== itemId);
     }
   } catch (error) {
     console.error('Error removing from wishlist:', error);
+    // Show error message to user
   }
 };
 
@@ -602,14 +557,14 @@ const addToCart = async (item) => {
       return;
     }
     
-    // TODO: Implement GraphQL mutation to add to cart
-    console.log('Add to cart:', item);
-    
-    // Show success message
-    // You can use a toast notification here
-    alert(`تم إضافة "${item.name}" إلى السلة`);
+    const result = await graphQLService.addToCart(item.id, 1);
+    if (result.success) {
+      // Show success message
+      alert(`تم إضافة "${item.name}" إلى السلة`);
+    }
   } catch (error) {
     console.error('Error adding to cart:', error);
+    // Show error message to user
   }
 };
 
@@ -620,16 +575,13 @@ const viewProduct = (productId) => {
 const clearWishlist = async () => {
   if (confirm('هل أنت متأكد من تفريغ المفضلة؟')) {
     try {
-      // Use GraphQL API instead of mock data
-      const { default: GraphQLService } = await import('@/services/GraphQLService');
-      const graphQLService = new GraphQLService();
-      
       const result = await graphQLService.clearWishlist();
       if (result.success) {
         wishlistItems.value = [];
       }
     } catch (error) {
       console.error('Error clearing wishlist:', error);
+      // Show error message to user
     }
   }
 };
@@ -637,16 +589,11 @@ const clearWishlist = async () => {
 const loadWishlist = async () => {
   try {
     loading.value = true;
-    
-    // Use GraphQL API instead of mock data
-    const { default: GraphQLService } = await import('@/services/GraphQLService');
-    const graphQLService = new GraphQLService();
-    
-    wishlistItems.value = await graphQLService.getMyWishlist();
+    const result = await graphQLService.getWishlist();
+    wishlistItems.value = result.items;
   } catch (error) {
     console.error('Error loading wishlist:', error);
-    // Fallback to mock data if GraphQL fails
-    wishlistItems.value = mockWishlistItems;
+    // Show error message to user
   } finally {
     loading.value = false;
   }

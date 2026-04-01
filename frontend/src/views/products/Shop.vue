@@ -295,16 +295,44 @@ const itemsPerPage = ref(9);
 const showMobileFilters = ref(false);
 const semanticQuery = ref('');
 
-const categories = ref([
-  { id: 'all', key: 'allCategories', icon: 'mdi-view-grid', count: 0 },
-  { id: 'furniture', key: 'furniture', icon: 'mdi-sofa', count: 0 },
-  { id: 'doors', key: 'doors', icon: 'mdi-door-open', count: 0 },
-  { id: 'walls', key: 'walls', icon: 'mdi-roller-shade', count: 0 },
-  { id: 'ceilings', key: 'ceilings', icon: 'mdi-arrow-up-bold', count: 0 },
-  { id: 'tiles', key: 'tiles', icon: 'mdi-grid', count: 0 },
-  { id: 'kitchens', key: 'kitchens', icon: 'mdi-silverware-fork-knife', count: 0 },
-  { id: 'cars', key: 'cars', icon: 'mdi-car', count: 0 },
-]);
+// Categories - Dynamic loading from API
+const categories = ref([]);
+
+const fetchCategories = async () => {
+  try {
+    const response = await fetch('/api/products/categories');
+    if (response.ok) {
+      const data = await response.json();
+      categories.value = [
+        { id: 'all', key: 'allCategories', icon: 'mdi-view-grid', count: 0 },
+        ...data.map(cat => ({
+          id: cat.value,
+          key: cat.name_key || cat.value,
+          icon: cat.icon || 'mdi-view-grid',
+          count: 0
+        }))
+      ];
+    }
+  } catch (error) {
+    console.error('Failed to fetch product categories:', error);
+    // Fallback to static data
+    categories.value = [
+      { id: 'all', key: 'allCategories', icon: 'mdi-view-grid', count: 0 },
+      { id: 'furniture', key: 'furniture', icon: 'mdi-sofa', count: 0 },
+      { id: 'doors', key: 'doors', icon: 'mdi-door-open', count: 0 },
+      { id: 'walls', key: 'walls', icon: 'mdi-roller-shade', count: 0 },
+      { id: 'ceilings', key: 'ceilings', icon: 'mdi-arrow-up-bold', count: 0 },
+      { id: 'tiles', key: 'tiles', icon: 'mdi-grid', count: 0 },
+      { id: 'kitchens', key: 'kitchens', icon: 'mdi-silverware-fork-knife', count: 0 },
+      { id: 'cars', key: 'cars', icon: 'mdi-car', count: 0 },
+    ];
+  }
+};
+
+// Lifecycle
+onMounted(() => {
+  fetchCategories();
+});
 
 const getCategoryIcon = (id) => {
   const icons = {

@@ -1,103 +1,645 @@
 <template>
-  <div class="unified-reports">
-    <!-- رأس الصفحة -->
-    <div class="page-header">
-      <div class="header-title">
-        <h1>
-          <i class="fa-solid fa-chart-pie header-icon"></i>
-          التقارير الموحدة
-        </h1>
-        <p class="header-subtitle">تحليلات متكاملة من موقعك و ERPNext</p>
-      </div>
-      <div class="header-actions">
-        <button class="btn-export" @click="exportReport">
-          <i class="fa-solid fa-download"></i>
-          <span>تصدير التقرير</span>
-        </button>
-        <button class="btn-refresh" @click="refreshData">
-          <i class="fa-solid fa-sync-alt"></i>
-          <span>تحديث</span>
-        </button>
-      </div>
-    </div>
+  <v-container fluid class="unified-reports pa-4">
+    <!-- Header -->
+    <v-card class="report-header mb-6" elevation="2">
+      <v-card-text class="pa-4">
+        <v-row align="center">
+          <v-col cols="12" md="8">
+            <div class="d-flex align-center">
+              <v-avatar
+                color="#d4af37"
+                size="48"
+                class="me-4"
+              >
+                <v-icon icon="mdi-chart-pie" size="28"></v-icon>
+              </v-avatar>
+              <div>
+                <h1 class="text-h3 font-weight-bold">
+                  {{ $t('reports.title', 'التقارير الموحدة') }}
+                </h1>
+                <p class="text-body-1 text-dim mt-1">
+                  {{ $t('reports.subtitle', 'تحليلات متكاملة من موقعك و ERPNext') }}
+                </p>
+              </div>
+            </div>
+          </v-col>
+          <v-col cols="12" md="4">
+            <div class="d-flex gap-2 justify-md-end justify-start">
+              <v-btn
+                @click="exportReport"
+                variant="outlined"
+                prepend-icon="mdi-download"
+                class="export-btn"
+              >
+                {{ $t('common.export', 'تصدير التقرير') }}
+              </v-btn>
+              <v-btn
+                @click="refreshData"
+                variant="elevated"
+                prepend-icon="mdi-refresh"
+                color="#d4af37"
+                class="refresh-btn"
+                :loading="loading"
+              >
+                {{ $t('common.refresh', 'تحديث') }}
+              </v-btn>
+            </div>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
 
-    <!-- تبويبات التقارير -->
-    <div class="reports-tabs">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        class="tab-btn"
-        :class="{ active: activeTab === tab.id }"
-        @click="activeTab = tab.id"
+    <!-- Report Tabs -->
+    <v-card class="report-tabs mb-6" elevation="2">
+      <v-tabs
+        v-model="activeTab"
+        align-tabs="center"
+        color="#d4af37"
+        class="report-tabs-container"
       >
-        <i :class="tab.icon"></i>
-        <span>{{ tab.name }}</span>
-      </button>
-    </div>
+        <v-tab
+          v-for="tab in tabs"
+          :key="tab.id"
+          :value="tab.id"
+          class="report-tab"
+        >
+          <v-icon :icon="tab.icon" size="20" class="me-2"></v-icon>
+          {{ tab.name }}
+        </v-tab>
+      </v-tabs>
+    </v-card>
 
-    <!-- محتوى التقرير حسب التبويب -->
-    <div class="tab-content">
-      <!-- ===== تقرير المبيعات ===== -->
-      <div v-if="activeTab === 'sales'" class="report-section">
-        <div class="section-header">
-          <h2>📈 تقرير المبيعات الموحد</h2>
-          <div class="date-range">
-            <input type="date" v-model="dateRange.from" />
-            <span>إلى</span>
-            <input type="date" v-model="dateRange.to" />
-            <button class="btn-apply" @click="loadSalesData">تطبيق</button>
+    <!-- Tab Content -->
+    <v-card class="report-content" elevation="2">
+      <v-card-text class="pa-4">
+        <!-- Sales Report -->
+        <div v-if="activeTab === 'sales'" class="report-section">
+          <div class="section-header mb-4">
+            <v-row align="center">
+              <v-col cols="12" md="6">
+                <h2 class="text-h5 font-weight-bold">
+                  <v-icon icon="mdi-chart-line" size="24" class="me-2"></v-icon>
+                  {{ $t('reports.salesReport', 'تقرير المبيعات الموحد') }}
+                </h2>
+              </v-col>
+              <v-col cols="12" md="6">
+                <div class="d-flex gap-2 align-center justify-md-end">
+                  <v-text-field
+                    v-model="dateRange.from"
+                    type="date"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                    class="date-field"
+                    label="من"
+                  ></v-text-field>
+                  <span class="mx-2">{{ $t('common.to', 'إلى') }}</span>
+                  <v-text-field
+                    v-model="dateRange.to"
+                    type="date"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
+                    class="date-field"
+                    label="إلى"
+                  ></v-text-field>
+                  <v-btn
+                    @click="loadSalesData"
+                    variant="elevated"
+                    color="#d4af37"
+                    class="apply-btn"
+                  >
+                    {{ $t('common.apply', 'تطبيق') }}
+                  </v-btn>
+                </div>
+              </v-col>
+            </v-row>
+          </div>
+
+          <!-- Summary Cards -->
+          <v-row class="mb-6">
+            <v-col cols="12" sm="6" md="4">
+              <v-card class="summary-card site-card" elevation="2">
+                <v-card-text class="pa-4">
+                  <div class="d-flex align-center">
+                    <v-avatar color="#4caf50" size="48" class="me-3">
+                      <v-icon icon="mdi-store" size="24"></v-icon>
+                    </v-avatar>
+                    <div class="flex-grow-1">
+                      <p class="text-caption text-dim mb-1">
+                        {{ $t('reports.siteSales', 'مبيعات الموقع') }}
+                      </p>
+                      <p class="text-h5 font-weight-bold">
+                        {{ formatCurrency(sales.site.total) }}
+                      </p>
+                      <div class="d-flex align-center mt-1">
+                        <v-icon 
+                          :icon="sales.site.trend > 0 ? 'mdi-trending-up' : 'mdi-trending-down'"
+                          :color="sales.site.trend > 0 ? 'success' : 'error'"
+                          size="16"
+                          class="me-1"
+                        ></v-icon>
+                        <span 
+                          :class="sales.site.trend > 0 ? 'text-success' : 'text-error'"
+                          class="text-caption font-weight-medium"
+                        >
+                          {{ Math.abs(sales.site.trend) }}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="12" sm="6" md="4">
+              <v-card class="summary-card erp-card" elevation="2">
+                <v-card-text class="pa-4">
+                  <div class="d-flex align-center">
+                    <v-avatar color="#2196f3" size="48" class="me-3">
+                      <v-icon icon="mdi-database" size="24"></v-icon>
+                    </v-avatar>
+                    <div class="flex-grow-1">
+                      <p class="text-caption text-dim mb-1">
+                        {{ $t('reports.erpSales', 'مبيعات ERPNext') }}
+                      </p>
+                      <p class="text-h5 font-weight-bold">
+                        {{ formatCurrency(sales.erpnext.total) }}
+                      </p>
+                      <div class="d-flex align-center mt-1">
+                        <v-icon 
+                          :icon="sales.erpnext.trend > 0 ? 'mdi-trending-up' : 'mdi-trending-down'"
+                          :color="sales.erpnext.trend > 0 ? 'success' : 'error'"
+                          size="16"
+                          class="me-1"
+                        ></v-icon>
+                        <span 
+                          :class="sales.erpnext.trend > 0 ? 'text-success' : 'text-error'"
+                          class="text-caption font-weight-medium"
+                        >
+                          {{ Math.abs(sales.erpnext.trend) }}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="12" sm="6" md="4">
+              <v-card class="summary-card total-card" elevation="2">
+                <v-card-text class="pa-4">
+                  <div class="d-flex align-center">
+                    <v-avatar color="#d4af37" size="48" class="me-3">
+                      <v-icon icon="mdi-chart-line" size="24"></v-icon>
+                    </v-avatar>
+                    <div class="flex-grow-1">
+                      <p class="text-caption text-dim mb-1">
+                        {{ $t('reports.totalUnified', 'إجمالي موحد') }}
+                      </p>
+                      <p class="text-h5 font-weight-bold">
+                        {{ formatCurrency(sales.total) }}
+                      </p>
+                      <div class="d-flex align-center mt-1">
+                        <v-icon 
+                          :icon="sales.trend > 0 ? 'mdi-trending-up' : 'mdi-trending-down'"
+                          :color="sales.trend > 0 ? 'success' : 'error'"
+                          size="16"
+                          class="me-1"
+                        ></v-icon>
+                        <span 
+                          :class="sales.trend > 0 ? 'text-success' : 'text-error'"
+                          class="text-caption font-weight-medium"
+                        >
+                          {{ Math.abs(sales.trend) }}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <!-- Charts -->
+          <v-row class="mb-6">
+            <v-col cols="12" md="8">
+              <v-card class="chart-card" elevation="2">
+                <v-card-title class="pa-4">
+                  <h3 class="text-h6 font-weight-bold">
+                    {{ $t('reports.salesTrend', 'اتجاه المبيعات') }}
+                  </h3>
+                </v-card-title>
+                <v-divider></v-divider>
+                <v-card-text class="pa-4">
+                  <div class="chart-container" style="height: 300px;">
+                    <!-- Chart placeholder - would integrate with Chart.js or similar -->
+                    <div class="d-flex align-center justify-center text-dim h-100">
+                      <v-icon icon="mdi-chart-line" size="64"></v-icon>
+                      <span class="ms-4">{{ $t('reports.chartPlaceholder', 'مخط بياني للمبيعات') }}</span>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="12" md="4">
+              <v-card class="chart-card" elevation="2">
+                <v-card-title class="pa-4">
+                  <h3 class="text-h6 font-weight-bold">
+                    {{ $t('reports.salesByCategory', 'المبيعات حسب الفئة') }}
+                  </h3>
+                </v-card-title>
+                <v-divider></v-divider>
+                <v-card-text class="pa-4">
+                  <div class="chart-container" style="height: 300px;">
+                    <!-- Pie chart placeholder -->
+                    <div class="d-flex align-center justify-center text-dim h-100 flex-column">
+                      <v-icon icon="mdi-chart-pie" size="64"></v-icon>
+                      <span class="mt-2">{{ $t('reports.pieChartPlaceholder', 'مخط دائري للفئات') }}</span>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <!-- Top Products Table -->
+          <v-card class="table-card" elevation="2">
+            <v-card-title class="pa-4">
+              <h3 class="text-h6 font-weight-bold">
+                {{ $t('reports.topProducts', 'أفضل المنتجات') }}
+              </h3>
+            </v-card-title>
+            <v-divider></v-divider>
+            <v-card-text class="pa-0">
+              <v-data-table
+                :headers="topProductsHeaders"
+                :items="sales.topProducts"
+                :loading="loading"
+                class="products-table"
+                :items-per-page="5"
+                hide-default-footer
+              >
+                <template v-slot:item.sales="{ item }">
+                  <span class="font-weight-bold">{{ formatCurrency(item.sales) }}</span>
+                </template>
+                <template v-slot:item.units="{ item }">
+                  <v-chip variant="elevated" size="small" color="primary">
+                    {{ item.units }}
+                  </v-chip>
+                </template>
+              </v-data-table>
+            </v-card-text>
+          </v-card>
+        </div>
+
+        <!-- Other report tabs would follow similar pattern -->
+        <div v-else-if="activeTab === 'customers'" class="report-section">
+          <!-- Customer Report Content -->
+          <div class="text-center py-8">
+            <v-icon icon="mdi-account-group" size="64" color="#d4af37"></v-icon>
+            <h3 class="text-h5 font-weight-bold mt-4">
+              {{ $t('reports.customerReport', 'تقرير العملاء') }}
+            </h3>
+            <p class="text-body-1 text-dim mt-2">
+              {{ $t('reports.customerReportDesc', 'تحليل شامل للعملاء والسلوك الشرائي') }}
+            </p>
           </div>
         </div>
 
-        <!-- بطاقات الملخص -->
-        <div class="summary-cards">
-          <div class="summary-card">
-            <div class="card-icon site">
-              <i class="fa-solid fa-store"></i>
-            </div>
-            <div class="card-content">
-              <span class="card-label">مبيعات الموقع</span>
-              <span class="card-value">{{ formatCurrency(sales.site.total) }}</span>
-              <span
-                class="card-trend"
-                :class="{ up: sales.site.trend > 0, down: sales.site.trend < 0 }"
-              >
-                <i :class="sales.site.trend > 0 ? 'fa-solid fa-arrow-up' : 'fa-solid fa-arrow-down'"></i>
-                {{ Math.abs(sales.site.trend) }}%
-              </span>
-            </div>
+        <div v-else-if="activeTab === 'products'" class="report-section">
+          <!-- Product Report Content -->
+          <div class="text-center py-8">
+            <v-icon icon="mdi-package" size="64" color="#d4af37"></v-icon>
+            <h3 class="text-h5 font-weight-bold mt-4">
+              {{ $t('reports.productReport', 'تقرير المنتجات') }}
+            </h3>
+            <p class="text-body-1 text-dim mt-2">
+              {{ $t('reports.productReportDesc', 'تحليل أداء المنتجات والمخزون') }}
+            </p>
           </div>
+        </div>
 
-          <div class="summary-card">
-            <div class="card-icon erpnext">
-              <i class="fa-solid fa-database"></i>
-            </div>
-            <div class="card-content">
-              <span class="card-label">مبيعات ERPNext</span>
-              <span class="card-value">{{ formatCurrency(sales.erpnext.total) }}</span>
-              <span
-                class="card-trend"
-                :class="{ up: sales.erpnext.trend > 0, down: sales.erpnext.trend < 0 }"
-              >
-                <i :class="sales.erpnext.trend > 0 ? 'fa-solid fa-arrow-up' : 'fa-solid fa-arrow-down'"></i>
-                {{ Math.abs(sales.erpnext.trend) }}%
-              </span>
-            </div>
+        <div v-else-if="activeTab === 'financial'" class="report-section">
+          <!-- Financial Report Content -->
+          <div class="text-center py-8">
+            <v-icon icon="mdi-currency-usd" size="64" color="#d4af37"></v-icon>
+            <h3 class="text-h5 font-weight-bold mt-4">
+              {{ $t('reports.financialReport', 'التقرير المالي') }}
+            </h3>
+            <p class="text-body-1 text-dim mt-2">
+              {{ $t('reports.financialReportDesc', 'تحليل مالي شامل بالإيرادات والمصروفات') }}
+            </p>
           </div>
+        </div>
 
-          <div class="summary-card total">
-            <div class="card-icon">
-              <i class="fa-solid fa-chart-line"></i>
-            </div>
-            <div class="card-content">
-              <span class="card-label">إجمالي موحد</span>
-              <span class="card-value">{{ formatCurrency(sales.total) }}</span>
-              <span class="card-trend" :class="{ up: sales.trend > 0, down: sales.trend < 0 }">
-                <i :class="sales.trend > 0 ? 'fa-solid fa-arrow-up' : 'fa-solid fa-arrow-down'"></i>
-                {{ Math.abs(sales.trend) }}%
-              </span>
-            </div>
+        <div v-else-if="activeTab === 'orders'" class="report-section">
+          <!-- Orders Report Content -->
+          <div class="text-center py-8">
+            <v-icon icon="mdi-shopping" size="64" color="#d4af37"></v-icon>
+            <h3 class="text-h5 font-weight-bold mt-4">
+              {{ $t('reports.ordersReport', 'تقرير الطلبات') }}
+            </h3>
+            <p class="text-body-1 text-dim mt-2">
+              {{ $t('reports.ordersReportDesc', 'تحليل الطلبات وحالاتها') }}
+            </p>
           </div>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-container>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue';
+import { useStore } from 'vuex';
+import { useI18n } from 'vue-i18n';
+import ReportsService from '@/services/ReportsService';
+
+// Store and i18n
+const store = useStore();
+const { t } = useI18n();
+
+// State
+const loading = ref(false);
+const activeTab = ref('sales');
+const dateRange = ref({
+  from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  to: new Date().toISOString().split('T')[0]
+});
+
+// Data
+const sales = ref({
+  site: { total: 1250000, trend: 12.5 },
+  erpnext: { total: 980000, trend: 8.3 },
+  total: 2230000,
+  trend: 10.4,
+  topProducts: [
+    { name: 'فينيل ديكوري ذهبي', sales: 45000, units: 32 },
+    { name: 'فينيل جدران فضي', sales: 38000, units: 28 },
+    { name: 'فينيل أرضيات بني', sales: 32000, units: 24 },
+    { name: 'فينيل سقوف أبيض', sales: 28000, units: 20 },
+    { name: 'فينيل أثاث أسود', sales: 25000, units: 18 }
+  ]
+});
+
+// Tabs configuration
+const tabs = ref([
+  { id: 'sales', name: t('reports.sales', 'المبيعات'), icon: 'mdi-chart-line' },
+  { id: 'customers', name: t('reports.customers', 'العملاء'), icon: 'mdi-account-group' },
+  { id: 'products', name: t('reports.products', 'المنتجات'), icon: 'mdi-package' },
+  { id: 'financial', name: t('reports.financial', 'المالية'), icon: 'mdi-currency-usd' },
+  { id: 'orders', name: t('reports.orders', 'الطلبات'), icon: 'mdi-shopping' }
+]);
+
+// Table headers
+const topProductsHeaders = computed(() => [
+  { title: t('reports.productName', 'اسم المنتج'), key: 'name' },
+  { title: t('reports.sales', 'المبيعات'), key: 'sales' },
+  { title: t('reports.units', 'الوحدات'), key: 'units' }
+]);
+
+// Methods
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('ar-DZ', {
+    style: 'currency',
+    currency: 'DZD',
+    minimumFractionDigits: 0
+  }).format(amount);
+};
+
+const loadSalesData = async () => {
+  try {
+    loading.value = true;
+    const response = await ReportsService.generateReport('sales', {
+      fromDate: dateRange.value.from,
+      toDate: dateRange.value.to
+    });
+    
+    if (response.success) {
+      // Update sales data with API response
+      sales.value = {
+        ...sales.value,
+        ...response.data.summary,
+        topProducts: response.data.topProducts || sales.value.topProducts
+      };
+    }
+  } catch (error) {
+    console.error('Error loading sales data:', error);
+    store.dispatch('notifications/showNotification', {
+      type: 'error',
+      message: t('reports.loadError', 'فشل في تحميل بيانات المبيعات')
+    });
+  } finally {
+    loading.value = false;
+  }
+};
+
+const refreshData = async () => {
+  await loadSalesData();
+  store.dispatch('notifications/showNotification', {
+    type: 'success',
+    message: t('reports.dataRefreshed', 'تم تحديث البيانات بنجاح')
+  });
+};
+
+const exportReport = async () => {
+  try {
+    const response = await ReportsService.exportReport(activeTab.value, 'pdf');
+    if (response.success) {
+      store.dispatch('notifications/showNotification', {
+        type: 'success',
+        message: t('reports.exportSuccess', 'تم تصدير التقرير بنجاح')
+      });
+    }
+  } catch (error) {
+    console.error('Error exporting report:', error);
+    store.dispatch('notifications/showNotification', {
+      type: 'error',
+      message: t('reports.exportError', 'فشل في تصدير التقرير')
+    });
+  }
+};
+
+// Lifecycle
+onMounted(() => {
+  loadSalesData();
+});
+</script>
+
+<style scoped>
+.unified-reports {
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+  min-height: 100vh;
+}
+
+/* Header Styles */
+.report-header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: 16px;
+}
+
+.export-btn {
+  border-color: #d4af37;
+  color: #d4af37;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.export-btn:hover {
+  background: rgba(212, 175, 55, 0.1);
+  transform: translateY(-1px);
+}
+
+.refresh-btn {
+  background: linear-gradient(135deg, #d4af37 0%, #f4e4c1 50%, #d4af37 100%);
+  color: #1a1a2e;
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+  transition: all 0.3s ease;
+}
+
+.refresh-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+}
+
+/* Tabs Styles */
+.report-tabs {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: 16px;
+}
+
+.report-tabs-container :deep(.v-tabs-slider) {
+  background: #d4af37;
+}
+
+.report-tab {
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+/* Content Styles */
+.report-content {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: 16px;
+}
+
+/* Summary Cards */
+.summary-card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+}
+
+.summary-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.site-card {
+  border-left: 4px solid #4caf50;
+}
+
+.erp-card {
+  border-left: 4px solid #2196f3;
+}
+
+.total-card {
+  border-left: 4px solid #d4af37;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.05) 0%, rgba(212, 175, 55, 0.02) 100%);
+}
+
+/* Chart Cards */
+.chart-card {
+  border-radius: 12px;
+}
+
+.chart-container {
+  position: relative;
+}
+
+/* Table Styles */
+.products-table {
+  background: transparent;
+}
+
+.products-table :deep(.v-data-table__thead > tr > th) {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.05) 100%);
+  color: #d4af37;
+  font-weight: 600;
+}
+
+.products-table :deep(.v-data-table__tbody > tr:hover) {
+  background: rgba(212, 175, 55, 0.05);
+}
+
+/* Date Fields */
+.date-field {
+  max-width: 150px;
+}
+
+.apply-btn {
+  font-weight: 500;
+}
+
+/* Text Styles */
+.text-dim {
+  color: #666 !important;
+}
+
+/* Responsive Design */
+@media (max-width: 960px) {
+  .report-header .v-btn {
+    font-size: 0.875rem;
+  }
+  
+  .summary-card {
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  .unified-reports {
+    padding: 1rem;
+  }
+  
+  .report-header,
+  .report-tabs,
+  .report-content {
+    border-radius: 12px;
+  }
+  
+  .date-field {
+    max-width: 120px;
+  }
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.summary-card,
+.chart-card,
+.table-card {
+  animation: fadeIn 0.6s ease-out;
+}
+</style>
         </div>
 
         <!-- الرسم البياني للمبيعات -->

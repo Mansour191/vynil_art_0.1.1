@@ -179,18 +179,65 @@ const activeCategory = ref('all');
 const currentPage = ref(1);
 const postsPerPage = ref(9);
 
-const categories = [
-  { value: 'all', nameKey: 'allCategories', icon: 'mdi-view-grid' },
-  { value: 'furniture', nameKey: 'furniture', icon: 'mdi-sofa' },
-  { value: 'doors', nameKey: 'doors', icon: 'mdi-door' },
-  { value: 'walls', nameKey: 'walls', icon: 'mdi-roller-brush' },
-  { value: 'ceilings', nameKey: 'ceilings', icon: 'mdi-arrow-up-bold' },
-  { value: 'tiles', nameKey: 'tiles', icon: 'mdi-border-all' },
-  { value: 'kitchens', nameKey: 'kitchens', icon: 'mdi-silverware' },
-  { value: 'cars', nameKey: 'cars', icon: 'mdi-car' },
-];
+// Categories - Dynamic loading from API
+const categories = ref([]);
 
-const allPosts = ref([
+const fetchCategories = async () => {
+  try {
+    const response = await fetch('/api/blog/categories');
+    if (response.ok) {
+      const data = await response.json();
+      categories.value = [
+        { value: 'all', nameKey: 'allCategories', icon: 'mdi-view-grid' },
+        ...data.map(cat => ({
+          value: cat.value,
+          nameKey: cat.name_key,
+          icon: cat.icon || 'mdi-view-grid'
+        }))
+      ];
+    }
+  } catch (error) {
+    console.error('Failed to fetch blog categories:', error);
+    // Fallback to static data
+    categories.value = [
+      { value: 'all', nameKey: 'allCategories', icon: 'mdi-view-grid' },
+      { value: 'furniture', nameKey: 'furniture', icon: 'mdi-sofa' },
+      { value: 'doors', nameKey: 'doors', icon: 'mdi-door' },
+      { value: 'walls', nameKey: 'walls', icon: 'mdi-roller-brush' },
+      { value: 'ceilings', nameKey: 'ceilings', icon: 'mdi-arrow-up-bold' },
+      { value: 'tiles', nameKey: 'tiles', icon: 'mdi-border-all' },
+      { value: 'kitchens', nameKey: 'kitchens', icon: 'mdi-silverware' },
+      { value: 'cars', nameKey: 'cars', icon: 'mdi-car' },
+    ];
+  }
+};
+
+// Posts - Dynamic loading from API
+const allPosts = ref([]);
+
+const fetchPosts = async () => {
+  try {
+    const response = await fetch('/api/blog/posts');
+    if (response.ok) {
+      const data = await response.json();
+      allPosts.value = data.map(post => ({
+        id: post.id,
+        title: post.title,
+        excerpt: post.excerpt,
+        image: post.image_url || 'https://i.postimg.cc/0QKmBBJ9/kitchen2.png',
+        category: post.category?.name || 'دليل المبتدئين',
+        categoryValue: post.category?.value || 'walls',
+        date: formatDate(post.created_at),
+        author: post.author?.name || 'أحمد منصور',
+        views: post.views || 0,
+        comments: post.comments_count || 0,
+        slug: post.slug
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to fetch blog posts:', error);
+    // Fallback to static data
+    allPosts.value = [
   {
     id: 1,
     title: 'كيف تختار الفينيل المناسب لمشروعك؟',
@@ -339,6 +386,25 @@ const allPosts = ref([
     comments: 22,
   },
 ]);
+
+// Utility function to format date
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('ar-SA', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+// Lifecycle
+onMounted(async () => {
+  await Promise.all([
+    fetchCategories(),
+    fetchPosts()
+  ]);
+});
 
 // Computed
 const filteredPosts = computed(() => {

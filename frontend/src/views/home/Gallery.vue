@@ -132,18 +132,62 @@ const activeCategory = ref('all');
 const itemsPerPage = ref(12);
 const currentPage = ref(1);
 
-const categories = [
-  { value: 'all', nameKey: 'allCategories', icon: 'mdi-view-grid' },
-  { value: 'furniture', nameKey: 'furniture', icon: 'mdi-sofa' },
-  { value: 'doors', nameKey: 'doors', icon: 'mdi-door' },
-  { value: 'walls', nameKey: 'walls', icon: 'mdi-roller-brush' },
-  { value: 'ceilings', nameKey: 'ceilings', icon: 'mdi-arrow-up-bold' },
-  { value: 'tiles', nameKey: 'tiles', icon: 'mdi-border-all' },
-  { value: 'kitchens', nameKey: 'kitchens', icon: 'mdi-silverware' },
-  { value: 'cars', nameKey: 'cars', icon: 'mdi-car' },
-];
+// Categories - Dynamic loading from API
+const categories = ref([]);
 
-const allItems = ref([
+const fetchCategories = async () => {
+  try {
+    const response = await fetch('/api/gallery/categories');
+    if (response.ok) {
+      const data = await response.json();
+      categories.value = [
+        { value: 'all', nameKey: 'allCategories', icon: 'mdi-view-grid' },
+        ...data.map(cat => ({
+          value: cat.value,
+          nameKey: cat.name_key,
+          icon: cat.icon || 'mdi-view-grid'
+        }))
+      ];
+    }
+  } catch (error) {
+    console.error('Failed to fetch gallery categories:', error);
+    // Fallback to static data
+    categories.value = [
+      { value: 'all', nameKey: 'allCategories', icon: 'mdi-view-grid' },
+      { value: 'furniture', nameKey: 'furniture', icon: 'mdi-sofa' },
+      { value: 'doors', nameKey: 'doors', icon: 'mdi-door' },
+      { value: 'walls', nameKey: 'walls', icon: 'mdi-roller-brush' },
+      { value: 'ceilings', nameKey: 'ceilings', icon: 'mdi-arrow-up-bold' },
+      { value: 'tiles', nameKey: 'tiles', icon: 'mdi-border-all' },
+      { value: 'kitchens', nameKey: 'kitchens', icon: 'mdi-silverware' },
+      { value: 'cars', nameKey: 'cars', icon: 'mdi-car' },
+    ];
+  }
+};
+
+// Gallery items - Dynamic loading from API
+const allItems = ref([]);
+
+const fetchGalleryItems = async () => {
+  try {
+    const response = await fetch('/api/gallery/items');
+    if (response.ok) {
+      const data = await response.json();
+      allItems.value = data.map(item => ({
+        id: item.id,
+        titleKey: item.title_key,
+        descKey: item.desc_key,
+        category: item.category?.value || 'furniture',
+        categoryKey: item.category?.name_key || 'furniture',
+        image: item.image_url || 'https://i.postimg.cc/Qx9tkDDn/wardrobe.png',
+        title: item.title,
+        description: item.description
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to fetch gallery items:', error);
+    // Fallback to static data
+    allItems.value = [
   {
     id: 1,
     titleKey: 'galleryItem1Title',
@@ -301,6 +345,14 @@ const nextImage = () => {
   lightbox.descKey = items[newIndex].descKey;
   lightbox.index = newIndex;
 };
+
+// Lifecycle
+onMounted(async () => {
+  await Promise.all([
+    fetchCategories(),
+    fetchGalleryItems()
+  ]);
+});
 
 // Watchers
 watch(activeCategory, () => {

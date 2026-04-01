@@ -720,30 +720,48 @@ const loadOrders = async () => {
     const { default: OrdersService } = await import('./OrdersService.js');
     
     // Load orders from API
-    const ordersResponse = await OrdersService.getOrders({
-      page: currentPage.value,
-      limit: itemsPerPage.value,
-      search: searchQuery.value,
-      status: statusFilter.value,
-      paymentMethod: paymentFilter.value,
-      sortBy: sortKey.value,
-      sortOrder: sortOrder.value
-    });
-    
-    if (ordersResponse.success) {
-      orders.value = ordersResponse.data.orders || [];
-    } else {
-      console.error('Failed to load orders:', ordersResponse.error);
-      // Fallback to mock data if API fails
-      orders.value = getMockOrders();
+    try {
+      const ordersResponse = await OrdersService.getOrders({
+        page: currentPage.value,
+        limit: itemsPerPage.value,
+        search: searchQuery.value,
+        status: statusFilter.value,
+        paymentMethod: paymentFilter.value,
+        sortBy: sortKey.value,
+        sortOrder: sortOrder.value
+      });
+      
+      if (ordersResponse.success) {
+        orders.value = ordersResponse.data.orders || [];
+      } else {
+        console.error('Failed to load orders:', ordersResponse.error);
+        // Try direct API as fallback
+        orders.value = await fetchOrders();
+      }
+    } catch (ordersError) {
+      console.error('OrdersService failed:', ordersError);
+      // Final fallback to direct API
+      orders.value = await fetchOrders();
     }
     
     // Load statistics from API
-    const statsResponse = await OrdersService.getOrderStats();
-    if (statsResponse.success) {
-      stats.value = statsResponse.data;
-    } else {
-      console.error('Failed to load stats:', statsResponse.error);
+    try {
+      const statsResponse = await OrdersService.getOrderStats();
+      if (statsResponse.success) {
+        stats.value = statsResponse.data;
+      } else {
+        console.error('Failed to load stats:', statsResponse.error);
+        // Try direct API for stats
+        const statsData = await fetch('/api/orders/statistics');
+        if (statsData.ok) {
+          stats.value = await statsData.json();
+        } else {
+          // Fallback to calculated stats
+          stats.value = calculateStatsFromOrders();
+        }
+      }
+    } catch (statsError) {
+      console.error('Stats API failed:', statsError);
       // Fallback to calculated stats
       stats.value = calculateStatsFromOrders();
     }
@@ -755,6 +773,52 @@ const loadOrders = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+// Dynamic data functions
+const fetchOrders = async () => {
+  try {
+    const response = await fetch('/api/orders');
+    if (response.ok) {
+      const data = await response.json();
+      return data.map(order => ({
+        id: order.order_number || `ORD-${order.id}`,
+        customer: order.customer?.name || 'عميل غير معروف',
+        email: order.customer?.email || '',
+        phone: order.customer?.phone || '',
+        date: order.created_at,
+        total: order.total_amount,
+        subtotal: order.subtotal,
+        shipping: order.shipping_amount || 0,
+        tax: order.tax_amount || 0,
+        status: order.status,
+        paymentMethod: order.payment_method,
+        paymentStatus: order.payment_status,
+        shippingAddress: {
+          street: order.shipping_address?.street || '',
+          city: order.shipping_address?.city || '',
+          country: order.shipping_address?.country || '',
+          zipCode: order.shipping_address?.zip_code || ''
+        },
+        products: order.items?.map(item => ({
+          id: item.product_id,
+          name: item.product_name,
+          price: item.price,
+          quantity: item.quantity,
+          sku: item.sku || '',
+          image: item.product_image || 'https://via.placeholder.com/50'
+        })) || [],
+        timeline: order.timeline || [
+          { status: order.status, date: order.created_at, note: 'تم إنشاء الطلب بنجاح' }
+        ]
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to fetch orders:', error);
+  }
+  
+  // Fallback to mock data
+  return getMockOrders();
 };
 
 // Mock data fallback

@@ -183,7 +183,7 @@ import { useStore } from 'vuex';
 import { useI18n } from 'vue-i18n';
 import { formatDate, formatTime } from '@/integration/utils/helpers';
 import CurrencyService from '@/integration/services/CurrencyService';
-import OrdersService from '../OrdersService';
+import OrdersService from '@/services/OrdersService';
 
 // Props
 const props = defineProps({

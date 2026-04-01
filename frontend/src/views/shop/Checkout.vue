@@ -288,93 +288,126 @@ const form = ref({
   notes: ''
 });
 
-const wilayas = ref([
-  { id: '1', name: 'أدرار' },
-  { id: '2', name: 'الشلف' },
-  { id: '3', name: 'الأغواط' },
-  { id: '4', name: 'أم البواقي' },
-  { id: '5', name: 'باتنة' },
-  { id: '6', name: 'بجاية' },
-  { id: '7', name: 'بسكرة' },
-  { id: '8', name: 'بشار' },
-  { id: '9', name: 'البليدة' },
-  { id: '10', name: 'البويرة' },
-  { id: '11', name: 'تمنراست' },
-  { id: '12', name: 'تبسة' },
-  { id: '13', name: 'تلمسان' },
-  { id: '14', name: 'تيارت' },
-  { id: '15', name: 'تيزي وزو' },
-  { id: '16', name: 'الجزائر' },
-  { id: '17', name: 'الجلفة' },
-  { id: '18', name: 'جيجل' },
-  { id: '19', name: 'سوق أهراس' },
-  { id: '20', name: 'سيدي بلعباس' },
-  { id: '21', name: 'عنابة' },
-  { id: '22', name: 'قالمة' },
-  { id: '23', name: 'قسنطينة' },
-  { id: '24', name: 'المدية' },
-  { id: '25', name: 'ميلة' },
-  { id: '26', name: 'معسكر' },
-  { id: '27', name: 'مسردة' },
-  { id: '28', name: 'مستغانم' },
-  { id: '29', name: 'ميلة' },
-  { id: '30', name: 'ورقلة' },
-  { id: '31', name: 'وهران' },
-  { id: '32', name: 'البيض' },
-  { id: '33', name: 'إليزي' },
-  { id: '34', name: 'برج بوعريريج' },
-  { id: '35', name: 'بومرداس' },
-  { id: '36', name: 'الطارف' },
-  { id: '37', name: 'تندوف' },
-  { id: '38', name: 'تميمون' },
-  { id: '39', name: 'غرداية' },
-  { id: '40', name: 'غليزان' },
-  { id: '41', name: 'قايدي بلعباس' },
-  { id: '42', name: 'خنشلة' },
-  { id: '43', name: 'سطيف' },
-  { id: '44', name: 'سيدي عبد الله' },
-  { id: '45', name: 'ميلة' },
-  { id: '46', name: 'عين الدفلى' },
-  { id: '47', name: 'عين تموشنت' },
-  { id: '48', name: 'عين صالح' },
-  { id: '49', name: 'عين قزام' },
-  { id: '50', name: 'الجلفة' },
-  { id: '51', name: 'المدية' },
-  { id: '52', name: 'خنشلة' },
-  { id: '53', name: 'سطيف' },
-  { id: '54', name: 'المنطقة' },
-  { id: '55', name: 'نعامة' },
-  { id: '56', name: 'تيميمون' },
-  { id: '57', name: 'برج بوعريريج' },
-  { id: '58', name: 'تلمسان' }
-]);
+// Wilayas - Dynamic loading from API
+const wilayas = ref([]);
 
-const paymentMethods = ref([
-  {
-    value: 'cash_on_delivery',
-    label: 'الدفع عند الاستلام',
-    description: 'الدفع عند استلام المنتجات',
-    icon: 'mdi-cash'
-  },
-  {
-    value: 'credit_card',
-    label: 'بطاقة بنكية',
-    description: 'الدفع الآمن بالبطاقة البنكية',
-    icon: 'mdi-credit-card'
-  },
-  {
-    value: 'cib',
-    label: 'CIB',
-    description: 'الدفع عبر CIB',
-    icon: 'mdi-bank'
-  },
-  {
-    value: 'edahabia',
-    label: 'Edahabia',
-    description: 'الدفع عبر محفظة Edahabia',
-    icon: 'mdi-wallet'
+const fetchWilayas = async () => {
+  try {
+    const response = await fetch('/api/locations/wilayas');
+    if (response.ok) {
+      const data = await response.json();
+      wilayas.value = data.map(wilaya => ({
+        id: wilaya.id,
+        name: wilaya.name
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to fetch wilayas:', error);
+    // Fallback to static data
+    wilayas.value = [
+      { id: '1', name: 'أدرار' },
+      { id: '2', name: 'الشلف' },
+      { id: '3', name: 'الأغواط' },
+      { id: '4', name: 'أم البواقي' },
+      { id: '5', name: 'باتنة' },
+      { id: '6', name: 'بجاية' },
+      { id: '7', name: 'بسكرة' },
+      { id: '8', name: 'بشار' },
+      { id: '9', name: 'البليدة' },
+      { id: '10', name: 'البويرة' },
+      { id: '11', name: 'تمنراست' },
+      { id: '12', name: 'تبسة' },
+      { id: '13', name: 'تلمسان' },
+      { id: '14', name: 'تيارت' },
+      { id: '15', name: 'تيزي وزو' },
+      { id: '16', name: 'الجزائر' },
+      { id: '17', name: 'الجلفة' },
+      { id: '18', name: 'جيجل' },
+      { id: '19', name: 'سوق أهراس' },
+      { id: '20', name: 'سيدي بلعباس' },
+      { id: '21', name: 'عنابة' },
+      { id: '22', name: 'قالمة' },
+      { id: '23', name: 'قسنطينة' },
+      { id: '24', name: 'المدية' },
+      { id: '25', name: 'ميلة' },
+      { id: '26', name: 'معسكر' },
+      { id: '27', name: 'مسردة' },
+      { id: '28', name: 'مستغانم' },
+      { id: '29', name: 'المسيلة' },
+      { id: '30', name: 'ورقلة' },
+      { id: '31', name: 'وهران' },
+      { id: '32', name: 'البيض' },
+      { id: '33', name: 'إليزي' },
+      { id: '34', name: 'برج بوعريريج' },
+      { id: '35', name: 'بومرداس' },
+      { id: '36', name: 'الطارف' },
+      { id: '37', name: 'تندوف' },
+      { id: '38', name: 'تميمون' },
+      { id: '39', name: 'غرداية' },
+      { id: '40', name: 'غليزان' },
+      { id: '41', name: 'قايدي بلعباس' },
+      { id: '42', name: 'خنشلة' },
+      { id: '43', name: 'سطيف' },
+      { id: '44', name: 'عين الدفلى' },
+      { id: '45', name: 'النعامة' },
+      { id: '46', name: 'عين تموشنت' },
+      { id: '47', name: 'غرداية' },
+      { id: '48', name: 'غليزان' },
+      { id: '54', name: 'المنطقة' },
+      { id: '55', name: 'نعامة' },
+      { id: '56', name: 'تيميمون' },
+      { id: '57', name: 'برج بوعريريج' },
+      { id: '58', name: 'تلمسان' }
+    ];
   }
-]);
+};
+
+// Payment Methods - Dynamic loading from API
+const paymentMethods = ref([]);
+
+const fetchPaymentMethods = async () => {
+  try {
+    const response = await fetch('/api/payment-methods');
+    if (response.ok) {
+      const data = await response.json();
+      paymentMethods.value = data.map(method => ({
+        value: method.value,
+        label: method.label,
+        description: method.description,
+        icon: method.icon || 'mdi-credit-card'
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to fetch payment methods:', error);
+    // Fallback to static data
+    paymentMethods.value = [
+      {
+        value: 'cash_on_delivery',
+        label: 'الدفع عند الاستلام',
+        description: 'الدفع عند استلام المنتجات',
+        icon: 'mdi-cash'
+      },
+      {
+        value: 'credit_card',
+        label: 'بطاقة بنكية',
+        description: 'الدفع الآمن بالبطاقة البنكية',
+        icon: 'mdi-credit-card'
+      },
+      {
+        value: 'cib',
+        label: 'CIB',
+        description: 'الدفع عبر CIB',
+        icon: 'mdi-bank'
+      },
+      {
+        value: 'edahabia',
+        label: 'Edahabia',
+        description: 'الدفع عبر محفظة Edahabia',
+        icon: 'mdi-wallet'
+      }
+    ];
+  }
+};
 
 // Computed
 const subtotal = computed(() => {
@@ -733,7 +766,13 @@ const wilayas = [
   { id: '40', name: 'خنشلة' }, { id: '41', name: 'سوق أهراس' }, { id: '42', name: 'تيبازة' },
   { id: '43', name: 'ميلة' }, { id: '44', name: 'عين الدفلى' }, { id: '45', name: 'النعامة' },
   { id: '46', name: 'عين تموشنت' }, { id: '47', name: 'غرداية' }, { id: '48', name: 'غليزان' }
-];
+// Lifecycle
+onMounted(async () => {
+  await Promise.all([
+    fetchWilayas(),
+    fetchPaymentMethods()
+  ]);
+});
 
 // Computed
 const subtotal = computed(() => cartItems.value.reduce((sum, item) => sum + item.price * item.quantity, 0));

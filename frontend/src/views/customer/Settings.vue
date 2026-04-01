@@ -337,6 +337,9 @@
   </v-main>
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
+import SettingsService from '@/integration/services/SettingsService';
+
+const settingsService = SettingsService;
 
 // Reactive data
 const overlayActive = ref(true);
@@ -415,33 +418,19 @@ const timezoneOptions = [
 // Methods
 const loadSettings = async () => {
   try {
-    // Simulate API call to load user settings
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Load all settings from API
+    const [profileData, privacyData, securityData, preferencesData] = await Promise.all([
+      settingsService.getProfileSettings(),
+      settingsService.getPrivacySettings(),
+      settingsService.getSecuritySettings(),
+      settingsService.getPreferences()
+    ]);
     
-    // In real app, fetch from API
-    Object.assign(profileForm, {
-      firstName: 'أحمد',
-      lastName: 'محمد',
-      email: 'ahmed@example.com',
-      phone: '0551234567'
-    });
-    
-    Object.assign(privacySettings, {
-      privateProfile: false,
-      allowSearch: true,
-      showFriends: true
-    });
-    
-    Object.assign(securitySettings, {
-      twoFactorEnabled: false
-    });
-    
-    Object.assign(preferences, {
-      language: 'ar',
-      theme: 'auto',
-      currency: 'DZD',
-      timezone: 'Africa/Algiers'
-    });
+    // Update reactive data
+    Object.assign(profileForm, profileData);
+    Object.assign(privacySettings, privacyData);
+    Object.assign(securitySettings, securityData);
+    Object.assign(preferences, preferencesData);
     
     console.log('✅ Settings loaded successfully');
   } catch (error) {
@@ -454,13 +443,12 @@ const updateProfile = async () => {
   
   saving.value = true;
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    console.log('✅ Profile updated:', profileForm);
+    await settingsService.updateProfileSettings(profileForm);
+    console.log('✅ Profile updated successfully');
     // Show success message
   } catch (error) {
     console.error('❌ Error updating profile:', error);
+    // Show error message
   } finally {
     saving.value = false;
   }
@@ -469,12 +457,12 @@ const updateProfile = async () => {
 const updatePrivacySettings = async () => {
   saving.value = true;
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    console.log('✅ Privacy settings updated:', privacySettings);
+    await settingsService.updatePrivacySettings(privacySettings);
+    console.log('✅ Privacy settings updated successfully');
+    // Show success message
   } catch (error) {
     console.error('❌ Error updating privacy settings:', error);
+    // Show error message
   } finally {
     saving.value = false;
   }
@@ -483,17 +471,17 @@ const updatePrivacySettings = async () => {
 const updatePreferences = async () => {
   saving.value = true;
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    console.log('✅ Preferences updated:', preferences);
+    await settingsService.updatePreferences(preferences);
+    console.log('✅ Preferences updated successfully');
     
     // Apply theme change
     if (preferences.theme !== 'auto') {
       document.documentElement.setAttribute('data-theme', preferences.theme);
     }
+    // Show success message
   } catch (error) {
     console.error('❌ Error updating preferences:', error);
+    // Show error message
   } finally {
     saving.value = false;
   }
@@ -504,9 +492,7 @@ const changePassword = async () => {
   
   changingPassword.value = true;
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    await settingsService.changePassword(passwordForm);
     console.log('✅ Password changed successfully');
     
     // Reset form and close dialog
@@ -521,8 +507,10 @@ const changePassword = async () => {
     }
     
     showPasswordDialog.value = false;
+    // Show success message
   } catch (error) {
     console.error('❌ Error changing password:', error);
+    // Show error message
   } finally {
     changingPassword.value = false;
   }

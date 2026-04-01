@@ -618,9 +618,11 @@ onMounted(() => {
 import { ref, reactive, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
+import { default as GraphQLService } from '@/services/GraphQLService';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const graphQLService = new GraphQLService();
 
 const loading = ref(true);
 const showSearch = ref(false);
@@ -631,55 +633,6 @@ const totalPages = ref(1);
 const ordersPerPage = 10;
 
 const orders = ref([]);
-
-// Mock data - في الواقع سيتم جلبها من GraphQL
-const mockOrders = [
-  {
-    id: 'ORD001',
-    status: 'delivered',
-    createdAt: '2024-01-15T10:30:00Z',
-    total: 1250.00,
-    items: [
-      {
-        id: 1,
-        name: 'خلفية فنية ذهبية',
-        quantity: 2,
-        price: 625.00,
-        image: '/images/products/product1.jpg'
-      }
-    ]
-  },
-  {
-    id: 'ORD002',
-    status: 'shipped',
-    createdAt: '2024-01-20T14:15:00Z',
-    total: 890.00,
-    items: [
-      {
-        id: 2,
-        name: 'ديكور حائط أزرق',
-        quantity: 1,
-        price: 890.00,
-        image: '/images/products/product2.jpg'
-      }
-    ]
-  },
-  {
-    id: 'ORD003',
-    status: 'processing',
-    createdAt: '2024-01-25T09:45:00Z',
-    total: 2100.00,
-    items: [
-      {
-        id: 3,
-        name: 'ورق جدران كلاسيكي',
-        quantity: 3,
-        price: 700.00,
-        image: '/images/products/product3.jpg'
-      }
-    ]
-  }
-];
 
 const filteredOrders = computed(() => {
   let filtered = orders.value;
@@ -766,46 +719,47 @@ const viewOrderDetails = (orderId) => {
 const cancelOrder = async (orderId) => {
   if (confirm('هل أنت متأكد من إلغاء هذا الطلب؟')) {
     try {
-      // TODO: Implement cancel order API call
-      console.log('Cancel order:', orderId);
-      // Update order status locally
-      const order = orders.value.find(o => o.id === orderId);
-      if (order) {
-        order.status = 'cancelled';
+      const result = await graphQLService.cancelOrder(orderId);
+      if (result.success) {
+        const order = orders.value.find(o => o.id === orderId);
+        if (order) {
+          order.status = 'cancelled';
+        }
       }
     } catch (error) {
       console.error('Error cancelling order:', error);
+      // Show error message to user
     }
   }
 };
 
 const reorderItems = async (order) => {
   try {
-    // TODO: Implement reorder functionality
-    console.log('Reorder items:', order);
-    // Add items to cart and redirect to cart
-    router.push('/cart');
+    const result = await graphQLService.reorderItems(order.id);
+    if (result.success) {
+      router.push('/cart');
+    }
   } catch (error) {
     console.error('Error reordering:', error);
+    // Show error message to user
   }
 };
 
 const loadOrders = async () => {
   try {
     loading.value = true;
-    // TODO: Implement GraphQL query to fetch orders
-    // const data = await graphqlQuery(GET_ORDERS_QUERY, {
-    //   page: currentPage.value,
-    //   limit: ordersPerPage
-    // });
+    const result = await graphQLService.getOrders({
+      page: currentPage.value,
+      limit: ordersPerPage,
+      filter: selectedFilter.value,
+      search: searchQuery.value
+    });
     
-    // Mock loading
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    orders.value = mockOrders;
-    totalPages.value = Math.ceil(mockOrders.length / ordersPerPage);
+    orders.value = result.orders;
+    totalPages.value = Math.ceil(result.total / ordersPerPage);
   } catch (error) {
     console.error('Error loading orders:', error);
+    // Show error message to user
   } finally {
     loading.value = false;
   }

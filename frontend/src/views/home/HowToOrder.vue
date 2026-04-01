@@ -61,24 +61,47 @@ import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 
-const steps = computed(() => [
-  {
-    title: t('step1Title') || 'اختر التصميم المناسب',
-    description: t('step1Desc') || 'تصفح معرض الأعمال أو المتجر واختر التصميم الذي يعجبك.'
-  },
-  {
-    title: t('step2Title') || 'حدد المقاسات والألوان',
-    description: t('step2Desc') || 'أدخل الطول والعرض المطلوبين، واختر الألوان ونوعية الخامة المفضلة.'
-  },
-  {
-    title: t('step3Title') || 'أضف للسلة وأتمم الطلب',
-    description: t('step3Desc') || 'أضف المنتج لسلة التسوق ثم توجه لصفحة الدفع وأدخل بيانات الشحن.'
-  },
-  {
-    title: t('step4Title') || 'تأكيد الطلب والتوصيل',
-    description: t('step4Desc') || 'بمجرد تأكيد الطلب، سيقوم فريقنا بتجهيزه وشحنه إليك في أسرع وقت.'
+// Order Steps - Dynamic loading from API
+const steps = ref([]);
+
+const fetchOrderSteps = async () => {
+  try {
+    const response = await fetch('/api/how-to-order/steps');
+    if (response.ok) {
+      const data = await response.json();
+      steps.value = data.map(step => ({
+        title: step.title,
+        description: step.description
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to fetch order steps:', error);
+    // Fallback to static data
+    steps.value = [
+      {
+        title: t('step1Title') || 'اختر التصميم المناسب',
+        description: t('step1Desc') || 'تصفح معرض الأعمال أو المتجر واختر التصميم الذي يعجبك.'
+      },
+      {
+        title: t('step2Title') || 'حدد المقاسات والألوان',
+        description: t('step2Desc') || 'أدخل الطول والعرض المطلوبين، واختر الألوان ونوعية الخامة المفضلة.'
+      },
+      {
+        title: t('step3Title') || 'أضف للسلة وأتمم الطلب',
+        description: t('step3Desc') || 'أضف المنتج لسلة التسوق ثم توجه لصفحة الدفع وأدخل بيانات الشحن.'
+      },
+      {
+        title: t('step4Title') || 'تأكيد الطلب والتوصيل',
+        description: t('step4Desc') || 'بمجرد تأكيد الطلب، سيقوم فريقنا بتجهيزه وشحنه إليك في أسرع وقت.'
+      }
+    ];
   }
-]);
+};
+
+// Lifecycle
+onMounted(() => {
+  fetchOrderSteps();
+});
 </script>
 
 <style scoped>

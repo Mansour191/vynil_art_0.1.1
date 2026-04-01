@@ -92,28 +92,52 @@ import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n();
 
-const policyItems = computed(() => [
-  {
-    icon: 'mdi-clock-fast',
-    title: t('deliverySpeed') || 'سرعة التوصيل',
-    description: t('deliverySpeedDesc') || 'نحرص على توصيل طلباتكم في أسرع وقت ممكن عبر شبكة واسعة من الشركاء.'
-  },
-  {
-    icon: 'mdi-map-marker-multiple',
-    title: t('wideCoverage') || 'تغطية شاملة',
-    description: t('wideCoverageDesc') || 'نوفر خدمة التوصيل لجميع الولايات الـ 58 في الجزائر.'
-  },
-  {
-    icon: 'mdi-package-variant-closed',
-    title: t('securePackaging') || 'تغليف آمن',
-    description: t('securePackagingDesc') || 'يتم تغليف التصاميم بعناية فائقة لضمان وصولها بحالة ممتازة.'
-  },
-  {
-    icon: 'mdi-headset',
-    title: t('orderTracking') || 'تتبع الطلب',
-    description: t('orderTrackingDesc') || 'يمكنك تتبع حالة طلبك لحظة بلحظة من خلال حسابك أو عبر الهاتف.'
+// Policy Items - Dynamic loading from API
+const policyItems = ref([]);
+
+const fetchPolicyItems = async () => {
+  try {
+    const response = await fetch('/api/shipping-policy/items');
+    if (response.ok) {
+      const data = await response.json();
+      policyItems.value = data.map(item => ({
+        icon: item.icon || 'mdi-truck',
+        title: item.title,
+        description: item.description
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to fetch shipping policy items:', error);
+    // Fallback to static data
+    policyItems.value = [
+      {
+        icon: 'mdi-clock-fast',
+        title: t('deliverySpeed') || 'سرعة التوصيل',
+        description: t('deliverySpeedDesc') || 'نحرص على توصيل طلباتكم في أسرع وقت ممكن عبر شبكة واسعة من الشركاء.'
+      },
+      {
+        icon: 'mdi-map-marker-multiple',
+        title: t('wideCoverage') || 'تغطية شاملة',
+        description: t('wideCoverageDesc') || 'نوفر خدمة التوصيل لجميع الولايات الـ 58 في الجزائر.'
+      },
+      {
+        icon: 'mdi-package-variant-closed',
+        title: t('securePackaging') || 'تغليف آمن',
+        description: t('securePackagingDesc') || 'يتم تغليف التصاميم بعناية فائقة لضمان وصولها بحالة ممتازة.'
+      },
+      {
+        icon: 'mdi-headset',
+        title: t('orderTracking') || 'تتبع الطلب',
+        description: t('orderTrackingDesc') || 'يمكنك تتبع حالة طلبك لحظة بلحظة من خلال حسابك أو عبر الهاتف.'
+      }
+    ];
   }
-]);
+};
+
+// Lifecycle
+onMounted(() => {
+  fetchPolicyItems();
+});
 </script>
 
 <style scoped>

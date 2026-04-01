@@ -366,18 +366,56 @@ const wishlistItemCount = computed(() => {
 const fetchSiteStats = async () => {
   try {
     loading.value = true;
+    
+    // Try to fetch from API first
+    try {
+      const response = await fetch('/api/site/statistics');
+      if (response.ok) {
+        const data = await response.json();
+        stats.value = {
+          totalProducts: data.total_products || 0,
+          totalCategories: data.total_categories || 0,
+          totalPages: data.total_pages || 0,
+          totalUsers: data.total_users || 0
+        };
+        return;
+      }
+    } catch (apiError) {
+      console.error('API call failed:', apiError);
+    }
+    
+    // Fallback to NavigationService
     const response = await NavigationService.getSiteStatistics();
     
     if (response.success) {
       stats.value = response.data;
     } else {
-      // Fallback to mock data
-      stats.value = {
-        totalProducts: 156,
-        totalCategories: 8,
-        totalPages: 24,
-        totalUsers: 1234
-      };
+      // Dynamic fallback - calculate from actual data
+      try {
+        const [productsRes, categoriesRes, pagesRes, usersRes] = await Promise.all([
+          fetch('/api/products/count'),
+          fetch('/api/categories/count'),
+          fetch('/api/pages/count'),
+          fetch('/api/users/count')
+        ]);
+        
+        stats.value = {
+          totalProducts: productsRes.ok ? await productsRes.json() : 0,
+          totalCategories: categoriesRes.ok ? await categoriesRes.json() : 0,
+          totalPages: pagesRes.ok ? await pagesRes.json() : 0,
+          totalUsers: usersRes.ok ? await usersRes.json() : 0
+        };
+      } catch (countError) {
+        console.error('Count API calls failed:', countError);
+        
+        // Final fallback to mock data
+        stats.value = {
+          totalProducts: 156,
+          totalCategories: 8,
+          totalPages: 24,
+          totalUsers: 1234
+        };
+      }
     }
   } catch (error) {
     console.error('Error fetching site statistics:', error);

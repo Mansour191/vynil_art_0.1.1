@@ -1,53 +1,874 @@
 <template>
-  <div class="settings-manager">
-    <!-- رأس الصفحة -->
-    <div class="page-header">
-      <div class="header-title">
-        <h1>
-          <i class="fa-solid fa-cog header-icon"></i>
-          الإعدادات
-        </h1>
-        <p class="header-subtitle">إدارة إعدادات الموقع والمتجر</p>
-      </div>
-      <div class="header-actions">
-        <button class="btn-save-header" @click="saveAllSettings">
-          <i class="fa-solid fa-save"></i>
-          <span>حفظ الكل</span>
-        </button>
-      </div>
-    </div>
+  <v-container fluid class="settings-manager pa-4">
+    <!-- Header -->
+    <v-card class="settings-header mb-6" elevation="2">
+      <v-card-text class="pa-4">
+        <v-row align="center">
+          <v-col cols="12" md="8">
+            <div class="d-flex align-center">
+              <v-avatar
+                color="#d4af37"
+                size="48"
+                class="me-4"
+              >
+                <v-icon icon="mdi-cog" size="28"></v-icon>
+              </v-avatar>
+              <div>
+                <h1 class="text-h3 font-weight-bold">
+                  {{ $t('settings.title', 'الإعدادات') }}
+                </h1>
+                <p class="text-body-1 text-dim mt-1">
+                  {{ $t('settings.subtitle', 'إدارة إعدادات الموقع والمتجر') }}
+                </p>
+              </div>
+            </div>
+          </v-col>
+          <v-col cols="12" md="4">
+            <div class="d-flex gap-2 justify-md-end justify-start">
+              <v-btn
+                @click="saveAllSettings"
+                variant="elevated"
+                prepend-icon="mdi-content-save"
+                color="#d4af37"
+                class="save-btn"
+                :loading="loading"
+              >
+                {{ $t('settings.saveAll', 'حفظ الكل') }}
+              </v-btn>
+              <v-btn
+                @click="resetSettings"
+                variant="outlined"
+                prepend-icon="mdi-refresh"
+                class="reset-btn"
+              >
+                {{ $t('settings.reset', 'إعادة تعيين') }}
+              </v-btn>
+            </div>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
 
-    <!-- تبويبات الإعدادات -->
-    <div class="settings-tabs">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        class="tab-btn"
-        :class="{ active: activeTab === tab.id }"
-        @click="activeTab = tab.id"
+    <!-- Settings Tabs -->
+    <v-card class="settings-tabs mb-6" elevation="2">
+      <v-tabs
+        v-model="activeTab"
+        align-tabs="center"
+        color="#d4af37"
+        class="settings-tabs-container"
       >
-        <i :class="tab.icon"></i>
-        <span>{{ tab.name }}</span>
-      </button>
-    </div>
+        <v-tab
+          v-for="tab in tabs"
+          :key="tab.id"
+          :value="tab.id"
+          class="settings-tab"
+        >
+          <v-icon :icon="tab.icon" size="20" class="me-2"></v-icon>
+          {{ tab.name }}
+        </v-tab>
+      </v-tabs>
+    </v-card>
 
-    <!-- محتوى الإعدادات حسب التبويب -->
-    <div class="settings-content">
-      <!-- ===== الإعدادات العامة ===== -->
-      <div v-if="activeTab === 'general'" class="settings-section">
-        <div class="section-header">
-          <h2><i class="fa-solid fa-globe"></i> الإعدادات العامة</h2>
-          <p>إعدادات الموقع الأساسية والمعلومات العامة</p>
+    <!-- Tab Content -->
+    <v-card class="settings-content" elevation="2">
+      <v-card-text class="pa-4">
+        <!-- General Settings -->
+        <div v-if="activeTab === 'general'" class="settings-section">
+          <div class="section-header mb-6">
+            <h2 class="text-h5 font-weight-bold">
+              <v-icon icon="mdi-web" size="24" class="me-2"></v-icon>
+              {{ $t('settings.general', 'الإعدادات العامة') }}
+            </h2>
+            <p class="text-body-2 text-dim">
+              {{ $t('settings.generalDesc', 'إعدادات الموقع الأساسية والمعلومات العامة') }}
+            </p>
+          </div>
+
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-card class="settings-card mb-4" elevation="1">
+                <v-card-title class="pa-4">
+                  <h3 class="text-h6 font-weight-bold">
+                    <v-icon icon="mdi-information" size="20" color="#d4af37" class="me-2"></v-icon>
+                    {{ $t('settings.siteInfo', 'معلومات الموقع') }}
+                  </h3>
+                </v-card-title>
+                <v-divider></v-divider>
+                <v-card-text class="pa-4">
+                  <v-text-field
+                    v-model="settings.general.siteName"
+                    :label="$t('settings.siteName', 'اسم الموقع')"
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-text-field>
+                  <v-text-field
+                    v-model="settings.general.siteDescription"
+                    :label="$t('settings.siteDescription', 'وصف الموقع')"
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-text-field>
+                  <v-text-field
+                    v-model="settings.general.adminEmail"
+                    :label="$t('settings.adminEmail', 'البريد الإلكتروني للمدير')"
+                    type="email"
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-text-field>
+                  <v-text-field
+                    v-model="settings.general.adminPhone"
+                    :label="$t('settings.adminPhone', 'رقم هاتف المدير')"
+                    type="tel"
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-text-field>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-card class="settings-card mb-4" elevation="1">
+                <v-card-title class="pa-4">
+                  <h3 class="text-h6 font-weight-bold">
+                    <v-icon icon="mdi-translate" size="20" color="#d4af37" class="me-2"></v-icon>
+                    {{ $t('settings.localization', 'اللغة والتوطين') }}
+                  </h3>
+                </v-card-title>
+                <v-divider></v-divider>
+                <v-card-text class="pa-4">
+                  <v-select
+                    v-model="settings.general.language"
+                    :label="$t('settings.language', 'اللغة الافتراضية')"
+                    :items="languages"
+                    item-title="text"
+                    item-value="value"
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-select>
+                  <v-text-field
+                    v-model="settings.general.timezone"
+                    :label="$t('settings.timezone', 'المنطقة الزمنية')"
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-text-field>
+                  <v-text-field
+                    v-model="settings.general.currency"
+                    :label="$t('settings.currency', 'العملة الافتراضية')"
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-text-field>
+                  <v-text-field
+                    v-model="settings.general.dateFormat"
+                    :label="$t('settings.dateFormat', 'تنسيق التاريخ')"
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-text-field>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
         </div>
 
-        <div class="settings-grid">
-          <div class="settings-card">
-            <h3>معلومات الموقع</h3>
-            <div class="form-group">
-              <label>اسم الموقع</label>
-              <input
-                type="text"
-                v-model="settings.general.siteName"
+        <!-- Appearance Settings -->
+        <div v-if="activeTab === 'appearance'" class="settings-section">
+          <div class="section-header mb-6">
+            <h2 class="text-h5 font-weight-bold">
+              <v-icon icon="mdi-palette" size="24" class="me-2"></v-icon>
+              {{ $t('settings.appearance', 'المظهر والتصميم') }}
+            </h2>
+            <p class="text-body-2 text-dim">
+              {{ $t('settings.appearanceDesc', 'تخصيص مظهر وتصميم الموقع') }}
+            </p>
+          </div>
+
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-card class="settings-card mb-4" elevation="1">
+                <v-card-title class="pa-4">
+                  <h3 class="text-h6 font-weight-bold">
+                    <v-icon icon="mdi-theme-light-dark" size="20" color="#d4af37" class="me-2"></v-icon>
+                    {{ $t('settings.theme', 'السمة') }}
+                  </h3>
+                </v-card-title>
+                <v-divider></v-divider>
+                <v-card-text class="pa-4">
+                  <v-select
+                    v-model="settings.appearance.theme"
+                    :label="$t('settings.themeMode', 'وضع السمة')"
+                    :items="themes"
+                    item-title="text"
+                    item-value="value"
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-select>
+                  <v-text-field
+                    v-model="settings.appearance.primaryColor"
+                    :label="$t('settings.primaryColor', 'اللون الأساسي')"
+                    type="color"
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-text-field>
+                  <v-text-field
+                    v-model="settings.appearance.secondaryColor"
+                    :label="$t('settings.secondaryColor', 'اللون الثانوي')"
+                    type="color"
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-text-field>
+                  <v-text-field
+                    v-model="settings.appearance.accentColor"
+                    :label="$t('settings.accentColor', 'لون التمييز')"
+                    type="color"
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-text-field>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-card class="settings-card mb-4" elevation="1">
+                <v-card-title class="pa-4">
+                  <h3 class="text-h6 font-weight-bold">
+                    <v-icon icon="mdi-format-font" size="20" color="#d4af37" class="me-2"></v-icon>
+                    {{ $t('settings.typography', 'الخطوط والنصوص') }}
+                  </h3>
+                </v-card-title>
+                <v-divider></v-divider>
+                <v-card-text class="pa-4">
+                  <v-select
+                    v-model="settings.appearance.fontFamily"
+                    :label="$t('settings.fontFamily', 'عائلة الخطوط')"
+                    :items="fonts"
+                    item-title="text"
+                    item-value="value"
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-select>
+                  <v-text-field
+                    v-model="settings.appearance.fontSize"
+                    :label="$t('settings.fontSize', 'حجم الخط الافتراضي')"
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-text-field>
+                  <v-switch
+                    v-model="settings.appearance.animationsEnabled"
+                    :label="$t('settings.animations', 'تمكين الرسوم المتحركة')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </div>
+
+        <!-- Notification Settings -->
+        <div v-if="activeTab === 'notifications'" class="settings-section">
+          <div class="section-header mb-6">
+            <h2 class="text-h5 font-weight-bold">
+              <v-icon icon="mdi-bell" size="24" class="me-2"></v-icon>
+              {{ $t('settings.notifications', 'الإشعارات') }}
+            </h2>
+            <p class="text-body-2 text-dim">
+              {{ $t('settings.notificationsDesc', 'إدارة إعدادات الإشعارات والتواصل') }}
+            </p>
+          </div>
+
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-card class="settings-card mb-4" elevation="1">
+                <v-card-title class="pa-4">
+                  <h3 class="text-h6 font-weight-bold">
+                    <v-icon icon="mdi-email" size="20" color="#d4af37" class="me-2"></v-icon>
+                    {{ $t('settings.emailNotifications', 'الإشعارات البريدية') }}
+                  </h3>
+                </v-card-title>
+                <v-divider></v-divider>
+                <v-card-text class="pa-4">
+                  <v-switch
+                    v-model="settings.notifications.emailNotifications"
+                    :label="$t('settings.enableEmail', 'تمكين الإشعارات البريدية')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                  <v-switch
+                    v-model="settings.notifications.orderNotifications"
+                    :label="$t('settings.orderEmail', 'إشعارات الطلبات')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                  <v-switch
+                    v-model="settings.notifications.customerNotifications"
+                    :label="$t('settings.customerEmail', 'إشعارات العملاء')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                  <v-switch
+                    v-model="settings.notifications.systemNotifications"
+                    :label="$t('settings.systemEmail', 'إشعارات النظام')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-card class="settings-card mb-4" elevation="1">
+                <v-card-title class="pa-4">
+                  <h3 class="text-h6 font-weight-bold">
+                    <v-icon icon="mdi-cellphone" size="20" color="#d4af37" class="me-2"></v-icon>
+                    {{ $t('settings.pushNotifications', 'الإشعارات الفورية') }}
+                  </h3>
+                </v-card-title>
+                <v-divider></v-divider>
+                <v-card-text class="pa-4">
+                  <v-switch
+                    v-model="settings.notifications.pushNotifications"
+                    :label="$t('settings.enablePush', 'تمكين الإشعارات الفورية')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                  <v-switch
+                    v-model="settings.notifications.notificationSound"
+                    :label="$t('settings.notificationSound', 'صوت الإشعارات')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                  <v-switch
+                    v-model="settings.notifications.desktopNotifications"
+                    :label="$t('settings.desktopNotifications', 'إشعارات سطح المكتب')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </div>
+
+        <!-- Privacy Settings -->
+        <div v-if="activeTab === 'privacy'" class="settings-section">
+          <div class="section-header mb-6">
+            <h2 class="text-h5 font-weight-bold">
+              <v-icon icon="mdi-shield-account" size="24" class="me-2"></v-icon>
+              {{ $t('settings.privacy', 'الخصوصية والأمان') }}
+            </h2>
+            <p class="text-body-2 text-dim">
+              {{ $t('settings.privacyDesc', 'إعدادات الخصوصية وحماية البيانات') }}
+            </p>
+          </div>
+
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-card class="settings-card mb-4" elevation="1">
+                <v-card-title class="pa-4">
+                  <h3 class="text-h6 font-weight-bold">
+                    <v-icon icon="mdi-account-lock" size="20" color="#d4af37" class="me-2"></v-icon>
+                    {{ $t('settings.userPrivacy', 'خصوصية المستخدمين') }}
+                  </h3>
+                </v-card-title>
+                <v-divider></v-divider>
+                <v-card-text class="pa-4">
+                  <v-switch
+                    v-model="settings.privacy.allowPublicRegistration"
+                    :label="$t('settings.publicRegistration', 'السماح بالتسجيل العام')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                  <v-switch
+                    v-model="settings.privacy.requireEmailVerification"
+                    :label="$t('settings.emailVerification', 'يتطلب التحقق من البريد الإلكتروني')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                  <v-switch
+                    v-model="settings.privacy.allowGuestCheckout"
+                    :label="$t('settings.guestCheckout', 'السماح بالدخول كضيف')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-card class="settings-card mb-4" elevation="1">
+                <v-card-title class="pa-4">
+                  <h3 class="text-h6 font-weight-bold">
+                    <v-icon icon="mdi-database-lock" size="20" color="#d4af37" class="me-2"></v-icon>
+                    {{ $t('settings.dataProtection', 'حماية البيانات') }}
+                  </h3>
+                </v-card-title>
+                <v-divider></v-divider>
+                <v-card-text class="pa-4">
+                  <v-switch
+                    v-model="settings.privacy.shareAnalytics"
+                    :label="$t('settings.shareAnalytics', 'مشاركة بيانات التحليلات')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                  <v-switch
+                    v-model="settings.privacy.cookiesEnabled"
+                    :label="$t('settings.enableCookies', 'تمكين ملفات تعريف الارتباط')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                  <v-switch
+                    v-model="settings.privacy.gdprCompliance"
+                    :label="$t('settings.gdprCompliance', 'التوافق مع GDPR')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                  <v-text-field
+                    v-model="settings.privacy.dataRetention"
+                    :label="$t('settings.dataRetention', 'فترة الاحتفاظ بالبيانات (أيام)')"
+                    type="number"
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-text-field>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </div>
+
+        <!-- Performance Settings -->
+        <div v-if="activeTab === 'performance'" class="settings-section">
+          <div class="section-header mb-6">
+            <h2 class="text-h5 font-weight-bold">
+              <v-icon icon="mdi-speedometer" size="24" class="me-2"></v-icon>
+              {{ $t('settings.performance', 'الأداء والتحسين') }}
+            </h2>
+            <p class="text-body-2 text-dim">
+              {{ $t('settings.performanceDesc', 'إعدادات تحسين أداء الموقع') }}
+            </p>
+          </div>
+
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-card class="settings-card mb-4" elevation="1">
+                <v-card-title class="pa-4">
+                  <h3 class="text-h6 font-weight-bold">
+                    <v-icon icon="mdi-cached" size="20" color="#d4af37" class="me-2"></v-icon>
+                    {{ $t('settings.caching', 'التخزين المؤقت') }}
+                  </h3>
+                </v-card-title>
+                <v-divider></v-divider>
+                <v-card-text class="pa-4">
+                  <v-switch
+                    v-model="settings.performance.cacheEnabled"
+                    :label="$t('settings.enableCache', 'تمكين التخزين المؤقت')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                  <v-text-field
+                    v-model="settings.performance.cacheDuration"
+                    :label="$t('settings.cacheDuration', 'مدة التخزين المؤقت (ثواني)')"
+                    type="number"
+                    variant="outlined"
+                    class="mb-4"
+                  ></v-text-field>
+                  <v-switch
+                    v-model="settings.performance.compressionEnabled"
+                    :label="$t('settings.enableCompression', 'تمكين الضغط')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="12" md="6">
+              <v-card class="settings-card mb-4" elevation="1">
+                <v-card-title class="pa-4">
+                  <h3 class="text-h6 font-weight-bold">
+                    <v-icon icon="mdi-image-filter-frames" size="20" color="#d4af37" class="me-2"></v-icon>
+                    {{ $t('settings.optimization', 'التحسين') }}
+                  </h3>
+                </v-card-title>
+                <v-divider></v-divider>
+                <v-card-text class="pa-4">
+                  <v-switch
+                    v-model="settings.performance.lazyLoading"
+                    :label="$t('settings.lazyLoading', 'التحميل البطيء')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                  <v-switch
+                    v-model="settings.performance.minifyAssets"
+                    :label="$t('settings.minifyAssets', 'تصغير الملفات')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                  <v-switch
+                    v-model="settings.performance.imageOptimization"
+                    :label="$t('settings.imageOptimization', 'تحسين الصور')"
+                    color="#d4af37"
+                    class="mb-4"
+                  ></v-switch>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-container>
+</template>
+
+<script setup>
+import { ref, reactive, onMounted } from 'vue';
+import { useStore } from 'vuex';
+import { useI18n } from 'vue-i18n';
+import SettingsService from '@/services/SettingsService';
+
+// Store and i18n
+const store = useStore();
+const { t } = useI18n();
+
+// State
+const loading = ref(false);
+const activeTab = ref('general');
+
+// Settings data
+const settings = reactive({
+  general: {
+    siteName: '',
+    siteDescription: '',
+    adminEmail: '',
+    adminPhone: '',
+    language: 'ar',
+    timezone: 'Africa/Algiers',
+    currency: 'DZD',
+    dateFormat: 'DD/MM/YYYY',
+    timeFormat: '24h',
+    itemsPerPage: 25
+  },
+  appearance: {
+    theme: 'light',
+    primaryColor: '#d4af37',
+    secondaryColor: '#1a1a2e',
+    accentColor: '#f44336',
+    backgroundColor: '#ffffff',
+    textColor: '#333333',
+    fontFamily: 'Cairo, sans-serif',
+    fontSize: '14px',
+    borderRadius: '8px',
+    sidebarCollapsed: false,
+    showNotifications: true,
+    animationsEnabled: true
+  },
+  notifications: {
+    emailNotifications: true,
+    pushNotifications: true,
+    smsNotifications: false,
+    orderNotifications: true,
+    customerNotifications: true,
+    inventoryNotifications: true,
+    systemNotifications: true,
+    marketingNotifications: false,
+    notificationSound: true,
+    desktopNotifications: true
+  },
+  privacy: {
+    allowPublicRegistration: false,
+    requireEmailVerification: true,
+    allowGuestCheckout: true,
+    shareAnalytics: false,
+    cookiesEnabled: true,
+    gdprCompliance: true,
+    dataRetention: 365,
+    anonymizeData: true
+  },
+  performance: {
+    cacheEnabled: true,
+    cacheDuration: 3600,
+    compressionEnabled: true,
+    lazyLoading: true,
+    minifyAssets: true,
+    imageOptimization: true,
+    databaseOptimization: true,
+    cdnEnabled: false
+  }
+});
+
+// Options - Dynamic loading from API
+const languages = ref([]);
+
+const fetchLanguages = async () => {
+  try {
+    const response = await fetch('/api/languages');
+    if (response.ok) {
+      const data = await response.json();
+      languages.value = data.map(lang => ({
+        text: lang.name,
+        value: lang.code
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to fetch languages:', error);
+    // Fallback to static data
+    languages.value = [
+      { text: t('languages.arabic', 'العربية'), value: 'ar' },
+      { text: t('languages.english', 'English'), value: 'en' },
+      { text: t('languages.french', 'Français'), value: 'fr' }
+    ];
+  }
+};
+
+const themes = ref([]);
+
+const fetchThemes = async () => {
+  try {
+    const response = await fetch('/api/themes');
+    if (response.ok) {
+      const data = await response.json();
+      themes.value = data.map(theme => ({
+        text: theme.name,
+        value: theme.value
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to fetch themes:', error);
+    // Fallback to static data
+    themes.value = [
+      { text: t('themes.light', 'فاتح'), value: 'light' },
+      { text: t('themes.dark', 'داكن'), value: 'dark' },
+      { text: t('themes.auto', 'تلقائي'), value: 'auto' }
+    ];
+  }
+};
+
+const fonts = ref([]);
+
+const fetchFonts = async () => {
+  try {
+    const response = await fetch('/api/fonts');
+    if (response.ok) {
+      const data = await response.json();
+      fonts.value = data.map(font => ({
+        text: font.name,
+        value: font.value
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to fetch fonts:', error);
+    // Fallback to static data
+    fonts.value = [
+      { text: 'Cairo', value: 'Cairo, sans-serif' },
+      { text: 'Roboto', value: 'Roboto, sans-serif' },
+      { text: 'Arial', value: 'Arial, sans-serif' },
+      { text: 'Helvetica', value: 'Helvetica, sans-serif' }
+    ];
+  }
+};
+
+// Tabs configuration
+const tabs = ref([
+  { id: 'general', name: t('settings.general', 'عام'), icon: 'mdi-web' },
+  { id: 'appearance', name: t('settings.appearance', 'المظهر'), icon: 'mdi-palette' },
+  { id: 'notifications', name: t('settings.notifications', 'الإشعارات'), icon: 'mdi-bell' },
+  { id: 'privacy', name: t('settings.privacy', 'الخصوصية'), icon: 'mdi-shield-account' },
+  { id: 'performance', name: t('settings.performance', 'الأداء'), icon: 'mdi-speedometer' }
+]);
+
+// Methods
+const loadSettings = async () => {
+  try {
+    loading.value = true;
+    const response = await SettingsService.getSettings();
+    
+    if (response.success) {
+      const data = response.data;
+      settings.general = { ...settings.general, ...data.general };
+      settings.appearance = { ...settings.appearance, ...data.appearance };
+      settings.notifications = { ...settings.notifications, ...data.notifications };
+      settings.privacy = { ...settings.privacy, ...data.privacy };
+      settings.performance = { ...settings.performance, ...data.performance };
+    }
+  } catch (error) {
+    console.error('Error loading settings:', error);
+    store.dispatch('notifications/showNotification', {
+      type: 'error',
+      message: t('settings.loadError', 'فشل في تحميل الإعدادات')
+    });
+  } finally {
+    loading.value = false;
+  }
+};
+
+const saveAllSettings = async () => {
+  try {
+    loading.value = true;
+    const response = await SettingsService.updateSettings(settings);
+    
+    if (response.success) {
+      store.dispatch('notifications/showNotification', {
+        type: 'success',
+        message: t('settings.saveSuccess', 'تم حفظ الإعدادات بنجاح')
+      });
+    }
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    store.dispatch('notifications/showNotification', {
+      type: 'error',
+      message: t('settings.saveError', 'فشل في حفظ الإعدادات')
+    });
+  } finally {
+    loading.value = false;
+  }
+};
+
+const resetSettings = async () => {
+  try {
+    loading.value = true;
+    const response = await SettingsService.resetSettings();
+    
+    if (response.success) {
+      await loadSettings();
+      store.dispatch('notifications/showNotification', {
+        type: 'success',
+        message: t('settings.resetSuccess', 'تم إعادة تعيين الإعدادات بنجاح')
+      });
+    }
+  } catch (error) {
+    console.error('Error resetting settings:', error);
+    store.dispatch('notifications/showNotification', {
+      type: 'error',
+      message: t('settings.resetError', 'فشل في إعادة تعيين الإعدادات')
+    });
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Lifecycle
+onMounted(() => {
+  loadSettings();
+});
+</script>
+
+<style scoped>
+.settings-manager {
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+  min-height: 100vh;
+}
+
+/* Header Styles */
+.settings-header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: 16px;
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #d4af37 0%, #f4e4c1 50%, #d4af37 100%);
+  color: #1a1a2e;
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+  transition: all 0.3s ease;
+}
+
+.save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+}
+
+.reset-btn {
+  border-color: #d4af37;
+  color: #d4af37;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.reset-btn:hover {
+  background: rgba(212, 175, 55, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Tabs Styles */
+.settings-tabs {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: 16px;
+}
+
+.settings-tabs-container :deep(.v-tabs-slider) {
+  background: #d4af37;
+}
+
+.settings-tab {
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+/* Content Styles */
+.settings-content {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: 16px;
+}
+
+.settings-section {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.section-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.settings-card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+}
+
+.settings-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Text Styles */
+.text-dim {
+  color: #666 !important;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 960px) {
+  .settings-header .v-btn {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .settings-manager {
+    padding: 1rem;
+  }
+  
+  .settings-header,
+  .settings-tabs,
+  .settings-content {
+    border-radius: 12px;
+  }
+}
+</style>
                 placeholder="أدخل اسم الموقع"
               />
             </div>
@@ -580,39 +1401,62 @@ const settings = reactive({
   },
 });
 
-// طرق الدفع
-const paymentMethods = reactive([
-  {
-    id: 'cash',
-    name: 'الدفع عند الاستلام',
-    icon: 'fa-solid fa-money-bill-wave',
-    description: 'يدفع العميل عند استلام الطلب',
-    enabled: true,
-    accountName: '',
-    accountNumber: '',
-    instructions: 'الدفع نقداً عند استلام الطلب',
-  },
-  {
-    id: 'card',
-    name: 'بطاقة ائتمان',
-    icon: 'fa-solid fa-credit-card',
-    description: 'دفع إلكتروني عبر بطاقة الائتمان',
-    enabled: true,
-    accountName: 'شركة فينيل آرت',
-    accountNumber: '4111 1111 1111 1111',
-    instructions: 'بيانات البطاقة محمية بشكل كامل',
-  },
-  {
-    id: 'bank',
-    name: 'تحويل بنكي',
-    icon: 'fa-solid fa-university',
-    description: 'تحويل مباشر إلى الحساب البنكي',
-    enabled: false,
-    accountName: 'فينيل آرت',
-    accountNumber: 'SA123456789012345678',
-    instructions: 'يرجى إرسال صورة الإيصال عبر الواتساب',
-  },
-]);
+// Payment methods - Dynamic loading from API
+const paymentMethods = reactive([]);
+
+const fetchPaymentMethods = async () => {
+  try {
+    const response = await fetch('/api/payment-methods');
+    if (response.ok) {
+      const data = await response.json();
+      paymentMethods.splice(0, paymentMethods.length, ...data.map(method => ({
+        id: method.id,
+        name: method.name,
+        icon: method.icon || 'fa-solid fa-credit-card',
+        description: method.description,
+        enabled: method.enabled,
+        accountName: method.account_name || '',
+        accountNumber: method.account_number || '',
+        instructions: method.instructions || ''
+      })));
+    }
+  } catch (error) {
+    console.error('Failed to fetch payment methods:', error);
+    // Fallback to static data
+    paymentMethods.splice(0, paymentMethods.length,
+      {
+        id: 'cash',
+        name: 'الدفع عند الاستلام',
+        icon: 'fa-solid fa-money-bill-wave',
+        description: 'يدفع العميل عند استلام الطلب',
+        enabled: true,
+        accountName: '',
+        accountNumber: '',
+        instructions: 'الدفع نقداً عند استلام الطلب',
+      },
+      {
+        id: 'card',
+        name: 'بطاقة ائتمان',
+        icon: 'fa-solid fa-credit-card',
+        description: 'دفع إلكتروني عبر بطاقة الائتمان',
+        enabled: true,
+        accountName: 'شركة فينيل آرت',
+        accountNumber: '4111 1111 1111 1111',
+        instructions: 'بيانات البطاقة محمية بشكل كامل',
+      },
+      {
+        id: 'bank',
+        name: 'تحويل بنكي',
+        icon: 'fa-solid fa-university',
+        description: 'تحويل مباشر إلى الحساب البنكي',
+        enabled: false,
+        accountName: 'فينيل آرت',
+        accountNumber: 'SA123456789012345678',
+        instructions: 'يرجى إرسال صورة الإيصال عبر الواتساب',
+      }
+    );
+  }
+};
 
 // فلاتر السجل
 const logFilter = reactive({
@@ -621,43 +1465,96 @@ const logFilter = reactive({
   date: '',
 });
 
-// بيانات النسخ الاحتياطي
-const backups = ref([
-  { id: 1, date: '2024-03-15 14:30', size: '245 MB', type: 'auto' },
-  { id: 2, date: '2024-03-14 10:15', size: '242 MB', type: 'auto' },
-  { id: 3, date: '2024-03-13 18:45', size: '240 MB', type: 'manual' },
-]);
+// Backup data - Dynamic loading from API
+const backups = ref([]);
 
-// سجل النشاط
-const logs = ref([
-  {
-    id: 1,
-    time: '2024-03-18 09:15',
-    user: 'أحمد محمد',
-    action: 'تحديث إعدادات الموقع',
-    actionType: 'setting',
-    details: 'تم تغيير اسم الموقع',
-    ip: '192.168.1.100',
-  },
-  {
-    id: 2,
-    time: '2024-03-18 08:30',
-    user: 'سارة أحمد',
-    action: 'إضافة منتج جديد',
-    actionType: 'product',
-    details: 'تم إضافة منتج "ملصق وردة حمراء"',
-    ip: '192.168.1.101',
-  },
-  {
-    id: 3,
-    time: '2024-03-17 16:20',
-    user: 'محمد علي',
-    action: 'تحديث حالة طلب',
-    actionType: 'order',
-    details: 'تم تغيير حالة الطلب #ORD-001 إلى مكتمل',
-    ip: '192.168.1.102',
-  },
-]);
+const fetchBackups = async () => {
+  try {
+    const response = await fetch('/api/backups');
+    if (response.ok) {
+      const data = await response.json();
+      backups.value = data.map(backup => ({
+        id: backup.id,
+        date: backup.created_at,
+        size: backup.size,
+        type: backup.type || 'auto'
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to fetch backups:', error);
+    // Fallback to static data
+    backups.value = [
+      { id: 1, date: '2024-03-15 14:30', size: '245 MB', type: 'auto' },
+      { id: 2, date: '2024-03-14 10:15', size: '242 MB', type: 'auto' },
+      { id: 3, date: '2024-03-13 18:45', size: '240 MB', type: 'manual' }
+    ];
+  }
+};
+
+// Activity logs - Dynamic loading from API
+const logs = ref([]);
+
+const fetchLogs = async () => {
+  try {
+    const response = await fetch('/api/activity-logs');
+    if (response.ok) {
+      const data = await response.json();
+      logs.value = data.map(log => ({
+        id: log.id,
+        time: log.created_at,
+        user: log.user?.name || 'مستخدم غير معروف',
+        action: log.action,
+        actionType: log.action_type,
+        details: log.details,
+        ip: log.ip_address
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to fetch logs:', error);
+    // Fallback to static data
+    logs.value = [
+      {
+        id: 1,
+        time: '2024-03-18 09:15',
+        user: 'أحمد محمد',
+        action: 'تحديث إعدادات الموقع',
+        actionType: 'setting',
+        details: 'تم تغيير اسم الموقع',
+        ip: '192.168.1.100',
+      },
+      {
+        id: 2,
+        time: '2024-03-18 08:30',
+        user: 'سارة أحمد',
+        action: 'إضافة منتج جديد',
+        actionType: 'product',
+        details: 'تم إضافة منتج "ملصق وردة حمراء"',
+        ip: '192.168.1.101',
+      },
+      {
+        id: 3,
+        time: '2024-03-17 16:20',
+        user: 'محمد علي',
+        action: 'تحديث حالة طلب',
+        actionType: 'order',
+        details: 'تم تغيير حالة الطلب #ORD-001 إلى مكتمل',
+        ip: '192.168.1.102',
+      }
+    ];
+  }
+};
+
+// Load all dynamic data on component mount
+onMounted(async () => {
+  await Promise.all([
+    fetchLanguages(),
+    fetchThemes(),
+    fetchFonts(),
+    fetchPaymentMethods(),
+    fetchBackups(),
+    fetchLogs()
+  ]);
+});
 
 // Refs for inputs
 const logoInput = ref(null);

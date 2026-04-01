@@ -1,14 +1,171 @@
 <template>
   <v-main class="post-page">
-    <v-container>
+    <!-- Loading State -->
+    <v-container v-if="loading" class="py-16">
+      <v-row justify="center">
+        <v-col cols="12" class="text-center">
+          <v-progress-circular
+            indeterminate
+            color="primary"
+            size="64"
+            class="mb-4"
+          ></v-progress-circular>
+          <h3 class="text-h5 text-medium-emphasis">جاري تحميل المقال...</h3>
+        </v-col>
+      </v-row>
+    </v-container>
+
+    <!-- Error State -->
+    <v-container v-else-if="error" class="py-16">
+      <v-row justify="center">
+        <v-col cols="12" md="8">
+          <v-alert
+            type="error"
+            variant="tonal"
+            class="text-center"
+            text
+          >
+            <template #prepend>
+              <v-icon>mdi-alert-circle</v-icon>
+            </template>
+            {{ error }}
+            <template #append>
+              <v-btn
+                @click="loadPost"
+                variant="text"
+                color="error"
+                prepend-icon="mdi-refresh"
+              >
+                إعادة المحاولة
+              </v-btn>
+            </template>
+          </v-alert>
+        </v-col>
+      </v-row>
+    </v-container>
+
+    <!-- Post Content -->
+    <v-container v-else-if="post" class="py-8">
       <v-row>
         <v-col cols="12">
           <v-card class="post-card" elevation="4">
             <v-card-text class="pa-8">
-              <h1 class="text-h3 font-weight-bold text-center mb-6 text-primary" v-ai-t>{{ post.title }}</h1>
-              <div class="post-body" v-html="post.content" v-ai-t></div>
+              <!-- Post Header -->
+              <div class="post-header mb-8">
+                <h1 class="text-h3 font-weight-bold text-center mb-4 text-primary" v-if="post.title">
+                  {{ post.title }}
+                </h1>
+                <div class="post-meta text-center mb-6">
+                  <v-chip
+                    v-if="post.category"
+                    color="primary"
+                    variant="tonal"
+                    class="me-2"
+                    size="small"
+                  >
+                    {{ getCategoryLabel(post.category) }}
+                  </v-chip>
+                  <span class="text-medium-emphasis">
+                    {{ formatDate(post.publishedAt) }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Post Body -->
+              <div class="post-body" v-html="post.content"></div>
+
+              <!-- Post Tags -->
+              <div v-if="post.tags && post.tags.length" class="post-tags mt-8">
+                <v-chip
+                  v-for="tag in post.tags"
+                  :key="tag"
+                  color="secondary"
+                  variant="outlined"
+                  class="me-2 mb-2"
+                  size="small"
+                >
+                  {{ tag }}
+                </v-chip>
+              </div>
+
+              <!-- Post Author -->
+              <div v-if="post.author" class="post-author mt-8 pt-8 border-top">
+                <v-row align="center">
+                  <v-col cols="auto">
+                    <v-avatar size="32" color="primary">
+                      <v-icon>mdi-account</v-icon>
+                    </v-avatar>
+                  </v-col>
+                  <v-col>
+                    <div class="text-body-2 font-weight-medium">{{ post.author }}</div>
+                    <div class="text-caption text-medium-emphasis">كاتب المقال</div>
+                  </v-col>
+                </v-row>
+              </div>
             </v-card-text>
           </v-card>
+        </v-col>
+      </v-row>
+
+      <!-- Related Posts -->
+      <v-row v-if="relatedPosts.length" class="mt-12">
+        <v-col cols="12">
+          <h2 class="text-h4 font-weight-bold mb-6 text-center">مقالات ذات صلة</h2>
+          <v-row>
+            <v-col
+              v-for="relatedPost in relatedPosts"
+              :key="relatedPost.id"
+              cols="12"
+              md="6"
+              lg="4"
+              class="mb-4"
+            >
+              <v-card
+                :to="`/post/${relatedPost.slug}`"
+                class="related-post-card h-100"
+                elevation="2"
+                hover
+              >
+                <v-card-text class="pa-6">
+                  <h3 class="text-h6 font-weight-bold mb-3">{{ relatedPost.title }}</h3>
+                  <p class="text-body-2 text-medium-emphasis mb-4">{{ relatedPost.excerpt }}</p>
+                  <div class="d-flex justify-space-between align-center">
+                    <v-chip
+                      color="primary"
+                      variant="tonal"
+                      size="small"
+                    >
+                      {{ getCategoryLabel(relatedPost.category) }}
+                    </v-chip>
+                    <span class="text-caption text-medium-emphasis">
+                      {{ formatDate(relatedPost.publishedAt) }}
+                    </span>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-col>
+      </v-row>
+    </v-container>
+
+    <!-- Not Found State -->
+    <v-container v-else class="py-16">
+      <v-row justify="center">
+        <v-col cols="12" md="8" class="text-center">
+          <v-icon size="64" color="primary" class="mb-4">mdi-file-document-outline</v-icon>
+          <h2 class="text-h4 font-weight-bold mb-4">المقال غير موجود</h2>
+          <p class="text-body-1 text-medium-emphasis mb-6">
+            عذراً، المقال الذي تبحث عنه غير موجود أو تم حذفه.
+          </p>
+          <v-btn
+            to="/blog"
+            color="primary"
+            prepend-icon="mdi-arrow-left"
+            variant="elevated"
+          >
+            العودة إلى المدونة
+          </v-btn>
         </v-col>
       </v-row>
     </v-container>
@@ -16,143 +173,205 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, onMounted, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import PostService from '@/integration/services/PostService';
 
 const route = useRoute();
+const router = useRouter();
 
-const post = ref({
-  id: 1,
-  title: 'كيف تختار الفينيل المناسب لمشروعك؟',
-  content: `
-    <!-- Content omitted for brevity in search/replace, keep original content -->
-    <div style="position:absolute; top:-9999px; left:-9999px; width:0; height:0; overflow:hidden;">
-        <img src="https://i.postimg.cc/0QKmBBJ9/kitchen2.png" alt="صورة مصغرة للمقال"/>
-    </div>
+// State
+const post = ref(null);
+const loading = ref(true);
+const error = ref(null);
+const relatedPosts = ref([]);
 
-    <h2 class="text-h2 text-center text-primary mb-8">📘 دليل المبتدئين: كيف تختار الفينيل المناسب لمشروعك؟</h2>
+// Computed
+const postId = computed(() => route.params.id || route.params.slug);
 
-    <div class="mb-8">
-        <v-card class="pa-6" color="surface" elevation="4">
-            <p class="text-body-1 text-center">
-                ✨ إذا كنت جديداً في عالم الفينيل اللاصق، قد تشعر بالحيرة عند اختيار النوع المناسب لمشروعك. لا تقلق! هذا الدليل الشامل سيساعدك على فهم كل ما تحتاج معرفته.
-            </p>
-        </v-card>
-    </div>
+// Methods
+const getCategoryLabel = (category) => {
+  const categoryLabels = {
+    guide: 'دليل',
+    comparison: 'مقارنة',
+    tutorial: 'دليل تعليمي',
+    news: 'أخبار',
+    review: 'مراجعة'
+  };
+  return categoryLabels[category] || category;
+};
 
-    <v-card class="pa-6 mb-8" elevation="2">
-        <h3 class="text-h5 mb-4 text-primary">📌 في هذا الدليل:</h3>
-        <v-row>
-            <v-col cols="12" md="6">
-                <v-list density="compact">
-                    <v-list-item>
-                        <template v-slot:prepend>
-                            <v-icon color="primary">mdi-circle-small</v-icon>
-                        </template>
-                        <v-list-item-title>
-                            <a href="#types" class="text-primary text-decoration-none">أنواع الفينيل المختلفة</a>
-                        </v-list-item-title>
-                    </v-list-item>
-                    <v-list-item>
-                        <template v-slot:prepend>
-                            <v-icon color="primary">mdi-circle-small</v-icon>
-                        </template>
-                        <v-list-item-title>
-                            <a href="#finish" class="text-primary text-decoration-none">الفرق بين اللامع والمطفي</a>
-                        </v-list-item-title>
-                    </v-list-item>
-                    <v-list-item>
-                        <template v-slot:prepend>
-                            <v-icon color="primary">mdi-circle-small</v-icon>
-                        </template>
-                        <v-list-item-title>
-                            <a href="#tips" class="text-primary text-decoration-none">نصائح الشراء</a>
-                        </v-list-item-title>
-                    </v-list-item>
-                </v-list>
-            </v-col>
-            <v-col cols="12" md="6">
-                <v-list density="compact">
-                    <v-list-item>
-                        <template v-slot:prepend>
-                            <v-icon color="primary">mdi-circle-small</v-icon>
-                        </template>
-                        <v-list-item-title>
-                            <a href="#mistakes" class="text-primary text-decoration-none">أخطاء شائعة تجنبها</a>
-                        </v-list-item-title>
-                    </v-list-item>
-                    <v-list-item>
-                        <template v-slot:prepend>
-                            <v-icon color="primary">mdi-circle-small</v-icon>
-                        </template>
-                        <v-list-item-title>
-                            <a href="#faq" class="text-primary text-decoration-none">أسئلة وأجوبة</a>
-                        </v-list-item-title>
-                    </v-list-item>
-                </v-list>
-            </v-col>
-        </v-row>
-    </v-card>
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('ar-SA', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
 
-    <div id="types" class="my-12">
-        <h3 class="text-h4 mb-6 text-primary border-b pb-2">🔰 أنواع الفينيل حسب الاستخدام</h3>
-        
-        <v-row>
-            <v-col cols="12" md="6">
-                <v-card class="pa-6 h-100" elevation="2" hover>
-                    <div class="text-h6 text-center mb-4">🪑</div>
-                    <h4 class="text-h5 text-center mb-3 text-primary">فينيل الأثاث</h4>
-                    <p class="text-body-1 mb-4">مصمم خصيصاً للأسطح الخشبية والمدهونة. يتميز بقوة التصاق عالية ومقاومة للخدوش. مثالي لتجديد الخزائن، الطاولات، والأدراج.</p>
-                    <v-chip color="primary" variant="tonal" class="mb-2">
-                        <v-icon start>mdi-check</v-icon>
-                        مناسب لـ: الخشب، الـ MDF، الأسطح المدهونة
-                    </v-chip>
-                </v-card>
-            </v-col>
-            
-            <v-col cols="12" md="6">
-                <v-card class="pa-6 h-100" elevation="2" hover>
-                    <div class="text-h6 text-center mb-4">🧱</div>
-                    <h4 class="text-h5 text-center mb-3 text-primary">فينيل الجدران</h4>
-                    <p class="text-body-1 mb-4">أخف وزناً وأسهل في الإزالة. مصمم للأسطح الملساء مثل الجدران المدهونة والزجاج. يأتي بتصاميم وألوان لا حصر لها.</p>
-                    <v-chip color="primary" variant="tonal" class="mb-2">
-                        <v-icon start>mdi-check</v-icon>
-                        مناسب لـ: الجدران الملساء، الزجاج، المرايا
-                    </v-chip>
-                </v-card>
-            </v-col>
-            
-            <v-col cols="12" md="6">
-                <v-card class="pa-6 h-100" elevation="2" hover>
-                    <div class="text-h6 text-center mb-4">🚗</div>
-                    <h4 class="text-h5 text-center mb-3 text-primary">فينيل السيارات</h4>
-                    <p class="text-body-1 mb-4">مقاوم للعوامل الجوية والحرارة. يتميز بمرونة عالية تسمح بتطبيقه على الأسطح المنحنية للسيارات والدراجات النارية.</p>
-                    <v-chip color="primary" variant="tonal" class="mb-2">
-                        <v-icon start>mdi-check</v-icon>
-                        مناسب لـ: السيارات، الدراجات، الأسطح الخارجية
-                    </v-chip>
-                </v-card>
-            </v-col>
-            
-            <v-col cols="12" md="6">
-                <v-card class="pa-6 h-100" elevation="2" hover>
-                    <div class="text-h6 text-center mb-4">🪟</div>
-                    <h4 class="text-h5 text-center mb-3 text-primary">فينيل النوافذ</h4>
-                    <p class="text-body-1 mb-4">شبه شفاف أو مزخرف، يستخدم للخصوصية مع السماح بدخول الضوء. مثالي للمكاتب والحمامات وأبواب الزجاج.</p>
-                    <v-chip color="primary" variant="tonal" class="mb-2">
-                        <v-icon start>mdi-check</v-icon>
-                        مناسب لـ: النوافذ، الأبواب الزجاجية، الفواصل
-                    </v-chip>
-                </v-card>
-            </v-col>
-        </v-row>
-    </div>
-  `,
-});
+const loadPost = async () => {
+  if (!postId.value) {
+    error.value = 'معرف المقال غير موجود';
+    loading.value = false;
+    return;
+  }
+
+  loading.value = true;
+  error.value = null;
+
+  try {
+    // Try to get post by ID first, then by slug
+    let postData = await PostService.getPost(postId.value);
+    
+    // If not found by ID, try by slug
+    if (!postData) {
+      postData = await PostService.getPostBySlug(postId.value);
+    }
+
+    // If still not found, use mock data as fallback
+    if (!postData) {
+      console.log('Using mock data fallback for post:', postId.value);
+      postData = PostService.getMockPost(postId.value);
+    }
+
+    if (postData) {
+      post.value = postData;
+      // Load related posts
+      await loadRelatedPosts(postData.category);
+    } else {
+      error.value = 'المقال غير موجود';
+    }
+  } catch (err) {
+    console.error('Error loading post:', err);
+    error.value = err.message || 'فشل تحميل المقال';
+    
+    // Fallback to mock data
+    try {
+      const mockPost = PostService.getMockPost(postId.value);
+      if (mockPost) {
+        post.value = mockPost;
+        await loadRelatedPosts(mockPost.category);
+      }
+    } catch (mockErr) {
+      console.error('Error loading mock post:', mockErr);
+    }
+  } finally {
+    loading.value = false;
+  }
+};
+
+const loadRelatedPosts = async (category) => {
+  if (!category) return;
+
+  try {
+    // Load posts from the same category
+    const related = await PostService.getPostsByCategory(category);
+    // Filter out current post and limit to 3 posts
+    relatedPosts.value = related
+      .filter(p => p.id !== post.value?.id && p.slug !== postId.value)
+      .slice(0, 3);
+  } catch (err) {
+    console.error('Error loading related posts:', err);
+    // Use mock related posts as fallback
+    relatedPosts.value = PostService.getMockPosts()
+      .filter(p => p.category === category && p.id !== post.value?.id)
+      .slice(0, 3);
+  }
+};
 
 onMounted(() => {
-  const postId = route.params.id;
-  console.log('Loading post:', postId);
+  console.log('Loading post:', postId.value);
+  loadPost();
 });
 </script>
+
+<style scoped>
+.post-page {
+  min-height: 80vh;
+  background: linear-gradient(135deg, var(--gradient-dark));
+}
+
+.post-card {
+  background: rgba(26, 26, 26, 0.95);
+  border: 1px solid var(--border-primary);
+  backdrop-filter: blur(20px);
+}
+
+.post-header {
+  border-bottom: 1px solid var(--border-secondary);
+  padding-bottom: 24px;
+}
+
+.post-meta {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.post-body {
+  line-height: 1.8;
+  font-size: 1.1rem;
+}
+
+.post-body :deep(h2) {
+  color: var(--text-primary);
+  margin: 24px 0 16px 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.post-body :deep(h3) {
+  color: var(--text-primary);
+  margin: 20px 0 12px 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.post-body :deep(p) {
+  margin-bottom: 16px;
+  color: var(--text-secondary);
+}
+
+.post-body :deep(.v-card) {
+  margin: 16px 0;
+  background: var(--surface);
+}
+
+.post-tags {
+  border-top: 1px solid var(--border-secondary);
+  padding-top: 16px;
+}
+
+.post-author {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.related-post-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.related-post-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .post-meta {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .post-body {
+    font-size: 1rem;
+  }
+}
+</style>
 

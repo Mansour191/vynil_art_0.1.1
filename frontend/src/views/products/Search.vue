@@ -286,16 +286,42 @@ const filters = reactive({
   limit: 12
 });
 
-const categories = [
-  { value: 'all', title: 'allCategories' },
-  { value: 'furniture', title: 'furniture' },
-  { value: 'doors', title: 'doors' },
-  { value: 'walls', title: 'walls' },
-  { value: 'ceilings', title: 'ceilings' },
-  { value: 'tiles', title: 'tiles' },
-  { value: 'kitchens', title: 'kitchens' },
-  { value: 'cars', title: 'cars' },
-];
+// Categories - Dynamic loading from API
+const categories = ref([]);
+
+const fetchCategories = async () => {
+  try {
+    const response = await fetch('/api/products/categories');
+    if (response.ok) {
+      const data = await response.json();
+      categories.value = [
+        { value: 'all', title: 'allCategories' },
+        ...data.map(cat => ({
+          value: cat.value,
+          title: cat.title_key || cat.value
+        }))
+      ];
+    }
+  } catch (error) {
+    console.error('Failed to fetch product categories:', error);
+    // Fallback to static data
+    categories.value = [
+      { value: 'all', title: 'allCategories' },
+      { value: 'furniture', title: 'furniture' },
+      { value: 'doors', title: 'doors' },
+      { value: 'walls', title: 'walls' },
+      { value: 'ceilings', title: 'ceilings' },
+      { value: 'tiles', title: 'tiles' },
+      { value: 'kitchens', title: 'kitchens' },
+      { value: 'cars', title: 'cars' },
+    ];
+  }
+};
+
+// Lifecycle
+onMounted(() => {
+  fetchCategories();
+});
 
 const categoryItems = computed(() => 
   categories.map(cat => ({ 

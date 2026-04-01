@@ -520,83 +520,12 @@ onMounted(() => {
             </div>
             <div class="form-group">
               <label class="form-label">الولاية *</label>
-              <select v-model="addressForm.wilaya" class="form-input" required>
+              <select v-model="addressForm.wilaya" @change="onWilayaChange(addressForm.wilaya)" class="form-input" required>
                 <option value="">اختر الولاية</option>
-                <option value="الجزائر">الجزائر</option>
-                <option value="وهران">وهران</option>
-                <option value="قسنطينة">قسنطينة</option>
-                <option value="عنابة">عنابة</option>
-                <option value="باتنة">باتنة</option>
-                <option value="جيجل">جيجل</option>
-                <option value="سطيف">سطيف</option>
-                <option value="البليدة">البليدة</option>
-                <option value="البويرة">البويرة</option>
-                <option value="تمنراست">تمنراست</option>
-                <option value="تيسمسيلت">تيسمسيلت</option>
-                <option value="الوادي">الوادي</option>
-                <option value="المسيلة">المسيلة</option>
-                <option value="غرداية">غرداية</option>
-                <option value="القليمة">القليمة</option>
-                <option value="برج بوعريريج">برج بوعريريج</option>
-                <option value="بومرداس">بومرداس</option>
-                <option value="الطارف">الطارف</option>
-                <option value="تيزي وزو">تيزي وزو</option>
-                <option value="الجلفة">الجلفة</option>
-                <option value="سعيدة">سعيدة</option>
-                <option value="ميلة">ميلة</option>
-                <option value="عين الدفلة">عين الدفلة</option>
-                <option value="غليزان">غليزان</option>
-                <option value="تامنغاست">تامنغاست</option>
-                <option value="أدرار">أدرار</option>
-                <option value="المدية">المدية</              </option>
-                <option value="معسكر">معسكر</option>
-                <option value="الشلف">الشلف</option>
-                <option value="النعامة">النعامة</option>
-                <option value="تقرت">تقرت</option>
-                <option value="البيض">البيض</option>
-                <option value="إليزي">إليزي</option>
-                <option value="تندوف">تندوف</option>
-                <option value="تميموسان">تميموسان</option>
-                <option value="ورقلة">ورقلة</option>
-                <option value="غرداية">غرداية</option>
-                <option value="خنشلة">خنشلة</option>
-                <option value="سوق أهراس">سوق أهراس</option>
-                <option value="أم البواقي">أم البواقي</option>
-                <option value="بسكرة">بسكرة</option>
-                <option value="الطارف">الطارف</option>
-                <option value="تندوف">تندوف</option>
-                <option value="الجلفة">الجلفة</option>
-                <option value="سعيدة">سعيدة</option>
-                <option value="ميلة">ميلة</option>
-                <option value="عين الدفلة">عين الدفلة</option>
-                <option value="غليزان">غليزان</option>
-                <option value="تامنغاست">تامنغاست</option>
-                <option value="أدرار">أدرار</option>
-                <option value="المدية">المدية</option>
-                <option value="معسكر">معسكر</option>
-                <option value="الشلف">الشلف</option>
-                <option value="النعامة">النعامة</option>
-                <option value="تقرت">تقرت</option>
-                <option value="البيض">البيض</option>
-                <option value="إليزي">إليزي</option>
-                <option value="تندوف">تندوف</option>
-                <option value="تميموسان">تميموسان</option>
-                <option value="ورقلة">ورقلة</option>
-                <option value="غرداية">غرداية</option>
-                <option value="خنشلة">خنشلة</option>
-                <option value="سوق أهراس">سوق أهراس</option>
-                <option value="أم البواقي">أم البواقي</option>
-                <option value="بسكرة">بسكرة</option>
-                <option value="خنشلة">خنشلة</option>
-                <option value="سوق أهراس">سوق أهراس</option>
-                <option value="أم البواقي">أم البواقي</option>
-                <option value="بسكرة">بسكرة</option>
-                <option value="الجلفة">الجلفة</option>
-                <option value="سعيدة">سعيدة</option>
-                <option value="ميلة">ميلة</option>
-                <option value="عين الدفلة">عين الدفلة</option>
-                <option value="غليزان">غليزان</option>
-                <option value="تامنغاست">تامنغاست</option>
+                <option v-for="wilaya in wilayas" :key="wilaya.code" :value="wilaya.name">
+                  {{ wilaya.name }}
+                </option>
+              </select>
                 <option value="أدرار">أدرار</option>
                 <option value="المدية">المدية</option>
                 <option value="معسكر">معسكر</option>
@@ -618,6 +547,15 @@ onMounted(() => {
           </div>
 
           <div class="form-group">
+            <label class="form-label">البلدية *</label>
+            <select v-model="addressForm.commune" @change="onCommuneChange(addressForm.commune)" class="form-input" required>
+              <option value="">اختر البلدية</option>
+              <option v-for="commune in communes" :key="commune.code" :value="commune.name">
+                {{ commune.name }}
+              </option>
+            </select>
+          </div>
+            <div class="form-group">
             <label class="form-label">العنوان *</label>
             <input 
               type="text" 
@@ -659,18 +597,25 @@ onMounted(() => {
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue';
+import AddressService from '@/integration/services/AddressService';
 
+const addressService = AddressService;
 const loading = ref(false);
 const showAddForm = ref(false);
 const editingAddress = ref(null);
 
 const addresses = ref([]);
+const wilayas = ref([]);
+const communes = ref([]);
 
 const addressForm = reactive({
   title: '',
   name: '',
   phone: '',
   wilaya: '',
+  wilayaCode: '',
+  commune: '',
+  communeCode: '',
   address: '',
   instructions: ''
 });
@@ -711,44 +656,51 @@ const resetForm = () => {
     name: '',
     phone: '',
     wilaya: '',
+    wilayaCode: '',
+    commune: '',
+    communeCode: '',
     address: '',
     instructions: ''
   });
+  communes.value = [];
 };
 
 const editAddress = (address) => {
   editingAddress.value = address;
-  Object.assign(addressForm, address);
+  Object.assign(addressForm, {
+    ...address,
+    wilaya: address.wilaya,
+    wilayaCode: address.wilayaCode,
+    commune: address.commune,
+    communeCode: address.communeCode
+  });
+  // Load communes for the selected wilaya
+  if (address.wilayaCode) {
+    loadCommunes(address.wilayaCode);
+  }
 };
 
 const saveAddress = async () => {
   try {
     loading.value = true;
     
-    // Use GraphQL API instead of mock data
-    const { default: GraphQLService } = await import('@/services/GraphQLService');
-    const graphQLService = new GraphQLService();
-    
     if (editingAddress.value) {
       // Update existing address
-      const result = await graphQLService.updateAddress(editingAddress.value.id, addressForm);
-      if (result.success) {
-        const index = addresses.value.findIndex(a => a.id === editingAddress.value.id);
-        if (index !== -1) {
-          addresses.value[index] = result.address;
-        }
+      const address = await addressService.updateAddress(editingAddress.value.id, addressForm);
+      const index = addresses.value.findIndex(a => a.id === editingAddress.value.id);
+      if (index !== -1) {
+        addresses.value[index] = address;
       }
     } else {
       // Add new address
-      const result = await graphQLService.createAddress(addressForm);
-      if (result.success) {
-        addresses.value.push(result.address);
-      }
+      const address = await addressService.createAddress(addressForm);
+      addresses.value.push(address);
     }
     
     closeModal();
   } catch (error) {
     console.error('Error saving address:', error);
+    // Show error message to user
   } finally {
     loading.value = false;
   }
@@ -757,57 +709,80 @@ const saveAddress = async () => {
 const deleteAddress = async (addressId) => {
   if (confirm('هل أنت متأكد من حذف هذا العنوان؟')) {
     try {
-      // Use GraphQL API instead of mock data
-      const { default: GraphQLService } = await import('@/services/GraphQLService');
-      const graphQLService = new GraphQLService();
-      
-      const result = await graphQLService.deleteAddress(addressId);
-      if (result.success) {
-        addresses.value = addresses.value.filter(a => a.id !== addressId);
-      }
+      await addressService.deleteAddress(addressId);
+      addresses.value = addresses.value.filter(a => a.id !== addressId);
     } catch (error) {
       console.error('Error deleting address:', error);
+      // Show error message to user
     }
   }
 };
 
 const setDefault = async (addressId) => {
   try {
-    // Use GraphQL API instead of mock data
-    const { default: GraphQLService } = await import('@/services/GraphQLService');
-    const graphQLService = new GraphQLService();
-    
-    const result = await graphQLService.setDefaultAddress(addressId);
-    if (result.success) {
-      addresses.value.forEach(address => {
-        address.isDefault = address.id === addressId;
-      });
-    }
+    await addressService.setDefaultAddress(addressId);
+    addresses.value.forEach(address => {
+      address.isDefault = address.id === addressId;
+    });
   } catch (error) {
     console.error('Error setting default address:', error);
+    // Show error message to user
   }
 };
 
 const loadAddresses = async () => {
   try {
     loading.value = true;
-    
-    // Use GraphQL API instead of mock data
-    const { default: GraphQLService } = await import('@/services/GraphQLService');
-    const graphQLService = new GraphQLService();
-    
-    addresses.value = await graphQLService.getMyAddresses();
+    addresses.value = await addressService.getAddresses();
   } catch (error) {
     console.error('Error loading addresses:', error);
-    // Fallback to mock data if GraphQL fails
-    addresses.value = mockAddresses;
   } finally {
     loading.value = false;
   }
 };
 
+const loadWilayas = async () => {
+  try {
+    wilayas.value = await addressService.getWilayas();
+  } catch (error) {
+    console.error('Error loading wilayas:', error);
+  }
+};
+
+const loadCommunes = async (wilayaCode) => {
+  if (!wilayaCode) {
+    communes.value = [];
+    return;
+  }
+  
+  try {
+    communes.value = await addressService.getCommunes(wilayaCode);
+  } catch (error) {
+    console.error('Error loading communes:', error);
+    communes.value = [];
+  }
+};
+
+const onWilayaChange = (wilayaName) => {
+  const selectedWilaya = wilayas.value.find(w => w.name === wilayaName);
+  if (selectedWilaya) {
+    addressForm.wilayaCode = selectedWilaya.code;
+    addressForm.commune = '';
+    addressForm.communeCode = '';
+    loadCommunes(selectedWilaya.code);
+  }
+};
+
+const onCommuneChange = (communeName) => {
+  const selectedCommune = communes.value.find(c => c.name === communeName);
+  if (selectedCommune) {
+    addressForm.communeCode = selectedCommune.code;
+  }
+};
+
 onMounted(() => {
   loadAddresses();
+  loadWilayas();
 });
 </script>
 

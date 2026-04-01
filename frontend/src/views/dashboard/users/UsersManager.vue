@@ -1,53 +1,1026 @@
 
 <template>
-  <div class="users-manager">
-    <!-- رأس الصفحة -->
-    <div class="page-header">
-      <div class="header-title">
-        <h1>
-          <i class="fa-solid fa-users header-icon"></i>
-          إدارة المستخدمين
-        </h1>
-        <p class="header-subtitle">عرض وإدارة جميع مستخدمي النظام والعملاء</p>
-      </div>
+  <v-container fluid class="users-manager pa-4">
+    <!-- Header -->
+    <v-card class="users-header mb-6" elevation="2">
+      <v-card-text class="pa-4">
+        <v-row align="center">
+          <v-col cols="12" md="8">
+            <div class="d-flex align-center">
+              <v-avatar
+                color="#d4af37"
+                size="48"
+                class="me-4"
+              >
+                <v-icon icon="mdi-account-group" size="28"></v-icon>
+              </v-avatar>
+              <div>
+                <h1 class="text-h3 font-weight-bold">
+                  {{ $t('users.title', 'إدارة المستخدمين') }}
+                </h1>
+                <p class="text-body-1 text-dim mt-1">
+                  {{ $t('users.subtitle', 'عرض وإدارة جميع مستخدمي النظام والعملاء') }}
+                </p>
+              </div>
+            </div>
+          </v-col>
+          <v-col cols="12" md="4">
+            <div class="d-flex gap-2 justify-md-end justify-start">
+              <v-btn
+                @click="exportUsers"
+                variant="outlined"
+                prepend-icon="mdi-download"
+                class="export-btn"
+              >
+                {{ $t('users.exportReport', 'تصدير تقرير') }}
+              </v-btn>
+              <v-btn
+                @click="syncAllCustomers"
+                variant="elevated"
+                prepend-icon="mdi-sync"
+                color="#d4af37"
+                class="sync-btn"
+                :disabled="syncingAll"
+                :loading="syncingAll"
+              >
+                {{ syncingAll ? $t('users.syncing', 'جاري المزامنة...') : $t('users.syncCustomers', 'مزامنة العملاء مع ERPNext') }}
+              </v-btn>
+              <v-btn
+                @click="openUserModal"
+                variant="elevated"
+                prepend-icon="mdi-account-plus"
+                color="#d4af37"
+                class="add-btn"
+              >
+                {{ $t('users.newUser', 'مستخدم جديد') }}
+              </v-btn>
+            </div>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
 
-      <div class="header-actions">
-        <button class="btn-export" @click="exportUsers">
-          <i class="fa-solid fa-download"></i>
-          <span>تصدير تقرير</span>
-        </button>
-        <button
-          class="btn-sync-all"
-          @click="syncAllCustomers"
-          :disabled="syncingAll"
-          :class="{ syncing: syncingAll }"
-        >
-          <i :class="syncingAll ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-users'"></i>
-          <span>{{ syncingAll ? 'جاري المزامنة...' : 'مزامنة العملاء مع ERPNext' }}</span>
-        </button>
-        <button class="btn-primary" @click="openUserModal">
-          <i class="fa-solid fa-user-plus"></i>
-          <span>مستخدم جديد</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- شريط التقدم للمزامنة -->
-    <transition name="fade">
+    <!-- Sync Progress -->
+    <v-expand-transition>
       <div v-if="syncingAll" class="sync-progress-container">
-        <div class="sync-progress-bar" :style="{ width: syncProgress + '%' }"></div>
-        <div class="sync-progress-text">
-          <i class="fa-solid fa-spinner fa-spin"></i>
-          <span>جاري مزامنة العملاء... {{ syncProgress }}%</span>
-        </div>
+        <v-card variant="outlined" class="mb-4">
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center mb-2">
+              <v-progress-circular
+                indeterminate
+                size="20"
+                width="2"
+                color="#d4af37"
+                class="me-3"
+              ></v-progress-circular>
+              <span class="text-body-2">
+                {{ $t('users.syncingCustomers', 'جاري مزامنة العملاء...') }} {{ syncProgress }}%
+              </span>
+            </div>
+            <v-progress-linear
+              :model-value="syncProgress"
+              color="#d4af37"
+              height="8"
+              rounded
+            ></v-progress-linear>
+          </v-card-text>
+        </v-card>
       </div>
-    </transition>
+    </v-expand-transition>
 
-    <!-- نافذة النتائج -->
-    <transition name="slide-up">
-      <div v-if="showSyncResults && syncResults" class="sync-results-card">
-        <div class="sync-results-header">
-          <h4><i class="fa-solid fa-check-circle" style="color: #4caf50"></i> نتائج مزامنة العملاء</h4>
+    <!-- Sync Results -->
+    <v-expand-transition>
+      <div v-if="showSyncResults && syncResults" class="mb-4">
+        <v-card variant="outlined" color="success">
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center">
+              <v-icon icon="mdi-check-circle" size="24" color="success" class="me-3"></v-icon>
+              <div>
+                <h4 class="text-h6 font-weight-bold">
+                  {{ $t('users.syncResults', 'نتائج مزامنة العملاء') }}
+                </h4>
+                <p class="text-body-2 mt-1">
+                  {{ $t('users.syncedCount', 'تمت مزامنة') }} {{ syncResults.synced }} {{ $t('users.customers', 'عميل') }}
+                  {{ syncResults.failed > 0 ? `| ${$t('users.failedCount', 'فشل')}: ${syncResults.failed}` : '' }}
+                </p>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </div>
+    </v-expand-transition>
+
+    <!-- Statistics Cards -->
+    <v-row class="mb-6">
+      <v-col cols="12" sm="6" md="3">
+        <v-card class="stat-card" elevation="2">
+          <v-card-text class="pa-4 text-center">
+            <v-icon icon="mdi-account-group" size="32" color="#d4af37" class="mb-2"></v-icon>
+            <h3 class="text-h4 font-weight-bold">{{ userStats.totalUsers }}</h3>
+            <p class="text-body-2 text-dim">{{ $t('users.totalUsers', 'إجمالي المستخدمين') }}</p>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" sm="6" md="3">
+        <v-card class="stat-card" elevation="2">
+          <v-card-text class="pa-4 text-center">
+            <v-icon icon="mdi-account-check" size="32" color="success" class="mb-2"></v-icon>
+            <h3 class="text-h4 font-weight-bold">{{ userStats.activeUsers }}</h3>
+            <p class="text-body-2 text-dim">{{ $t('users.activeUsers', 'المستخدمين النشطين') }}</p>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" sm="6" md="3">
+        <v-card class="stat-card" elevation="2">
+          <v-card-text class="pa-4 text-center">
+            <v-icon icon="mdi-account-clock" size="32" color="warning" class="mb-2"></v-icon>
+            <h3 class="text-h4 font-weight-bold">{{ userStats.newUsers }}</h3>
+            <p class="text-body-2 text-dim">{{ $t('users.newUsers', 'مستخدمين جدد') }}</p>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" sm="6" md="3">
+        <v-card class="stat-card" elevation="2">
+          <v-card-text class="pa-4 text-center">
+            <v-icon icon="mdi-account-off" size="32" color="error" class="mb-2"></v-icon>
+            <h3 class="text-h4 font-weight-bold">{{ userStats.inactiveUsers }}</h3>
+            <p class="text-body-2 text-dim">{{ $t('users.inactiveUsers', 'المستخدمين غير النشطين') }}</p>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- Main Content -->
+    <v-card class="users-content" elevation="2">
+      <v-card-title class="pa-4">
+        <div class="d-flex justify-space-between align-center w-100">
+          <h3 class="text-h5 font-weight-bold">
+            <v-icon icon="mdi-format-list-bulleted" size="24" class="me-2"></v-icon>
+            {{ $t('users.userList', 'قائمة المستخدمين') }}
+          </h3>
+          <div class="d-flex gap-2">
+            <v-text-field
+              v-model="searchQuery"
+              :label="$t('common.search', 'بحث')"
+              variant="outlined"
+              prepend-inner-icon="mdi-magnify"
+              hide-details
+              density="compact"
+              style="max-width: 300px;"
+              class="me-2"
+            ></v-text-field>
+            <v-select
+              v-model="roleFilter"
+              :label="$t('users.filterByRole', 'فلترة بالدور')"
+              :items="roleOptions"
+              item-title="text"
+              item-value="value"
+              variant="outlined"
+              hide-details
+              density="compact"
+              style="max-width: 200px;"
+              class="me-2"
+            ></v-select>
+            <v-select
+              v-model="statusFilter"
+              :label="$t('users.filterByStatus', 'فلترة بالحالة')"
+              :items="statusOptions"
+              item-title="text"
+              item-value="value"
+              variant="outlined"
+              hide-details
+              density="compact"
+              style="max-width: 200px;"
+            ></v-select>
+          </div>
+        </div>
+      </v-card-title>
+      <v-divider></v-divider>
+      <v-card-text class="pa-4">
+        <!-- Loading State -->
+        <div v-if="loading" class="text-center py-8">
+          <v-progress-circular indeterminate color="#d4af37" size="48"></v-progress-circular>
+          <div class="mt-4 text-body-2 text-dim">{{ $t('common.loading', 'جاري التحميل...') }}</div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="filteredUsers.length === 0" class="text-center py-8">
+          <v-icon icon="mdi-account-group-outline" size="64" color="#d4af37" class="mb-4"></v-icon>
+          <h4 class="text-h6 font-weight-bold mb-2">{{ $t('users.noUsers', 'لا توجد مستخدمين') }}</h4>
+          <p class="text-body-2 text-dim mb-4">{{ $t('users.noUsersDesc', 'لا توجد مستخدمين حالياً') }}</p>
+          <v-btn variant="elevated" color="#d4af37" @click="openUserModal">
+            {{ $t('users.addFirstUser', 'إضافة أول مستخدم') }}
+          </v-btn>
+        </div>
+
+        <!-- Users Table -->
+        <v-data-table
+          v-else
+          :headers="userHeaders"
+          :items="paginatedUsers"
+          :loading="loading"
+          class="users-table"
+          hide-default-footer
+        >
+          <!-- Avatar and Name -->
+          <template v-slot:item.name="{ item }">
+            <div class="d-flex align-center">
+              <v-avatar :image="item.avatar" size="32" class="me-3">
+                <v-icon icon="mdi-account" size="16"></v-icon>
+              </v-avatar>
+              <div>
+                <div class="text-body-2 font-weight-bold">{{ item.name }}</div>
+                <div class="text-caption text-dim">@{{ item.username }}</div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Email -->
+          <template v-slot:item.email="{ item }">
+            <div class="text-body-2">{{ item.email }}</div>
+          </template>
+
+          <!-- Role -->
+          <template v-slot:item.role="{ item }">
+            <v-chip
+              :color="getRoleColor(item.role)"
+              variant="elevated"
+              size="small"
+            >
+              {{ getRoleText(item.role) }}
+            </v-chip>
+          </template>
+
+          <!-- Status -->
+          <template v-slot:item.status="{ item }">
+            <v-chip
+              :color="getStatusColor(item.status)"
+              variant="elevated"
+              size="small"
+            >
+              {{ getStatusText(item.status) }}
+            </v-chip>
+          </template>
+
+          <!-- Last Active -->
+          <template v-slot:item.lastActive="{ item }">
+            <div class="text-body-2">{{ getLastActiveText(item.lastActive) }}</div>
+          </template>
+
+          <!-- Actions -->
+          <template v-slot:item.actions="{ item }">
+            <div class="d-flex gap-1">
+              <v-btn
+                variant="text"
+                size="small"
+                color="#d4af37"
+                @click="viewUser(item)"
+              >
+                <v-icon icon="mdi-eye" size="16"></v-icon>
+              </v-btn>
+              <v-btn
+                variant="text"
+                size="small"
+                color="info"
+                @click="editUser(item)"
+              >
+                <v-icon icon="mdi-pencil" size="16"></v-icon>
+              </v-btn>
+              <v-btn
+                variant="text"
+                size="small"
+                :color="item.status === 'active' ? 'warning' : 'success'"
+                @click="toggleUserStatus(item)"
+              >
+                <v-icon :icon="item.status === 'active' ? 'mdi-account-off' : 'mdi-account-check'" size="16"></v-icon>
+              </v-btn>
+              <v-btn
+                variant="text"
+                size="small"
+                color="error"
+                @click="deleteUser(item)"
+              >
+                <v-icon icon="mdi-delete" size="16"></v-icon>
+              </v-btn>
+            </div>
+          </template>
+        </v-data-table>
+
+        <!-- Pagination -->
+        <div v-if="filteredUsers.length > itemsPerPage" class="d-flex justify-center mt-4">
+          <v-pagination
+            v-model="currentPage"
+            :length="totalPages"
+            :total-visible="7"
+            color="#d4af37"
+          ></v-pagination>
+        </div>
+      </v-card-text>
+    </v-card>
+
+    <!-- User Modal -->
+    <v-dialog v-model="userModal" max-width="600px">
+      <v-card>
+        <v-card-title class="pa-4">
+          <h3 class="text-h5 font-weight-bold">
+            <v-icon icon="mdi-account" size="24" class="me-2"></v-icon>
+            {{ editingUser ? $t('users.editUser', 'تعديل المستخدم') : $t('users.addUser', 'إضافة مستخدم') }}
+          </h3>
+        </v-card-title>
+        <v-divider></v-divider>
+        <v-card-text class="pa-4">
+          <v-form ref="userFormRef" v-model="userFormValid">
+            <v-row>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="userForm.name"
+                  :label="$t('users.name', 'الاسم')"
+                  variant="outlined"
+                  :rules="[v => !!v || $t('validation.required', 'مطلوب')]"
+                  required
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="userForm.username"
+                  :label="$t('users.username', 'اسم المستخدم')"
+                  variant="outlined"
+                  :rules="[v => !!v || $t('validation.required', 'مطلوب')]"
+                  required
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="userForm.email"
+                  :label="$t('users.email', 'البريد الإلكتروني')"
+                  type="email"
+                  variant="outlined"
+                  :rules="emailRules"
+                  required
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="userForm.phone"
+                  :label="$t('users.phone', 'رقم الهاتف')"
+                  type="tel"
+                  variant="outlined"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="userForm.role"
+                  :label="$t('users.role', 'الدور')"
+                  :items="roleOptions"
+                  item-title="text"
+                  item-value="value"
+                  variant="outlined"
+                  :rules="[v => !!v || $t('validation.required', 'مطلوب')]"
+                  required
+                ></v-select>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-select
+                  v-model="userForm.status"
+                  :label="$t('users.status', 'الحالة')"
+                  :items="statusOptions"
+                  item-title="text"
+                  item-value="value"
+                  variant="outlined"
+                  :rules="[v => !!v || $t('validation.required', 'مطلوب')]"
+                  required
+                ></v-select>
+              </v-col>
+              <v-col cols="12" v-if="!editingUser">
+                <v-text-field
+                  v-model="userForm.password"
+                  :label="$t('users.password', 'كلمة المرور')"
+                  type="password"
+                  variant="outlined"
+                  :rules="passwordRules"
+                  required
+                ></v-text-field>
+              </v-col>
+            </v-row>
+          </v-form>
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-actions class="pa-4">
+          <v-spacer></v-spacer>
+          <v-btn @click="closeUserModal" variant="outlined">
+            {{ $t('common.cancel', 'إلغاء') }}
+          </v-btn>
+          <v-btn
+            @click="saveUser"
+            variant="elevated"
+            color="#d4af37"
+            :disabled="!userFormValid"
+            :loading="saving"
+          >
+            {{ editingUser ? $t('common.update', 'تحديث') : $t('common.save', 'حفظ') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- User Details Modal -->
+    <v-dialog v-model="userDetailsModal" max-width="800px">
+      <v-card>
+        <v-card-title class="pa-4">
+          <h3 class="text-h5 font-weight-bold">
+            <v-icon icon="mdi-account-details" size="24" class="me-2"></v-icon>
+            {{ $t('users.userDetails', 'تفاصيل المستخدم') }}
+          </h3>
+        </v-card-title>
+        <v-divider></v-divider>
+        <v-card-text class="pa-4">
+          <div v-if="selectedUser">
+            <!-- User Info -->
+            <v-row class="mb-4">
+              <v-col cols="12" md="4" class="text-center">
+                <v-avatar :image="selectedUser.avatar" size="120" class="mb-3">
+                  <v-icon icon="mdi-account" size="60"></v-icon>
+                </v-avatar>
+                <h4 class="text-h6 font-weight-bold">{{ selectedUser.name }}</h4>
+                <p class="text-caption text-dim">@{{ selectedUser.username }}</p>
+              </v-col>
+              <v-col cols="12" md="8">
+                <v-row>
+                  <v-col cols="12" md="6">
+                    <div class="text-caption text-dim">{{ $t('users.email', 'البريد الإلكتروني') }}</div>
+                    <div class="text-body-2">{{ selectedUser.email }}</div>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <div class="text-caption text-dim">{{ $t('users.phone', 'رقم الهاتف') }}</div>
+                    <div class="text-body-2">{{ selectedUser.phone || '-' }}</div>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <div class="text-caption text-dim">{{ $t('users.role', 'الدور') }}</div>
+                    <v-chip
+                      :color="getRoleColor(selectedUser.role)"
+                      variant="elevated"
+                      size="small"
+                    >
+                      {{ getRoleText(selectedUser.role) }}
+                    </v-chip>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <div class="text-caption text-dim">{{ $t('users.status', 'الحالة') }}</div>
+                    <v-chip
+                      :color="getStatusColor(selectedUser.status)"
+                      variant="elevated"
+                      size="small"
+                    >
+                      {{ getStatusText(selectedUser.status) }}
+                    </v-chip>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <div class="text-caption text-dim">{{ $t('users.createdAt', 'تاريخ الإنشاء') }}</div>
+                    <div class="text-body-2">{{ formatDate(selectedUser.createdAt) }}</div>
+                  </v-col>
+                  <v-col cols="12" md="6">
+                    <div class="text-caption text-dim">{{ $t('users.lastActive', 'آخر نشاط') }}</div>
+                    <div class="text-body-2">{{ getLastActiveText(selectedUser.lastActive) }}</div>
+                  </v-col>
+                </v-row>
+              </v-col>
+            </v-row>
+          </div>
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-actions class="pa-4">
+          <v-spacer></v-spacer>
+          <v-btn @click="userDetailsModal = false" variant="outlined">
+            {{ $t('common.close', 'إغلاق') }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-container>
+</template>
+
+<script setup>
+import { ref, reactive, computed, onMounted } from 'vue';
+import { useStore } from 'vuex';
+import { useI18n } from 'vue-i18n';
+import UserService from '@/services/UserService';
+
+// Store and i18n
+const store = useStore();
+const { t } = useI18n();
+
+// State
+const loading = ref(false);
+const saving = ref(false);
+const syncingAll = ref(false);
+const syncProgress = ref(0);
+const showSyncResults = ref(false);
+const syncResults = ref(null);
+const searchQuery = ref('');
+const roleFilter = ref('all');
+const statusFilter = ref('all');
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+const userModal = ref(false);
+const userDetailsModal = ref(false);
+const editingUser = ref(null);
+const selectedUser = ref(null);
+const userFormRef = ref(null);
+const userFormValid = ref(false);
+
+// Users data
+const users = ref([]);
+
+// User statistics
+const userStats = reactive({
+  totalUsers: 0,
+  activeUsers: 0,
+  newUsers: 0,
+  inactiveUsers: 0
+});
+
+// User form
+const userForm = reactive({
+  name: '',
+  username: '',
+  email: '',
+  phone: '',
+  role: '',
+  status: 'active',
+  password: ''
+});
+
+// Options
+const roleOptions = ref([
+  { text: t('users.allRoles', 'الكل'), value: 'all' },
+  { text: t('roles.admin', 'مدير'), value: 'admin' },
+  { text: t('roles.manager', 'مسؤول'), value: 'manager' },
+  { text: t('roles.employee', 'موظف'), value: 'employee' },
+  { text: t('roles.user', 'مستخدم'), value: 'user' }
+]);
+
+const statusOptions = ref([
+  { text: t('users.allStatus', 'الكل'), value: 'all' },
+  { text: t('status.active', 'نشط'), value: 'active' },
+  { text: t('status.inactive', 'غير نشط'), value: 'inactive' },
+  { text: t('status.banned', 'محظور'), value: 'banned' }
+]);
+
+// Table headers
+const userHeaders = ref([
+  { title: t('users.name', 'الاسم'), key: 'name', sortable: true },
+  { title: t('users.email', 'البريد الإلكتروني'), key: 'email', sortable: true },
+  { title: t('users.role', 'الدور'), key: 'role', sortable: true },
+  { title: t('users.status', 'الحالة'), key: 'status', sortable: true },
+  { title: t('users.lastActive', 'آخر نشاط'), key: 'lastActive', sortable: true },
+  { title: t('common.actions', 'الإجراءات'), key: 'actions', sortable: false, width: 120 }
+]);
+
+// Form validation rules
+const emailRules = [
+  v => !!v || t('validation.required', 'مطلوب'),
+  v => /.+@.+\..+/.test(v) || t('validation.email', 'البريد الإلكتروني غير صحيح')
+];
+
+const passwordRules = [
+  v => !!v || t('validation.required', 'مطلوب'),
+  v => v.length >= 6 || t('validation.passwordMin', 'كلمة المرور يجب أن تكون 6 أحرف على الأقل')
+];
+
+// Computed
+const filteredUsers = computed(() => {
+  let filtered = users.value;
+
+  // Filter by search query
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    filtered = filtered.filter(user => 
+      user.name.toLowerCase().includes(query) ||
+      user.username.toLowerCase().includes(query) ||
+      user.email.toLowerCase().includes(query) ||
+      (user.phone && user.phone.includes(query))
+    );
+  }
+
+  // Filter by role
+  if (roleFilter.value !== 'all') {
+    filtered = filtered.filter(user => user.role === roleFilter.value);
+  }
+
+  // Filter by status
+  if (statusFilter.value !== 'all') {
+    filtered = filtered.filter(user => user.status === statusFilter.value);
+  }
+
+  return filtered;
+});
+
+const totalPages = computed(() => {
+  return Math.ceil(filteredUsers.value.length / itemsPerPage.value);
+});
+
+const paginatedUsers = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return filteredUsers.value.slice(start, end);
+});
+
+// Methods
+const loadUsers = async () => {
+  try {
+    loading.value = true;
+    const response = await UserService.getAllUsers();
+    
+    if (response.success) {
+      users.value = response.data.users;
+      updateUserStats();
+    }
+  } catch (error) {
+    console.error('Error loading users:', error);
+    store.dispatch('notifications/showNotification', {
+      type: 'error',
+      message: t('users.loadError', 'فشل في تحميل المستخدمين')
+    });
+  } finally {
+    loading.value = false;
+  }
+};
+
+const updateUserStats = () => {
+  userStats.totalUsers = users.value.length;
+  userStats.activeUsers = users.value.filter(u => u.status === 'active').length;
+  userStats.inactiveUsers = users.value.filter(u => u.status === 'inactive').length;
+  
+  // Calculate new users (last 30 days)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  userStats.newUsers = users.value.filter(u => new Date(u.createdAt) > thirtyDaysAgo).length;
+};
+
+const syncAllCustomers = async () => {
+  try {
+    syncingAll.value = true;
+    syncProgress.value = 0;
+    showSyncResults.value = false;
+    
+    const response = await UserService.syncAllCustomers();
+    
+    if (response.success) {
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        syncProgress.value += 10;
+        if (syncProgress.value >= 100) {
+          clearInterval(progressInterval);
+          syncResults.value = response.data;
+          showSyncResults.value = true;
+          syncingAll.value = false;
+          syncProgress.value = 0;
+          
+          // Reload users after sync
+          loadUsers();
+          
+          store.dispatch('notifications/showNotification', {
+            type: 'success',
+            message: t('users.syncSuccess', 'تمت مزامنة العملاء بنجاح')
+          });
+        }
+      }, 200);
+    }
+  } catch (error) {
+    console.error('Error syncing customers:', error);
+    syncingAll.value = false;
+    syncProgress.value = 0;
+    store.dispatch('notifications/showNotification', {
+      type: 'error',
+      message: t('users.syncError', 'فشل في مزامنة العملاء')
+    });
+  }
+};
+
+const exportUsers = async () => {
+  try {
+    const response = await UserService.exportUsers();
+    
+    if (response.success) {
+      // Create download link
+      const blob = new Blob([response.data], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `users_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      
+      store.dispatch('notifications/showNotification', {
+        type: 'success',
+        message: t('users.exportSuccess', 'تم تصدير البيانات بنجاح')
+      });
+    }
+  } catch (error) {
+    console.error('Error exporting users:', error);
+    store.dispatch('notifications/showNotification', {
+      type: 'error',
+      message: t('users.exportError', 'فشل في تصدير البيانات')
+    });
+  }
+};
+
+const openUserModal = () => {
+  editingUser.value = null;
+  resetUserForm();
+  userModal.value = true;
+};
+
+const closeUserModal = () => {
+  userModal.value = false;
+  resetUserForm();
+};
+
+const resetUserForm = () => {
+  Object.assign(userForm, {
+    name: '',
+    username: '',
+    email: '',
+    phone: '',
+    role: '',
+    status: 'active',
+    password: ''
+  });
+  userFormValid.value = false;
+};
+
+const viewUser = (user) => {
+  selectedUser.value = user;
+  userDetailsModal.value = true;
+};
+
+const editUser = (user) => {
+  editingUser.value = user;
+  Object.assign(userForm, {
+    name: user.name,
+    username: user.username,
+    email: user.email,
+    phone: user.phone || '',
+    role: user.role,
+    status: user.status,
+    password: ''
+  });
+  userModal.value = true;
+};
+
+const saveUser = async () => {
+  try {
+    saving.value = true;
+    
+    let response;
+    if (editingUser.value) {
+      response = await UserService.updateUser(editingUser.value.id, userForm);
+    } else {
+      response = await UserService.createUser(userForm);
+    }
+    
+    if (response.success) {
+      await loadUsers();
+      closeUserModal();
+      
+      store.dispatch('notifications/showNotification', {
+        type: 'success',
+        message: editingUser.value ? 
+          t('users.updateSuccess', 'تم تحديث المستخدم بنجاح') : 
+          t('users.createSuccess', 'تم إنشاء المستخدم بنجاح')
+      });
+    }
+  } catch (error) {
+    console.error('Error saving user:', error);
+    store.dispatch('notifications/showNotification', {
+      type: 'error',
+      message: t('users.saveError', 'فشل في حفظ المستخدم')
+    });
+  } finally {
+    saving.value = false;
+  }
+};
+
+const toggleUserStatus = async (user) => {
+  try {
+    const newStatus = user.status === 'active' ? 'inactive' : 'active';
+    const response = await UserService.updateUserStatus(user.id, newStatus);
+    
+    if (response.success) {
+      user.status = newStatus;
+      updateUserStats();
+      
+      store.dispatch('notifications/showNotification', {
+        type: 'success',
+        message: t('users.statusUpdateSuccess', 'تم تحديث حالة المستخدم بنجاح')
+      });
+    }
+  } catch (error) {
+    console.error('Error updating user status:', error);
+    store.dispatch('notifications/showNotification', {
+      type: 'error',
+      message: t('users.statusUpdateError', 'فشل في تحديث حالة المستخدم')
+    });
+  }
+};
+
+const deleteUser = async (user) => {
+  if (!confirm(t('users.deleteConfirm', 'هل أنت متأكد من حذف هذا المستخدم؟'))) {
+    return;
+  }
+  
+  try {
+    const response = await UserService.deleteUser(user.id);
+    
+    if (response.success) {
+      users.value = users.value.filter(u => u.id !== user.id);
+      updateUserStats();
+      
+      store.dispatch('notifications/showNotification', {
+        type: 'success',
+        message: t('users.deleteSuccess', 'تم حذف المستخدم بنجاح')
+      });
+    }
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    store.dispatch('notifications/showNotification', {
+      type: 'error',
+      message: t('users.deleteError', 'فشل في حذف المستخدم')
+    });
+  }
+};
+
+// Utility methods
+const formatDate = (dateString) => {
+  if (!dateString) return '-';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('ar-DZ', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
+const getLastActiveText = (dateString) => {
+  if (!dateString) return t('users.never', 'أبداً');
+  const lastActive = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - lastActive;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return t('users.now', 'الآن');
+  if (diffMins < 60) return t('users.minutesAgo', `منذ ${diffMins} دقيقة`);
+  if (diffHours < 24) return t('users.hoursAgo', `منذ ${diffHours} ساعة`);
+  if (diffDays === 1) return t('users.yesterday', 'أمس');
+  return formatDate(dateString);
+};
+
+const getRoleText = (role) => {
+  const map = {
+    admin: t('roles.admin', 'مدير'),
+    manager: t('roles.manager', 'مسؤول'),
+    employee: t('roles.employee', 'موظف'),
+    user: t('roles.user', 'مستخدم')
+  };
+  return map[role] || role;
+};
+
+const getRoleColor = (role) => {
+  const colors = {
+    admin: 'error',
+    manager: 'warning',
+    employee: 'info',
+    user: 'success'
+  };
+  return colors[role] || 'default';
+};
+
+const getStatusText = (status) => {
+  const map = {
+    active: t('status.active', 'نشط'),
+    inactive: t('status.inactive', 'غير نشط'),
+    banned: t('status.banned', 'محظور')
+  };
+  return map[status] || status;
+};
+
+const getStatusColor = (status) => {
+  const colors = {
+    active: 'success',
+    inactive: 'warning',
+    banned: 'error'
+  };
+  return colors[status] || 'default';
+};
+
+// Lifecycle
+onMounted(() => {
+  loadUsers();
+});
+</script>
+
+<style scoped>
+.users-manager {
+  background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+  min-height: 100vh;
+}
+
+/* Header Styles */
+.users-header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: 16px;
+}
+
+.add-btn,
+.sync-btn {
+  background: linear-gradient(135deg, #d4af37 0%, #f4e4c1 50%, #d4af37 100%);
+  color: #1a1a2e;
+  font-weight: 600;
+  border: none;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+  transition: all 0.3s ease;
+}
+
+.add-btn:hover,
+.sync-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+}
+
+.export-btn {
+  border-color: #d4af37;
+  color: #d4af37;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.export-btn:hover {
+  background: rgba(212, 175, 55, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Statistics Cards */
+.stat-card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* Content Styles */
+.users-content {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  border-radius: 16px;
+}
+
+.sync-progress-container {
+  animation: fadeIn 0.6s ease-out;
+}
+
+/* Text Styles */
+.text-dim {
+  color: #666 !important;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 960px) {
+  .users-header .v-btn {
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .users-manager {
+    padding: 1rem;
+  }
+  
+  .users-header,
+  .users-content {
+    border-radius: 12px;
+  }
+}
+</style>
           <button @click="showSyncResults = false" class="close-results">×</button>
         </div>
         <div class="sync-results-body">
@@ -552,8 +1525,39 @@ const columns = ref([
   },
 ]);
 
-// قائمة المستخدمين
-const users = ref([
+// قائمة المستخدمين - جلب من API
+const users = ref([]);
+
+// دالة جلب بيانات المستخدمين
+const fetchUsers = async () => {
+  try {
+    const response = await fetch('/api/users');
+    if (response.ok) {
+      const data = await response.json();
+      users.value = data.map(user => ({
+        id: user.id,
+        name: user.name,
+        username: user.username,
+        email: user.email,
+        phone: user.phone,
+        avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=d4af37&color=fff`,
+        role: user.role,
+        status: user.status,
+        verified: user.verified || false,
+        online: user.online || false,
+        joined: user.created_at,
+        lastActive: user.last_active,
+        city: user.city,
+        address: user.address,
+        ordersCount: user.orders_count || 0,
+        erpnextSynced: user.erpnext_synced || false,
+        erpnextCustomerId: user.erpnext_customer_id
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to fetch users:', error);
+    // Fallback to mock data if API fails
+    users.value = [
   {
     id: 1,
     name: 'أحمد محمد',
@@ -641,10 +1645,54 @@ const users = ref([
     address: 'شارع العليا',
     ordersCount: 0,
   },
-]);
+    ];
+  }
+};
 
-// إحصائيات
-const userStats = ref([
+// إحصائيات - جلب من API
+const userStats = ref([]);
+
+// دالة جلب إحصائيات المستخدمين
+const fetchUserStats = async () => {
+  try {
+    const response = await fetch('/api/users/statistics');
+    if (response.ok) {
+      const data = await response.json();
+      userStats.value = [
+        {
+          label: 'إجمالي المستخدمين',
+          value: data.total_users?.toLocaleString('ar-SA') || '0',
+          icon: 'fa-solid fa-users',
+          color: '#d4af37',
+          trend: data.total_users_trend || 0,
+        },
+        {
+          label: 'مستخدمين نشطين',
+          value: data.active_users?.toLocaleString('ar-SA') || '0',
+          icon: 'fa-solid fa-user-check',
+          color: '#4CAF50',
+          trend: data.active_users_trend || 0,
+        },
+        {
+          label: 'مستخدمين جدد',
+          value: data.new_users?.toLocaleString('ar-SA') || '0',
+          icon: 'fa-solid fa-user-plus',
+          color: '#2196F3',
+          trend: data.new_users_trend || 0,
+        },
+        {
+          label: 'مستخدمين محظورين',
+          value: data.banned_users?.toLocaleString('ar-SA') || '0',
+          icon: 'fa-solid fa-user-slash',
+          color: '#f44336',
+          trend: data.banned_users_trend || 0,
+        },
+      ];
+    }
+  } catch (error) {
+    console.error('Failed to fetch user statistics:', error);
+    // Fallback to mock data
+    userStats.value = [
   {
     label: 'إجمالي المستخدمين',
     value: '1,543',
@@ -673,7 +1721,17 @@ const userStats = ref([
     color: '#f44336',
     trend: -5,
   },
-]);
+    ];
+  }
+};
+
+// جلب البيانات عند تحميل المكون
+onMounted(async () => {
+  await Promise.all([
+    fetchUsers(),
+    fetchUserStats()
+  ]);
+});
 
 // الفلاتر
 const searchQuery = ref('');
