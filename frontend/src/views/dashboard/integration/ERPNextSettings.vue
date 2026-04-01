@@ -1,255 +1,346 @@
 <template>
-  <div class="erpnext-settings">
-    <!-- رأس الصفحة -->
-    <div class="page-header">
-      <div class="header-title">
-        <h1>
-          <i class="fa-solid fa-cog header-icon"></i>
-          إعدادات التكامل مع ERPNext
-        </h1>
-        <p class="header-subtitle">تكوين وإدارة الاتصال مع نظام ERPNext</p>
-      </div>
-      <div class="header-actions">
-        <button class="btn-test" @click="testConnection" :disabled="testing">
-          <i :class="testing ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-plug'"></i>
-          <span>{{ testing ? 'جاري الاختبار...' : 'اختبار الاتصال' }}</span>
-        </button>
-        <button class="btn-save" @click="saveSettings" :disabled="!settingsChanged">
-          <i class="fa-solid fa-save"></i>
-          <span>حفظ الإعدادات</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- حالة الاتصال -->
-    <div class="connection-status" :class="{ connected: connectionStatus }" v-if="connectionTested">
-      <div class="status-icon">
-        <i :class="connectionStatus ? 'fa-solid fa-check-circle' : 'fa-solid fa-times-circle'"></i>
-      </div>
-      <div class="status-message">
-        <h3>{{ connectionStatus ? 'اتصال ناجح' : 'فشل الاتصال' }}</h3>
-        <p>{{ connectionMessage }}</p>
-      </div>
-    </div>
-
-    <!-- نموذج الإعدادات -->
-    <form @submit.prevent="saveSettings" class="settings-form">
-      <!-- قسم الاتصال الأساسي -->
-      <div class="settings-section">
-        <h3><i class="fa-solid fa-plug"></i> إعدادات الاتصال</h3>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>عنوان الخادم (URL) <span class="required">*</span></label>
-            <input
-              type="url"
-              v-model="settings.baseURL"
-              placeholder="https://your-erpnext.com"
-              required
-            />
-            <small class="hint">مثال: https://erpnext.yourcompany.com</small>
+  <v-container class="pa-4">
+    <!-- Header -->
+    <v-card variant="elevated" class="mb-6 erpnext-header">
+      <v-card-text class="pa-6">
+        <div class="d-flex align-center justify-space-between">
+          <div class="header-content">
+            <h1 class="text-h3 font-weight-bold text-primary mb-2 d-flex align-center ga-3">
+              <v-icon color="primary" size="40">mdi-cog</v-icon>
+              {{ $t('erpNextIntegration') || 'إعدادات التكامل مع ERPNext' }}
+            </h1>
+            <p class="text-body-1 text-medium-emphasis mb-0">
+              {{ $t('erpNextSubtitle') || 'تكوين وإدارة الاتصال مع نظام ERPNext' }}
+            </p>
+          </div>
+          <div class="header-actions d-flex ga-3">
+            <v-btn
+              @click="testConnection"
+              :disabled="testing"
+              variant="tonal"
+              color="info"
+              prepend-icon="mdi-plug"
+            >
+              {{ testing ? ($t('testing') || 'جاري الاختبار...') : ($t('testConnection') || 'اختبار الاتصال') }}
+            </v-btn>
+            <v-btn
+              @click="saveSettings"
+              :disabled="!settingsChanged"
+              variant="elevated"
+              color="primary"
+              prepend-icon="mdi-content-save"
+            >
+              {{ $t('saveSettings') || 'حفظ الإعدادات' }}
+            </v-btn>
           </div>
         </div>
+      </v-card-text>
+    </v-card>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label>مفتاح API (API Key) <span class="required">*</span></label>
-            <input type="text" v-model="settings.apiKey" placeholder="أدخل مفتاح API" required />
-          </div>
-
-          <div class="form-group">
-            <label>السر (API Secret) <span class="required">*</span></label>
-            <input
-              :type="showSecret ? 'text' : 'password'"
-              v-model="settings.apiSecret"
-              placeholder="أدخل secret key"
-              required
-            />
-            <button type="button" class="toggle-secret" @click="showSecret = !showSecret">
-              <i :class="showSecret ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye'"></i>
-            </button>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>مهلة الطلب (Timeout)</label>
-            <input type="number" v-model="settings.timeout" min="5" max="120" />
-            <small class="hint">بالثواني (افتراضي: 30 ثانية)</small>
+    <!-- Connection Status -->
+    <v-card 
+      v-if="connectionTested" 
+      variant="outlined" 
+      class="mb-6"
+      :color="connectionStatus ? 'success' : 'error'"
+    >
+      <v-card-text class="pa-4">
+        <div class="d-flex align-center ga-3">
+          <v-icon 
+            :color="connectionStatus ? 'success' : 'error'" 
+            size="32"
+          >
+            {{ connectionStatus ? 'mdi-check-circle' : 'mdi-close-circle' }}
+          </v-icon>
+          <div class="flex-grow-1">
+            <h3 class="text-h6 font-weight-medium mb-1" :class="connectionStatus ? 'text-success' : 'text-error'">
+              {{ connectionStatus ? ($t('connectionSuccess') || 'اتصال ناجح') : ($t('connectionFailed') || 'فشل الاتصال') }}
+            </h3>
+            <p class="text-body-2 text-medium-emphasis mb-0">{{ connectionMessage }}</p>
           </div>
         </div>
-      </div>
+      </v-card-text>
+    </v-card>
 
-      <!-- إعدادات المزامنة -->
-      <div class="settings-section">
-        <h3><i class="fa-solid fa-sync-alt"></i> إعدادات المزامنة</h3>
-
-        <div class="form-row">
-          <div class="form-group checkbox-group">
-            <label class="checkbox-label">
-              <input type="checkbox" v-model="settings.sync.autoSync" />
-              <span class="checkbox-custom"></span>
-              <span>تفعيل المزامنة التلقائية</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="form-row" v-if="settings.sync.autoSync">
-          <div class="form-group">
-            <label>فترة المزامنة</label>
-            <select v-model="settings.sync.interval">
-              <option value="5">كل 5 دقائق</option>
-              <option value="15">كل 15 دقيقة</option>
-              <option value="30">كل 30 دقيقة</option>
-              <option value="60">كل ساعة</option>
-              <option value="360">كل 6 ساعات</option>
-              <option value="720">كل 12 ساعة</option>
-              <option value="1440">كل يوم</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>عدد محاولات إعادة المحاولة</label>
-            <input type="number" v-model="settings.sync.retryAttempts" min="1" max="10" />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group checkbox-group">
-            <label class="checkbox-label">
-              <input type="checkbox" v-model="settings.sync.autoCreateProducts" />
-              <span class="checkbox-custom"></span>
-              <span>إنشاء منتجات جديدة في ERPNext تلقائياً</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group checkbox-group">
-            <label class="checkbox-label">
-              <input type="checkbox" v-model="settings.sync.autoUpdateProducts" />
-              <span class="checkbox-custom"></span>
-              <span>تحديث المنتجات في ERPNext تلقائياً</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group checkbox-group">
-            <label class="checkbox-label">
-              <input type="checkbox" v-model="settings.sync.autoCreateCustomers" />
-              <span class="checkbox-custom"></span>
-              <span>إنشاء عملاء جدد في ERPNext تلقائياً</span>
-            </label>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group checkbox-group">
-            <label class="checkbox-label">
-              <input type="checkbox" v-model="settings.sync.autoCreateInvoices" />
-              <span class="checkbox-custom"></span>
-              <span>إنشاء فواتير للطلبات المكتملة تلقائياً</span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <!-- إعدادات المحاسبة -->
-      <div class="settings-section">
-        <h3><i class="fa-solid fa-chart-line"></i> إعدادات المحاسبة</h3>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>المستودع الافتراضي</label>
-            <input
-              type="text"
-              v-model="settings.accounting.defaultWarehouse"
-              placeholder="Stores - SA"
-            />
-          </div>
-
-          <div class="form-group">
-            <label>حساب الضرائب الافتراضي</label>
-            <input
-              type="text"
-              v-model="settings.accounting.defaultTaxAccount"
-              placeholder="VAT - 15% - SA"
-            />
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label>طريقة الدفع الافتراضية</label>
-            <select v-model="settings.accounting.defaultPaymentMethod">
-              <option value="cash">الدفع عند الاستلام</option>
-              <option value="card">بطاقة ائتمان</option>
-              <option value="bank">تحويل بنكي</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>نسبة الضريبة الافتراضية (%)</label>
-            <input
-              type="number"
-              v-model="settings.accounting.defaultTaxRate"
-              min="0"
-              max="100"
-              step="0.1"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- إعدادات تصنيف المنتجات -->
-      <div class="settings-section">
-        <h3><i class="fa-solid fa-tags"></i> تصنيف المنتجات</h3>
-
-        <div class="info-box">
-          <i class="fa-solid fa-info-circle"></i>
-          <span>ربط تصنيفات الموقع مع مجموعات المنتجات في ERPNext</span>
-        </div>
-
-        <div class="category-mapping">
-          <div v-for="(category, index) in categoryMappings" :key="index" class="mapping-row">
-            <div class="mapping-site">
-              <span>{{ category.siteLabel }}</span>
-            </div>
-            <div class="mapping-arrow">
-              <i class="fa-solid fa-arrow-left"></i>
-            </div>
-            <div class="mapping-erpnext">
-              <input
-                type="text"
-                v-model="category.erpnextGroup"
-                :placeholder="`مجموعة ${category.siteLabel} في ERPNext`"
+    <!-- Settings Form -->
+    <v-form @submit.prevent="saveSettings" class="settings-form">
+      <!-- Connection Settings -->
+      <v-card variant="elevated" class="mb-6">
+        <v-card-title class="pa-4">
+          <h3 class="text-h6 font-weight-medium d-flex align-center ga-2">
+            <v-icon color="primary">mdi-plug</v-icon>
+            {{ $t('connectionSettings') || 'إعدادات الاتصال' }}
+          </h3>
+        </v-card-title>
+        <v-card-text class="pa-4">
+          <v-row>
+            <v-col cols="12">
+              <v-text-field
+                v-model="settings.baseURL"
+                :label="($t('serverUrl') || 'عنوان الخادم (URL)') + ' *'"
+                placeholder="https://your-erpnext.com"
+                type="url"
+                required
+                :hint="$t('serverUrlHint') || 'مثال: https://erpnext.yourcompany.com'"
+                persistent-hint
+                prepend-icon="mdi-web"
               />
-            </div>
-          </div>
-        </div>
-      </div>
+            </v-col>
+          </v-row>
 
-      <!-- أزرار الحفظ -->
-      <div class="form-actions">
-        <button type="button" class="btn-reset" @click="resetSettings">
-          <i class="fa-solid fa-undo-alt"></i>
-          <span>إعادة تعيين</span>
-        </button>
-        <button type="submit" class="btn-save" :disabled="!settingsChanged">
-          <i class="fa-solid fa-save"></i>
-          <span>حفظ الإعدادات</span>
-        </button>
-      </div>
-    </form>
-  </div>
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="settings.apiKey"
+                :label="($t('apiKey') || 'مفتاح API (API Key)') + ' *'"
+                :placeholder="$t('enterApiKey') || 'أدخل مفتاح API'"
+                required
+                prepend-icon="mdi-key"
+              />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="settings.apiSecret"
+                :label="($t('apiSecret') || 'السر (API Secret)') + ' *'"
+                :placeholder="$t('enterSecretKey') || 'أدخل secret key'"
+                :type="showSecret ? 'text' : 'password'"
+                required
+                prepend-icon="mdi-lock"
+                :append-inner-icon="showSecret ? 'mdi-eye-off' : 'mdi-eye'"
+                @click:append-inner="showSecret = !showSecret"
+              />
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col cols="12" md="4">
+              <v-text-field
+                v-model="settings.timeout"
+                :label="$t('requestTimeout') || 'مهلة الطلب (Timeout)'"
+                type="number"
+                min="5"
+                max="120"
+                :hint="$t('timeoutHint') || 'بالثواني (افتراضي: 30 ثانية)'"
+                persistent-hint
+                prepend-icon="mdi-clock"
+              />
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+
+      <!-- Sync Settings -->
+      <v-card variant="elevated" class="mb-6">
+        <v-card-title class="pa-4">
+          <h3 class="text-h6 font-weight-medium d-flex align-center ga-2">
+            <v-icon color="primary">mdi-sync</v-icon>
+            {{ $t('syncSettings') || 'إعدادات المزامنة' }}
+          </h3>
+        </v-card-title>
+        <v-card-text class="pa-4">
+          <v-row>
+            <v-col cols="12">
+              <v-checkbox
+                v-model="settings.sync.autoSync"
+                :label="$t('enableAutoSync') || 'تفعيل المزامنة التلقائية'"
+                color="primary"
+              />
+            </v-col>
+          </v-row>
+
+          <v-row v-if="settings.sync.autoSync">
+            <v-col cols="12" md="6">
+              <v-select
+                v-model="settings.sync.interval"
+                :label="$t('syncInterval') || 'فترة المزامنة'"
+                :items="syncIntervalOptions"
+                prepend-icon="mdi-clock-outline"
+              />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="settings.sync.retryAttempts"
+                :label="$t('retryAttempts') || 'عدد محاولات إعادة المحاولة'"
+                type="number"
+                min="1"
+                max="10"
+                prepend-icon="mdi-refresh"
+              />
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-checkbox
+                v-model="settings.sync.autoCreateProducts"
+                :label="$t('autoCreateProducts') || 'إنشاء منتجات جديدة في ERPNext تلقائياً'"
+                color="primary"
+              />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-checkbox
+                v-model="settings.sync.autoUpdateProducts"
+                :label="$t('autoUpdateProducts') || 'تحديث المنتجات في ERPNext تلقائياً'"
+                color="primary"
+              />
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-checkbox
+                v-model="settings.sync.autoCreateCustomers"
+                :label="$t('autoCreateCustomers') || 'إنشاء عملاء جدد في ERPNext تلقائياً'"
+                color="primary"
+              />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-checkbox
+                v-model="settings.sync.autoCreateInvoices"
+                :label="$t('autoCreateInvoices') || 'إنشاء فواتير للطلبات المكتملة تلقائياً'"
+                color="primary"
+              />
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+
+      <!-- Accounting Settings -->
+      <v-card variant="elevated" class="mb-6">
+        <v-card-title class="pa-4">
+          <h3 class="text-h6 font-weight-medium d-flex align-center ga-2">
+            <v-icon color="primary">mdi-chart-line</v-icon>
+            {{ $t('accountingSettings') || 'إعدادات المحاسبة' }}
+          </h3>
+        </v-card-title>
+        <v-card-text class="pa-4">
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="settings.accounting.defaultWarehouse"
+                :label="$t('defaultWarehouse') || 'المستودع الافتراضي'"
+                placeholder="Stores - SA"
+                prepend-icon="mdi-warehouse"
+              />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="settings.accounting.defaultTaxAccount"
+                :label="$t('defaultTaxAccount') || 'حساب الضرائب الافتراضي'"
+                placeholder="VAT - 15% - SA"
+                prepend-icon="mdi-receipt"
+              />
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-select
+                v-model="settings.accounting.defaultPaymentMethod"
+                :label="$t('defaultPaymentMethod') || 'طريقة الدفع الافتراضية'"
+                :items="paymentMethodOptions"
+                prepend-icon="mdi-cash"
+              />
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="settings.accounting.defaultTaxRate"
+                :label="$t('defaultTaxRate') || 'نسبة الضريبة الافتراضية (%)'"
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                prepend-icon="mdi-percent"
+              />
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+
+      <!-- Product Category Mapping -->
+      <v-card variant="elevated" class="mb-6">
+        <v-card-title class="pa-4">
+          <h3 class="text-h6 font-weight-medium d-flex align-center ga-2">
+            <v-icon color="primary">mdi-tag</v-icon>
+            {{ $t('productCategoryMapping') || 'تصنيف المنتجات' }}
+          </h3>
+        </v-card-title>
+        <v-card-text class="pa-4">
+          <v-alert
+            type="info"
+            variant="tonal"
+            class="mb-4"
+          >
+            <v-alert-title>{{ $t('categoryMappingInfo') || 'معلومات التصنيف' }}</v-alert-title>
+            {{ $t('categoryMappingDescription') || 'ربط تصنيفات الموقع مع مجموعات المنتجات في ERPNext' }}
+          </v-alert>
+
+          <v-row>
+            <v-col
+              v-for="(category, index) in categoryMappings"
+              :key="index"
+              cols="12"
+              md="6"
+              lg="4"
+            >
+              <v-card variant="outlined" class="category-mapping-card">
+                <v-card-text class="pa-4">
+                  <div class="d-flex align-center ga-3 mb-3">
+                    <v-chip color="primary" variant="tonal" size="small">
+                      {{ category.siteLabel }}
+                    </v-chip>
+                    <v-icon color="primary">mdi-arrow-left</v-icon>
+                  </div>
+                  <v-text-field
+                    v-model="category.erpnextGroup"
+                    :placeholder="`${$t('erpnextGroup') || 'مجموعة'} ${category.siteLabel} ${$t('inERPNext') || 'في ERPNext'}`"
+                    variant="outlined"
+                    density="compact"
+                    prepend-icon="mdi-folder"
+                  />
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-card-text>
+      </v-card>
+
+      <!-- Action Buttons -->
+      <v-card variant="elevated">
+        <v-card-text class="pa-4">
+          <div class="d-flex justify-end ga-3">
+            <v-btn
+              @click="resetSettings"
+              variant="tonal"
+              color="secondary"
+              prepend-icon="mdi-undo"
+            >
+              {{ $t('reset') || 'إعادة تعيين' }}
+            </v-btn>
+            <v-btn
+              type="submit"
+              variant="elevated"
+              color="primary"
+              prepend-icon="mdi-content-save"
+              :disabled="!settingsChanged"
+            >
+              {{ $t('saveSettings') || 'حفظ الإعدادات' }}
+            </v-btn>
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-form>
+  </v-container>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue';
-// DEPRECATED: ERPNextService has been migrated to GraphQL
-// Use GraphQLERPNextService instead
+import { useI18n } from 'vue-i18n';
+import { useStore } from 'vuex';
 import { erpNextSyncService } from '@/services/ERPNextSyncService';
+
+const { t } = useI18n();
+const store = useStore();
 
 const emit = defineEmits(['settings-saved']);
 
@@ -284,13 +375,13 @@ const settings = reactive({
 });
 
 const categoryMappings = ref([
-  { siteKey: 'walls', siteLabel: 'جدران', erpnextGroup: 'ملصقات جدران' },
-  { siteKey: 'doors', siteLabel: 'أبواب', erpnextGroup: 'ملصقات أبواب' },
-  { siteKey: 'furniture', siteLabel: 'أثاث', erpnextGroup: 'ملصقات أثاث' },
-  { siteKey: 'cars', siteLabel: 'سيارات', erpnextGroup: 'ملصقات سيارات' },
-  { siteKey: 'kitchens', siteLabel: 'مطابخ', erpnextGroup: 'ملصقات مطابخ' },
-  { siteKey: 'ceilings', siteLabel: 'أسقف', erpnextGroup: 'ملصقات أسقف' },
-  { siteKey: 'tiles', siteLabel: 'بلاط', erpnextGroup: 'ملصقات بلاط' },
+  { siteKey: 'walls', siteLabel: t('walls') || 'جدران', erpnextGroup: t('wallStickers') || 'ملصقات جدران' },
+  { siteKey: 'doors', siteLabel: t('doors') || 'أبواب', erpnextGroup: t('doorStickers') || 'ملصقات أبواب' },
+  { siteKey: 'furniture', siteLabel: t('furniture') || 'أثاث', erpnextGroup: t('furnitureStickers') || 'ملصقات أثاث' },
+  { siteKey: 'cars', siteLabel: t('cars') || 'سيارات', erpnextGroup: t('carStickers') || 'ملصقات سيارات' },
+  { siteKey: 'kitchens', siteLabel: t('kitchens') || 'مطابخ', erpnextGroup: t('kitchenStickers') || 'ملصقات مطابخ' },
+  { siteKey: 'ceilings', siteLabel: t('ceilings') || 'أسقف', erpnextGroup: t('ceilingStickers') || 'ملصقات أسقف' },
+  { siteKey: 'tiles', siteLabel: t('tiles') || 'بلاط', erpnextGroup: t('tileStickers') || 'ملصقات بلاط' },
 ]);
 
 // Computed
@@ -298,64 +389,186 @@ const settingsChanged = computed(() => {
   return JSON.stringify(originalSettings.value) !== JSON.stringify(settings);
 });
 
+const syncIntervalOptions = computed(() => [
+  { title: t('every5Minutes') || 'كل 5 دقائق', value: 5 },
+  { title: t('every15Minutes') || 'كل 15 دقيقة', value: 15 },
+  { title: t('every30Minutes') || 'كل 30 دقيقة', value: 30 },
+  { title: t('everyHour') || 'كل ساعة', value: 60 },
+  { title: t('every6Hours') || 'كل 6 ساعات', value: 360 },
+  { title: t('every12Hours') || 'كل 12 ساعة', value: 720 },
+  { title: t('everyDay') || 'كل يوم', value: 1440 },
+]);
+
+const paymentMethodOptions = computed(() => [
+  { title: t('cashOnDelivery') || 'الدفع عند الاستلام', value: 'cash' },
+  { title: t('creditCard') || 'بطاقة ائتمان', value: 'card' },
+  { title: t('bankTransfer') || 'تحويل بنكي', value: 'bank' },
+]);
+
 // Methods
-const loadSettings = () => {
-  const saved = localStorage.getItem('erpnextSettings');
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved);
-      Object.assign(settings, parsed);
-      if (parsed.categoryMappings) {
-        categoryMappings.value = parsed.categoryMappings;
+const loadSettings = async () => {
+  try {
+    // Try to load from API first
+    const result = await erpNextSyncService.getSettings();
+    if (result.success && result.data) {
+      Object.assign(settings, result.data);
+      if (result.data.categoryMappings) {
+        categoryMappings.value = result.data.categoryMappings;
       }
-    } catch (e) {
-      console.error('Failed to load settings:', e);
+    } else {
+      // Fallback to localStorage
+      const saved = localStorage.getItem('erpnextSettings');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          Object.assign(settings, parsed);
+          if (parsed.categoryMappings) {
+            categoryMappings.value = parsed.categoryMappings;
+          }
+        } catch (e) {
+          console.error('Failed to load settings from localStorage:', e);
+        }
+      }
     }
-  } else {
-    // Default settings
-    settings.baseURL = ''; // Could use process.env if available
-    settings.apiKey = '';
-    settings.apiSecret = '';
+  } catch (error) {
+    console.error('Failed to load settings:', error);
+    // Fallback to localStorage
+    const saved = localStorage.getItem('erpnextSettings');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        Object.assign(settings, parsed);
+        if (parsed.categoryMappings) {
+          categoryMappings.value = parsed.categoryMappings;
+        }
+      } catch (e) {
+        console.error('Failed to load settings from localStorage:', e);
+      }
+    }
   }
+  
   originalSettings.value = JSON.parse(JSON.stringify(settings));
 };
 
 const testConnection = async () => {
   testing.value = true;
   connectionTested.value = true;
+  
   try {
+    // Save current settings first
+    await saveSettingsToAPI();
+    
     const result = await erpNextSyncService.testConnection();
     connectionStatus.value = result.success;
     connectionMessage.value = result.success
-      ? 'تم الاتصال بنجاح مع ERPNext'
-      : result.message || 'فشل الاتصال';
+      ? (t('connectionSuccessMessage') || 'تم الاتصال بنجاح مع ERPNext')
+      : result.message || (t('connectionFailedMessage') || 'فشل الاتصال');
+    
+    // Show notification
+    store.dispatch('notifications/add', {
+      type: connectionStatus.value ? 'success' : 'error',
+      title: connectionStatus.value ? (t('connectionSuccess') || 'اتصال ناجح') : (t('connectionFailed') || 'فشل الاتصال'),
+      message: connectionMessage.value,
+      timeout: 5000
+    });
   } catch (error) {
     connectionStatus.value = false;
-    connectionMessage.value = error.message || 'حدث خطأ أثناء الاتصال';
+    connectionMessage.value = error.message || (t('connectionError') || 'حدث خطأ أثناء الاتصال');
+    
+    store.dispatch('notifications/add', {
+      type: 'error',
+      title: t('connectionError') || 'خطأ في الاتصال',
+      message: connectionMessage.value,
+      timeout: 5000
+    });
   } finally {
     testing.value = false;
   }
 };
 
-const saveSettings = () => {
+const saveSettingsToAPI = async () => {
   try {
     const settingsToSave = {
       ...settings,
       categoryMappings: categoryMappings.value,
     };
-    localStorage.setItem('erpnextSettings', JSON.stringify(settingsToSave));
-    originalSettings.value = JSON.parse(JSON.stringify(settings));
-    emit('settings-saved', settingsToSave);
-    alert('✅ تم حفظ الإعدادات بنجاح');
+    
+    const result = await erpNextSyncService.saveSettings(settingsToSave);
+    if (result.success) {
+      return result;
+    } else {
+      throw new Error(result.message || 'Failed to save settings to API');
+    }
   } catch (error) {
-    console.error('Save error:', error);
-    alert('❌ فشل حفظ الإعدادات');
+    // Fallback to localStorage
+    const settingsToSave = {
+      ...settings,
+      categoryMappings: categoryMappings.value,
+    };
+    localStorage.setItem('erpnextSettings', JSON.stringify(settingsToSave));
+    throw error;
   }
 };
 
-const resetSettings = () => {
-  if (confirm('هل أنت متأكد من إعادة تعيين جميع الإعدادات؟')) {
-    loadSettings();
+const saveSettings = async () => {
+  try {
+    await saveSettingsToAPI();
+    originalSettings.value = JSON.parse(JSON.stringify(settings));
+    emit('settings-saved', { ...settings, categoryMappings: categoryMappings.value });
+    
+    store.dispatch('notifications/add', {
+      type: 'success',
+      title: t('settingsSaved') || 'تم حفظ الإعدادات',
+      message: t('settingsSavedMessage') || 'تم حفظ إعدادات ERPNext بنجاح',
+      timeout: 3000
+    });
+  } catch (error) {
+    console.error('Save error:', error);
+    
+    store.dispatch('notifications/add', {
+      type: 'error',
+      title: t('settingsSaveFailed') || 'فشل حفظ الإعدادات',
+      message: error.message || (t('settingsSaveFailedMessage') || 'فشل حفظ إعدادات ERPNext'),
+      timeout: 5000
+    });
+  }
+};
+
+const resetSettings = async () => {
+  try {
+    const confirmed = await new Promise((resolve) => {
+      store.dispatch('notifications/add', {
+        type: 'warning',
+        title: t('resetSettings') || 'إعادة تعيين الإعدادات',
+        message: t('resetSettingsConfirm') || 'هل أنت متأكد من إعادة تعيين جميع الإعدادات؟',
+        timeout: 0,
+        actions: [
+          {
+            text: t('cancel') || 'إلغاء',
+            color: 'secondary',
+            handler: () => resolve(false)
+          },
+          {
+            text: t('confirm') || 'تأكيد',
+            color: 'error',
+            handler: () => resolve(true)
+          }
+        ]
+      });
+    });
+    
+    if (confirmed) {
+      await loadSettings();
+      
+      store.dispatch('notifications/add', {
+        type: 'info',
+        title: t('settingsReset') || 'تم إعادة تعيين الإعدادات',
+        message: t('settingsResetMessage') || 'تم إعادة تعيين الإعدادات إلى القيم الافتراضية',
+        timeout: 3000
+      });
+    }
+  } catch (error) {
+    console.error('Reset error:', error);
   }
 };
 
@@ -366,15 +579,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-@import '@/assets/theme.css';
-
-.erpnext-settings {
-  padding: 25px;
-  min-height: 100vh;
-  background: var(--bg-primary);
-  animation: fadeIn 0.5s ease;
-}
-
+/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -386,367 +591,47 @@ onMounted(() => {
   }
 }
 
-/* رأس الصفحة */
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-  background: var(--bg-card);
-  padding: 25px 30px;
-  border-radius: 24px;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-md);
+/* Header */
+.erpnext-header {
+  animation: fadeIn 0.5s ease;
 }
 
-.header-title h1 {
-  font-size: 2rem;
-  color: white;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+/* Category Mapping Cards */
+.category-mapping-card {
+  transition: all 0.3s ease;
 }
 
-.header-icon {
-  color: var(--gold-1);
-  font-size: 2rem;
-  animation: iconPulse 2s ease infinite;
+.category-mapping-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-@keyframes iconPulse {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-}
-
-.header-subtitle {
-  color: var(--text-dim);
-  font-size: 0.95rem;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.btn-test,
-.btn-save {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 16px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  transition: all 0.3s;
-}
-
-.btn-test {
-  background: var(--bg-card);
-  color: var(--gold-1);
-  border: 1px solid var(--border-light);
-}
-
-.btn-save {
-  background: var(--gold-gradient);
-  color: var(--bg-deep);
-}
-
-.btn-test:hover,
-.btn-save:hover:not(:disabled) {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-gold-strong);
-}
-
-.btn-save:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* حالة الاتصال */
-.connection-status {
-  background: var(--bg-card);
-  border-radius: 20px;
-  padding: 20px 25px;
-  margin-bottom: 25px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  border: 1px solid var(--border-light);
-}
-
-.connection-status.connected {
-  border-color: #4caf50;
-  background: rgba(76, 175, 80, 0.1);
-}
-
-.connection-status .status-icon i {
-  font-size: 2.5rem;
-}
-
-.connection-status.connected .status-icon i {
-  color: #4caf50;
-}
-
-.connection-status:not(.connected) .status-icon i {
-  color: #f44336;
-}
-
-.status-message h3 {
-  color: white;
-  font-size: 1.1rem;
-  margin-bottom: 5px;
-}
-
-.status-message p {
-  color: var(--text-dim);
-}
-
-/* نموذج الإعدادات */
+/* Form Styles */
 .settings-form {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
+  animation: fadeIn 0.6s ease;
 }
 
-.settings-section {
-  background: var(--bg-card);
-  border-radius: 20px;
-  padding: 25px;
-  border: 1px solid var(--border-light);
-}
-
-.settings-section h3 {
-  color: var(--gold-1);
-  font-size: 1.1rem;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  margin-bottom: 20px;
-}
-
-.form-group {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
-
-.form-group label {
-  color: var(--text-dim);
-  margin-bottom: 8px;
-  font-size: 0.9rem;
-}
-
-.required {
-  color: var(--danger);
-  margin-right: 3px;
-}
-
-.form-group input,
-.form-group select {
-  padding: 12px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-light);
-  border-radius: 12px;
-  color: white;
-  font-size: 0.95rem;
-  transition: all 0.3s;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: var(--gold-1);
-  box-shadow: var(--shadow-gold);
-}
-
-.hint {
-  color: var(--text-dim);
-  font-size: 0.8rem;
-  margin-top: 5px;
-}
-
-/* زر إظهار/إخفاء السر */
-.toggle-secret {
-  position: absolute;
-  left: 12px;
-  top: 38px;
-  background: transparent;
-  border: none;
-  color: var(--text-dim);
-  cursor: pointer;
-  padding: 5px;
-  transition: color 0.3s;
-}
-
-.toggle-secret:hover {
-  color: var(--gold-1);
-}
-
-/* خانات الاختيار */
-.checkbox-group {
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-}
-
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  color: var(--text-secondary);
-}
-
-.checkbox-label input[type='checkbox'] {
-  display: none;
-}
-
-.checkbox-custom {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--border-light);
-  border-radius: 5px;
-  position: relative;
-  transition: all 0.3s;
-}
-
-.checkbox-label input:checked + .checkbox-custom {
-  background: var(--gold-gradient);
-  border-color: transparent;
-}
-
-.checkbox-label input:checked + .checkbox-custom::after {
-  content: '✓';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: var(--bg-deep);
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-
-/* تصنيف المنتجات */
-.info-box {
-  background: rgba(33, 150, 243, 0.1);
-  border: 1px solid #2196f3;
-  border-radius: 12px;
-  padding: 15px;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: #2196f3;
-}
-
-.category-mapping {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.mapping-row {
-  display: grid;
-  grid-template-columns: 100px 30px 1fr;
-  align-items: center;
-  gap: 10px;
-  padding: 10px;
-  background: var(--bg-primary);
-  border-radius: 12px;
-}
-
-.mapping-site {
-  color: white;
-  font-weight: 500;
-}
-
-.mapping-arrow {
-  text-align: center;
-  color: var(--gold-1);
-}
-
-.mapping-erpnext input {
-  width: 100%;
-  padding: 8px 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  color: white;
-}
-
-.mapping-erpnext input:focus {
-  outline: none;
-  border-color: var(--gold-1);
-}
-
-/* أزرار الحفظ */
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 15px;
-  margin-top: 25px;
-}
-
-.btn-reset {
-  padding: 12px 24px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-light);
-  border-radius: 16px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s;
-}
-
-.btn-reset:hover {
-  background: var(--bg-card);
-  color: var(--gold-1);
-  border-color: var(--gold-1);
-}
-
-/* استجابة للشاشات الصغيرة */
+/* Responsive */
 @media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    gap: 15px;
-    text-align: center;
-  }
-
   .header-actions {
-    width: 100%;
     flex-direction: column;
+    width: 100%;
   }
+  
+  .d-flex.justify-space-between {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+}
 
-  .form-row {
-    grid-template-columns: 1fr;
-  }
+/* Loading states */
+.v-progress-circular {
+  animation: spin 1s linear infinite;
+}
 
-  .mapping-row {
-    grid-template-columns: 1fr;
-    gap: 5px;
-  }
-
-  .mapping-arrow {
-    transform: rotate(90deg);
-  }
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 </style>

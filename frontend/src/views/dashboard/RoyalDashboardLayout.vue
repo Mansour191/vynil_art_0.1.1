@@ -1,6 +1,6 @@
 <template>
-  <div class="royal-dashboard-layout marble-bg min-h-screen">
-    <!-- Particles Background -->
+  <v-app>
+    <!-- Animated Background Particles -->
     <div class="particles">
       <div
         v-for="n in 30"
@@ -10,133 +10,207 @@
       ></div>
     </div>
 
-    <!-- Header -->
-    <header class="dashboard-header glass sticky top-0 z-40">
-      <div class="container mx-auto px-6 py-4">
-        <div class="flex items-center justify-between">
+    <!-- Royal Header -->
+    <v-app-bar
+      elevation="4"
+      color="transparent"
+      class="royal-header"
+      height="80"
+    >
+      <v-container class="px-4 py-2">
+        <div class="d-flex align-center justify-space-between">
           <!-- Logo & Title -->
-          <div class="flex items-center space-x-4">
-            <button
+          <div class="d-flex align-center ga-4">
+            <v-app-bar-nav-icon
               @click="toggleSidebar"
-              class="lg:hidden p-2 rounded-xl bg-charcoal/80 backdrop-blur-sm text-off-white hover:bg-charcoal/60 transition-colors"
+              class="d-lg-none"
+              variant="tonal"
+              color="primary"
             >
-              <i class="fas fa-bars"></i>
-            </button>
-            <div class="flex items-center space-x-3">
-              <div class="w-10 h-10 bg-gradient-to-r from-royal-600 to-gold-500 rounded-xl flex items-center justify-center">
-                <i class="fas fa-paint-roller text-white"></i>
-              </div>
+              <v-icon>mdi-menu</v-icon>
+            </v-app-bar-nav-icon>
+            
+            <div class="d-flex align-center ga-3">
+              <v-avatar
+                size="40"
+                class="logo-avatar"
+                gradient="primary"
+              >
+                <v-icon size="24" color="white">mdi-palette</v-icon>
+              </v-avatar>
               <div>
-                <h1 class="text-xl font-bold text-white">VinylArt</h1>
-                <p class="text-royal-200 text-sm">Dashboard</p>
+                <h1 class="text-h5 font-weight-bold text-white mb-0">VinylArt</h1>
+                <p class="text-caption text-medium-emphasis mb-0">Dashboard</p>
               </div>
             </div>
           </div>
 
           <!-- Search & Actions -->
-          <div class="flex items-center space-x-4">
+          <div class="d-flex align-center ga-3">
             <!-- Search -->
-            <div class="hidden md:flex items-center bg-charcoal/80 backdrop-blur-sm rounded-xl px-4 py-2">
-              <i class="fas fa-search text-off-white/60 mr-3"></i>
-              <input
-                v-model="searchQuery"
-                type="text"
-                placeholder="بحث في لوحة التحكم..."
-                class="bg-transparent text-white placeholder-white/60 border-0 outline-none w-64"
-              />
-            </div>
+            <v-text-field
+              v-model="searchQuery"
+              :placeholder="$t('searchDashboard') || 'بحث في لوحة التحكم...'"
+              variant="solo-filled"
+              density="compact"
+              prepend-inner-icon="mdi-magnify"
+              hide-details
+              class="search-field d-none d-md-flex"
+              style="max-width: 320px;"
+              bg-color="rgba(0,0,0,0.3)"
+              color="white"
+              base-color="white"
+            />
 
             <!-- Notifications -->
-            <div class="relative">
-              <button class="p-2 rounded-xl bg-charcoal/80 backdrop-blur-sm text-off-white hover:bg-charcoal/60 transition-colors">
-                <i class="fas fa-bell"></i>
-                <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-              </button>
-            </div>
+            <v-btn
+              icon="mdi-bell"
+              variant="tonal"
+              color="primary"
+              @click="toggleNotifications"
+            >
+              <v-badge content="3" color="error" dot />
+            </v-btn>
 
             <!-- User Menu -->
-            <div class="flex items-center space-x-3">
-              <Avatar
-                :image="userAvatar"
-                shape="circle"
-                size="large"
-                class="ring-2 ring-gold-500"
-              />
-              <div class="hidden lg:block">
-                <p class="text-white font-medium">{{ userName }}</p>
-                <p class="text-royal-200 text-sm">{{ userRole }}</p>
-              </div>
-            </div>
+            <v-menu location="bottom end">
+              <template v-slot:activator="{ props }">
+                <div class="d-flex align-center ga-3">
+                  <v-avatar
+                    :image="userAvatar"
+                    size="40"
+                    class="user-avatar"
+                  >
+                    <v-icon>mdi-account</v-icon>
+                  </v-avatar>
+                  
+                  <div class="d-none d-lg-block">
+                    <div class="text-body-2 font-weight-medium text-white">{{ userName }}</div>
+                    <div class="text-caption text-medium-emphasis">{{ userRole }}</div>
+                  </div>
+                  
+                  <v-btn
+                    v-bind="props"
+                    icon="mdi-chevron-down"
+                    variant="tonal"
+                    color="primary"
+                    size="small"
+                  />
+                </div>
+              </template>
+
+              <v-card min-width="280" class="user-dropdown">
+                <v-card-text class="pa-4">
+                  <div class="d-flex align-center ga-3 mb-4">
+                    <v-avatar :image="userAvatar" size="48">
+                      <v-icon>mdi-account</v-icon>
+                    </v-avatar>
+                    <div>
+                      <div class="text-body-2 font-weight-medium">{{ userName }}</div>
+                      <div class="text-caption text-medium-emphasis">
+                        {{ authStore.user?.email || 'user@vinylart.com' }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <v-divider class="mb-2" />
+
+                  <v-list density="compact">
+                    <v-list-item
+                      :to="{ name: 'profile' }"
+                      prepend-icon="mdi-account"
+                      :title="$t('profile') || 'الملف الشخصي'"
+                    />
+                    <v-list-item
+                      :to="{ name: 'settings' }"
+                      prepend-icon="mdi-cog"
+                      :title="$t('settings') || 'الإعدادات'"
+                    />
+                    <v-list-item
+                      :to="{ name: 'integration-settings' }"
+                      prepend-icon="mdi-connection"
+                      :title="$t('erpSettings') || 'إعدادات ERPNext'"
+                    />
+                  </v-list>
+
+                  <v-divider class="my-2" />
+
+                  <v-btn
+                    @click="logout"
+                    variant="text"
+                    color="error"
+                    prepend-icon="mdi-logout"
+                    block
+                  >
+                    {{ $t('logout') || 'تسجيل خروج' }}
+                  </v-btn>
+                </v-card-text>
+              </v-card>
+            </v-menu>
           </div>
         </div>
-      </div>
-    </header>
+      </v-container>
+    </v-app-bar>
 
     <!-- Main Layout -->
-    <div class="flex">
-      <!-- Sidebar -->
+    <v-main class="royal-main">
+      <!-- Royal Sidebar -->
       <RoyalSidebar
         :visible="sidebarVisible"
         @hide="sidebarVisible = false"
       />
 
       <!-- Main Content -->
-      <main class="flex-1 p-6">
+      <div class="main-content pa-6">
         <!-- Breadcrumb -->
-        <nav class="mb-6">
-          <ol class="flex items-center space-x-2 text-sm">
-            <li>
-              <router-link
-                to="/dashboard"
-                class="text-royal-600 hover:text-royal-700 transition-colors"
-              >
-                <i class="fas fa-home mr-1"></i>
-                الرئيسية
-              </router-link>
-            </li>
-            <li class="text-marble-400">/</li>
-            <li class="text-marble-600 font-medium">{{ breadcrumbTitle }}</li>
-          </ol>
-        </nav>
+        <v-breadcrumbs
+          :items="breadcrumbs"
+          class="mb-6"
+          bg-color="transparent"
+        >
+          <template v-slot:prepend>
+            <v-icon size="small" color="primary">mdi-home</v-icon>
+          </template>
+        </v-breadcrumbs>
 
         <!-- Page Content -->
-        <div
-          class="page-content"
-          v-motion="{
-            initial: { opacity: 0, y: 20 },
-            enter: { 
-              opacity: 1, 
-              y: 0,
-              transition: { duration: 500 }
-            }
-          }"
-        >
-          <router-view />
+        <div class="page-content">
+          <transition name="page-transition" mode="out-in">
+            <router-view />
+          </transition>
         </div>
-      </main>
-    </div>
+      </div>
+    </v-main>
 
     <!-- Mobile Sidebar Overlay -->
-    <div
-      v-if="sidebarVisible"
-      class="fixed inset-0 bg-black/50 z-30 lg:hidden"
+    <v-overlay
+      v-model="sidebarVisible"
+      class="d-lg-none"
       @click="sidebarVisible = false"
-    ></div>
-  </div>
+    />
+  </v-app>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, computed, onMounted, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/store/auth';
+import { useI18n } from 'vue-i18n';
+import { useStore } from 'vuex';
 import RoyalSidebar from '@/components/ui/RoyalSidebar.vue';
+import NavigationService from '@/services/NavigationService';
 
 const route = useRoute();
+const router = useRouter();
+const { t } = useI18n();
+const store = useStore();
 const authStore = useAuthStore();
 
+// State
 const sidebarVisible = ref(false);
 const searchQuery = ref('');
 
+// Computed
 const userName = computed(() => {
   const user = authStore.user;
   if (user?.firstName && user?.lastName) {
@@ -148,27 +222,38 @@ const userName = computed(() => {
   } else if (user?.username) {
     return user.username;
   } else {
-    return 'مستخدم';
+    return t('user') || 'مستخدم';
   }
 });
 
 const userRole = computed(() => {
-  const roles = { admin: 'مدير النظام', investor: 'ممول استراتيجي', customer: 'عميل مميز' };
-  return roles[authStore.role] || 'زائر';
+  const roles = { 
+    admin: t('systemAdmin') || 'مدير النظام', 
+    investor: t('strategicInvestor') || 'ممول استراتيجي', 
+    customer: t('premiumCustomer') || 'عميل مميز' 
+  };
+  return roles[authStore.role] || t('guest') || 'زائر';
 });
 
 const userAvatar = computed(() => {
   return `https://ui-avatars.com/api/?name=${userName.value}&background=d4af37&color=fff&size=100`;
 });
 
-const breadcrumbTitle = computed(() => {
-  return route.meta?.title || 'لوحة التحكم';
+const breadcrumbs = computed(() => {
+  return [
+    {
+      title: t('home') || 'الرئيسية',
+      disabled: false,
+      href: '/dashboard'
+    },
+    {
+      title: route.meta?.title || t('dashboard') || 'لوحة التحكم',
+      disabled: true
+    }
+  ];
 });
 
-const toggleSidebar = () => {
-  sidebarVisible.value = !sidebarVisible.value;
-};
-
+// Methods
 const getParticleStyle = (n) => {
   return {
     left: Math.random() * 100 + '%',
@@ -181,7 +266,53 @@ const getParticleStyle = (n) => {
   };
 };
 
+const toggleSidebar = () => {
+  sidebarVisible.value = !sidebarVisible.value;
+};
+
+const toggleNotifications = () => {
+  // Show notifications panel or navigate
+  store.dispatch('notifications/showPanel');
+};
+
+const logout = () => {
+  authStore.logout();
+  router.push('/');
+  
+  // Show notification
+  store.dispatch('notifications/add', {
+    type: 'success',
+    title: t('loggedOut') || 'تم تسجيل الخروج',
+    message: t('loggedOutMessage') || 'تم تسجيل خروجك بنجاح',
+    timeout: 3000
+  });
+};
+
+const trackPageVisit = async () => {
+  try {
+    await NavigationService.trackPageVisit(
+      route.path,
+      route.meta?.title || t('dashboard')
+    );
+  } catch (error) {
+    console.error('Error tracking page visit:', error);
+  }
+};
+
+// Watchers
+watch(() => route.path, () => {
+  trackPageVisit();
+  
+  // Close sidebar on route change (mobile)
+  if (window.innerWidth < 1024) {
+    sidebarVisible.value = false;
+  }
+});
+
+// Lifecycle
 onMounted(() => {
+  trackPageVisit();
+  
   // Close sidebar on route change (mobile)
   if (window.innerWidth < 1024) {
     sidebarVisible.value = false;
@@ -190,10 +321,17 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.royal-dashboard-layout {
-  font-family: 'Inter', system-ui, sans-serif;
+/* Royal Theme Variables */
+:root {
+  --royal-primary: #6b46c1;
+  --royal-secondary: #9333ea;
+  --gold-primary: #d4af37;
+  --gold-secondary: #f4e4c1;
+  --marble-light: #fafafa;
+  --marble-dark: #e4e4e7;
 }
 
+/* Particles Background */
 .particles {
   position: fixed;
   top: 0;
@@ -201,63 +339,112 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 1;
+  z-index: 0;
 }
 
 .particle {
   position: absolute;
   border-radius: 50%;
-  animation: float 20s infinite ease-in-out;
+  animation: floatParticle 20s infinite ease-in-out;
 }
 
-@keyframes float {
+@keyframes floatParticle {
   0%, 100% {
-    transform: translateY(0) translateX(0);
+    transform: translateY(0) translateX(0) rotate(0deg);
+    opacity: 0;
   }
-  25% {
-    transform: translateY(-20px) translateX(10px);
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-100px) translateX(100px) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Royal Header */
+.royal-header {
+  backdrop-filter: blur(20px) !important;
+  background: rgba(107, 70, 193, 0.1) !important;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2) !important;
+  position: relative;
+  z-index: 100;
+}
+
+.logo-avatar {
+  animation: logoFloat 3s ease infinite;
+}
+
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
   }
   50% {
-    transform: translateY(10px) translateX(-10px);
-  }
-  75% {
-    transform: translateY(-10px) translateX(5px);
+    transform: translateY(-5px) rotate(5deg);
   }
 }
 
-.dashboard-header {
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  background: rgba(255, 255, 255, 0.1);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+.user-avatar {
+  border: 2px solid var(--gold-primary);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+  transition: all 0.3s ease;
+}
+
+.user-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+}
+
+.search-field {
+  transition: all 0.3s ease;
+}
+
+.search-field:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.2);
+}
+
+.user-dropdown {
+  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+/* Main Content */
+.royal-main {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(135deg, 
+    var(--marble-light) 0%, 
+    var(--marble-dark) 25%, 
+    #f4f4f5 50%, 
+    var(--marble-dark) 75%, 
+    var(--marble-light) 100%);
+  background-size: 400% 400%;
+  animation: marbleShift 15s ease infinite;
+  min-height: 100vh;
+}
+
+@keyframes marbleShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.main-content {
+  position: relative;
+  z-index: 2;
 }
 
 .page-content {
   min-height: calc(100vh - 200px);
+  animation: contentFadeIn 0.6s ease;
 }
 
-/* Search input styling */
-input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .dashboard-header {
-    padding: 1rem;
-  }
-  
-  .search-input {
-    display: none;
-  }
-}
-
-/* Animation classes */
-.animate-fade-in-up {
-  animation: fadeInUp 0.6s ease-out;
-}
-
-@keyframes fadeInUp {
+@keyframes contentFadeIn {
   from {
     opacity: 0;
     transform: translateY(20px);
@@ -268,29 +455,94 @@ input::placeholder {
   }
 }
 
-/* Glass effect */
-.glass {
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+/* Page Transitions */
+.page-transition-enter-active,
+.page-transition-leave-active {
+  transition: opacity 0.4s, transform 0.4s;
 }
 
-/* Marble background */
-.marble-bg {
-  background: linear-gradient(135deg, 
-    #fafafa 0%, 
-    #f4f4f5 25%, 
-    #e4e4e7 50%, 
-    #f4f4f5 75%, 
-    #fafafa 100%);
-  background-size: 400% 400%;
-  animation: marble-shift 15s ease infinite;
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(20px);
 }
 
-@keyframes marble-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+.page-transition-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+/* Responsive Design */
+@media (max-width: 960px) {
+  .search-field {
+    max-width: 200px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .royal-header {
+    height: 70px !important;
+  }
+  
+  .search-field {
+    display: none !important;
+  }
+  
+  .main-content {
+    padding: 16px !important;
+  }
+}
+
+/* Vuetify Overrides */
+:deep(.v-app-bar) {
+  backdrop-filter: blur(20px);
+  background: rgba(107, 70, 193, 0.1) !important;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2) !important;
+}
+
+:deep(.v-text-field) {
+  transition: all 0.3s ease;
+}
+
+:deep(.v-text-field:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.2);
+}
+
+:deep(.v-btn) {
+  transition: all 0.3s ease;
+}
+
+:deep(.v-btn:hover) {
+  transform: translateY(-2px);
+}
+
+:deep(.v-avatar) {
+  transition: all 0.3s ease;
+}
+
+:deep(.v-avatar:hover) {
+  transform: scale(1.05);
+}
+
+:deep(.v-card) {
+  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+:deep(.v-overlay) {
+  backdrop-filter: blur(5px);
+}
+
+:deep(.v-breadcrumbs) {
+  background: transparent;
+}
+
+:deep(.v-breadcrumbs-item) {
+  color: rgb(var(--v-theme-primary));
+}
+
+:deep(.v-breadcrumbs-item--disabled) {
+  color: rgb(var(--v-theme-on-surface-variant));
 }
 </style>

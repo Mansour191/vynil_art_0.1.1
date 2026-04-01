@@ -1,12 +1,13 @@
 <template>
   <div class="glass-chatbot-wrapper">
-    <v-btn
+    <!-- Chat FAB -->
+    <v-fab
       v-if="!isOpen"
-      color="primary"
       icon="mdi-robot-happy-outline"
       size="x-large"
-      elevation="8"
-      class="chat-fab logo-glow"
+      extended
+      color="primary"
+      class="chat-fab"
       @click="isOpen = true"
     >
       <v-badge
@@ -19,57 +20,93 @@
         <v-icon size="32">mdi-robot-happy-outline</v-icon>
       </v-badge>
       <v-icon v-else size="32">mdi-robot-happy-outline</v-icon>
-    </v-btn>
+      <template v-slot:append>
+        <span class="text-caption font-weight-medium">مساعد Paclos</span>
+      </template>
+    </v-fab>
 
+    <!-- Chat Window -->
     <v-expand-transition>
       <v-card
         v-if="isOpen"
-        class="chat-window glass-card border-gold"
-        width="380"
-        height="550"
+        class="chat-window"
+        width="400"
+        height="600"
         rounded="xl"
+        elevation="24"
       >
-        <v-toolbar color="primary" class="px-2">
-          <v-avatar size="40" class="bg-white-opacity-20 ml-3">
-            <v-img src="/logo.svg" />
+        <!-- Header -->
+        <v-toolbar color="primary" density="comfortable">
+          <v-avatar size="40" class="elevation-2">
+            <v-img src="/logo.svg" alt="Paclos Logo" />
           </v-avatar>
-          <div>
-            <v-toolbar-title class="text-subtitle-1 font-weight-bold">مساعد Paclos الذكي</v-toolbar-title>
+          <v-toolbar-title class="ms-3">
+            <div class="text-subtitle-1 font-weight-bold">مساعد Paclos الذكي</div>
             <div class="text-caption d-flex align-center">
-              <v-badge dot color="success" class="ml-2"></v-badge>
+              <v-badge dot color="success" inline class="me-1"></v-badge>
               متصل الآن
             </div>
-          </div>
+          </v-toolbar-title>
           <v-spacer></v-spacer>
-          <v-btn icon="mdi-close" variant="text" @click="isOpen = false"></v-btn>
+          <v-btn
+            icon="mdi-close"
+            variant="text"
+            @click="isOpen = false"
+          />
         </v-toolbar>
 
+        <!-- Messages Container -->
         <v-card-text class="chat-messages-container pa-4">
-          <div v-for="(msg, i) in messages" :key="i" 
-            :class="['d-flex mb-4', msg.role === 'user' ? 'justify-end' : 'justify-start']">
-            
-            <div :class="['message-bubble', msg.role === 'user' ? 'user-bubble' : 'bot-bubble']">
-              {{ msg.text }}
-              <div class="text-caption mt-1 opacity-60 text-left" style="font-size: 0.7rem;">
-                {{ msg.time }}
+          <v-virtual-scroll
+            :items="messages"
+            :item-height="80"
+            height="400"
+            class="messages-scroll"
+          >
+            <template v-slot:default="{ item: msg, index }">
+              <div
+                :class="[
+                  'd-flex mb-4 align-end',
+                  msg.role === 'user' ? 'justify-end' : 'justify-start'
+                ]"
+              >
+                <v-chip
+                  :color="msg.role === 'user' ? 'primary' : 'surface-variant'"
+                  :variant="msg.role === 'user' ? 'elevated' : 'tonal'"
+                  class="message-chip"
+                  max-width="80%"
+                >
+                  <span class="text-body-2">{{ msg.text }}</span>
+                  <div class="text-caption mt-1 opacity-70">
+                    {{ msg.time }}
+                  </div>
+                </v-chip>
               </div>
-            </div>
-          </div>
+            </template>
+          </v-virtual-scroll>
           
+          <!-- Typing Indicator -->
           <div v-if="isTyping" class="d-flex justify-start mb-4">
-            <div class="bot-bubble typing-dots">
-              <span>.</span><span>.</span><span>.</span>
-            </div>
+            <v-chip color="surface-variant" variant="tonal" class="typing-chip">
+              <v-progress-circular
+                indeterminate
+                size="16"
+                width="2"
+                class="me-2"
+              />
+              <span class="typing-dots">جاري الكتابة</span>
+            </v-chip>
           </div>
         </v-card-text>
 
-        <v-divider class="opacity-10"></v-divider>
-        <v-card-actions class="pa-3 bg-glass-dark">
+        <v-divider />
+        
+        <!-- Input Area -->
+        <v-card-actions class="pa-3 bg-surface-variant">
           <v-text-field
             v-model="userInput"
             placeholder="كيف يمكنني مساعدتك؟"
             variant="solo-filled"
-            flat
             density="comfortable"
             rounded="pill"
             hide-details
@@ -79,11 +116,12 @@
             <template v-slot:append-inner>
               <v-btn
                 icon="mdi-send-variant"
-                variant="text"
+                variant="elevated"
                 color="primary"
+                size="small"
                 :disabled="!userInput.trim()"
                 @click="sendMessage"
-              ></v-btn>
+              />
             </template>
           </v-text-field>
         </v-card-actions>
@@ -93,54 +131,87 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, nextTick, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
+import ChatService from '@/integration/services/ChatService';
 
+const { t } = useI18n();
+
+// State
 const isOpen = ref(false);
 const userInput = ref('');
 const isTyping = ref(false);
 const unreadCount = ref(1);
 const messages = ref([
-  { role: 'bot', text: 'مرحباً بك في Paclos! كيف يمكنني مساعدتك في تجديد منزلك اليوم؟', time: '10:00 AM' }
+  { 
+    role: 'bot', 
+    text: t('chatbot.welcome') || 'مرحباً بك في Paclos! كيف يمكنني مساعدتك في تجديد منزلك اليوم؟', 
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }
 ]);
 
+// Methods
 const sendMessage = async () => {
   if (!userInput.value.trim()) return;
 
-  // إضافة رسالة المستخدم
-  messages.value.push({
+  // Add user message
+  const userMessage = {
     role: 'user',
     text: userInput.value,
     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  });
-
+  };
+  
+  messages.value.push(userMessage);
   const query = userInput.value;
   userInput.value = '';
   isTyping.value = true;
 
-  // محاكاة استجابة الـ Backend (Django)
-  setTimeout(() => {
+  // Scroll to bottom
+  await nextTick();
+
+  try {
+    // Send message to backend API
+    const response = await ChatService.sendMessage(query);
+    
     isTyping.value = false;
     messages.value.push({
       role: 'bot',
-      text: 'شكراً لتواصلك. فريق Paclos سيقوم بالرد على استفسارك بخصوص "' + query + '" في أقرب وقت ممكن.',
+      text: response.message || t('chatbot.defaultResponse') || 'شكراً لتواصلك. فريق Paclos سيقوم بالرد على استفسارك في أقرب وقت ممكن.',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     });
-  }, 1500);
+  } catch (error) {
+    console.error('❌ Error sending message:', error);
+    isTyping.value = false;
+    messages.value.push({
+      role: 'bot',
+      text: t('chatbot.error') || 'عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.',
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+  }
+
+  await nextTick();
 };
+
+// Lifecycle
+onMounted(() => {
+  // Initialize chat service if needed
+  console.log('✅ GlassChatbot mounted');
+});
 </script>
 
 <style scoped>
 .glass-chatbot-wrapper {
   position: fixed;
-  bottom: 30px;
-  left: 30px; /* للغة العربية يفضل وضعه يساراً أو يميناً حسب التصميم */
+  bottom: 24px;
+  left: 24px;
   z-index: 9999;
 }
 
 .chat-fab {
-  width: 65px !important;
-  height: 65px !important;
-  background: linear-gradient(135deg, #d4af37 0%, #aa891a 100%) !important;
+  width: 64px !important;
+  height: 64px !important;
+  background: linear-gradient(135deg, rgb(var(--v-theme-primary)) 0%, rgb(var(--v-theme-primary-darken-1)) 100%) !important;
+  box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.3) !important;
 }
 
 .chat-window {
@@ -149,67 +220,57 @@ const sendMessage = async () => {
   left: 0;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.4) !important;
   overflow: hidden;
-}
-
-.glass-card {
-  background: rgba(15, 15, 26, 0.9) !important;
+  background: rgb(var(--v-theme-surface)) !important;
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(212, 175, 55, 0.3) !important;
+  border: 1px solid rgba(var(--v-theme-outline), 0.2) !important;
 }
 
 .chat-messages-container {
   flex-grow: 1;
-  overflow-y: auto;
-  background: rgba(255, 255, 255, 0.02);
+  overflow: hidden;
+  background: rgb(var(--v-theme-surface-variant));
 }
 
-.message-bubble {
-  max-width: 80%;
+.messages-scroll {
+  height: 100%;
+}
+
+.message-chip {
   padding: 12px 16px;
   border-radius: 18px;
-  font-size: 0.95rem;
   line-height: 1.4;
+  min-height: auto;
 }
 
-.user-bubble {
-  background: #d4af37;
-  color: #1a1a2e;
-  border-bottom-left-radius: 4px;
+.typing-chip {
+  padding: 8px 16px;
 }
 
-.bot-bubble {
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border-bottom-right-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.typing-dots {
+  font-size: 0.875rem;
+  opacity: 0.7;
 }
 
-.bg-white-opacity-20 {
-  background: rgba(255, 255, 255, 0.2);
+.chat-input {
+  background: rgb(var(--v-theme-surface));
 }
 
-.bg-glass-dark {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.typing-dots span {
-  animation: blink 1.4s infinite both;
-  font-size: 1.5rem;
-  margin: 0 2px;
-}
-
-.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes blink {
-  0% { opacity: 0.2; }
-  20% { opacity: 1; }
-  100% { opacity: 0.2; }
-}
-
-.logo-glow {
-  filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.5));
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .glass-chatbot-wrapper {
+    bottom: 16px;
+    left: 16px;
+  }
+  
+  .chat-window {
+    width: calc(100vw - 32px) !important;
+    height: 500px !important;
+  }
+  
+  .chat-fab {
+    width: 56px !important;
+    height: 56px !important;
+  }
 }
 </style>

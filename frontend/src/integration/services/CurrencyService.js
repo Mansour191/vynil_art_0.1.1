@@ -59,6 +59,30 @@ class CurrencyService {
     return amount;
   }
 
+  // الحصول على جميع العملات المتاحة
+  static async getAvailableCurrencies() {
+    try {
+      // في المستقبل يمكن جلب هذه البيانات من API
+      // حالياً نستخدم الإعدادات المحلية
+      const currencies = Object.entries(currencyConfig.currencies).map(([code, data]) => ({
+        code,
+        symbol: data.symbol,
+        name: data.name || code
+      }));
+      
+      return {
+        success: true,
+        data: currencies
+      };
+    } catch (error) {
+      console.error('❌ Error fetching available currencies:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
   // تنسيق للاستخدام في التقارير
   formatForReport(amount) {
     const currency = this.getCurrentCurrency();

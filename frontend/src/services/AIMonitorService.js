@@ -1,6 +1,6 @@
 import AIServiceClass from './AIService';
 import PricingServiceClass from './PricingService';
-import ERPNextServiceClass from '@/services/ERPNextService';
+import ERPNextService from '@/services/ERPNextService';
 
 class AIMonitorService {
   constructor() {
@@ -19,7 +19,7 @@ class AIMonitorService {
     // Initialize singleton instances correctly
     this.aiService = AIServiceClass.getInstance();
     this.pricingService = PricingServiceClass.getInstance();
-    this.erpService = ERPNextServiceClass.getInstance();
+    this.erpService = ERPNextService.getInstance();
     
     console.log('🔍 AIMonitorService initialized with singleton instances');
     

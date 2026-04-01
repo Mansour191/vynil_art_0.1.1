@@ -387,7 +387,7 @@ const saving = ref(false);
 const changingPassword = ref(false);
 const savingPreferences = ref(false);
 const passwordFormValid = ref(false);
-const passwordForm = ref(null);
+const passwordFormRef = ref(null);
 
 const userStats = ref({
   orders: 0,

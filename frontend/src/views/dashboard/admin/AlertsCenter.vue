@@ -1,440 +1,887 @@
 <template>
-  <div class="alerts-center">
-    <!-- رأس الصفحة -->
-    <div class="page-header">
-      <div class="header-title">
-        <h1>
-          <i class="fa-solid fa-bell header-icon"></i>
-          مركز التنبيهات
-        </h1>
-        <p class="header-subtitle">إدارة ومتابعة جميع التنبيهات والإشعارات الذكية</p>
-      </div>
+  <v-container class="pa-4">
+    <!-- Page Header -->
+    <v-card variant="elevated" class="mb-6 page-header">
+      <v-card-text class="pa-6">
+        <div class="d-flex align-center justify-space-between">
+          <div class="header-title">
+            <h1 class="text-h3 font-weight-bold text-white mb-2 d-flex align-center ga-3">
+              <v-icon color="primary" size="40" class="header-icon">mdi-bell</v-icon>
+              {{ $t('alertsCenter') || 'مركز التنبيهات' }}
+            </h1>
+            <p class="text-body-2 text-medium-emphasis mb-0">
+              {{ $t('alertsSubtitle') || 'إدارة ومتابعة جميع التنبيهات والإشعارات الذكية' }}
+            </p>
+          </div>
 
-      <div class="header-actions">
-        <button class="btn-refresh" @click="loadAlerts" :disabled="loading">
-          <i :class="loading ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-sync-alt'"></i>
-          <span>{{ loading ? 'جاري التحديث...' : 'تحديث' }}</span>
-        </button>
-        <button class="btn-mark-read" @click="markAllAsRead" v-if="unreadCount > 0">
-          <i class="fa-solid fa-check-double"></i>
-          <span>تحديد الكل كمقروء</span>
-        </button>
-      </div>
+          <div class="header-actions d-flex ga-3">
+            <v-btn
+              @click="loadAlerts"
+              :disabled="loading"
+              variant="tonal"
+              color="primary"
+              prepend-icon="mdi-refresh"
+              :loading="loading"
+            >
+              {{ loading ? ($t('refreshing') || 'جاري التحديث...') : ($t('refresh') || 'تحديث') }}
+            </v-btn>
+            <v-btn
+              v-if="unreadCount > 0"
+              @click="markAllAsRead"
+              variant="elevated"
+              color="primary"
+              prepend-icon="mdi-check-all"
+            >
+              {{ $t('markAllAsRead') || 'تحديد الكل كمقروء' }}
+            </v-btn>
+          </div>
+        </div>
+      </v-card-text>
+    </v-card>
+
+    <!-- Statistics Cards -->
+    <v-row v-if="alerts.length" class="mb-6">
+      <v-col cols="12" sm="6" md="3">
+        <v-card variant="elevated" class="stat-card critical">
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center ga-4">
+              <v-avatar color="error" variant="tonal" size="50">
+                <v-icon size="28" color="error">mdi-alert-triangle</v-icon>
+              </v-avatar>
+              <div class="stat-content">
+                <div class="text-h4 font-weight-bold text-white">{{ priorityCounts.critical }}</div>
+                <div class="text-caption text-medium-emphasis">{{ $t('critical') || 'حرج' }}</div>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" sm="6" md="3">
+        <v-card variant="elevated" class="stat-card high">
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center ga-4">
+              <v-avatar color="warning" variant="tonal" size="50">
+                <v-icon size="28" color="warning">mdi-alert-circle</v-icon>
+              </v-avatar>
+              <div class="stat-content">
+                <div class="text-h4 font-weight-bold text-white">{{ priorityCounts.high }}</div>
+                <div class="text-caption text-medium-emphasis">{{ $t('high') || 'عالي' }}</div>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" sm="6" md="3">
+        <v-card variant="elevated" class="stat-card medium">
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center ga-4">
+              <v-avatar color="info" variant="tonal" size="50">
+                <v-icon size="28" color="info">mdi-alert</v-icon>
+              </v-avatar>
+              <div class="stat-content">
+                <div class="text-h4 font-weight-bold text-white">{{ priorityCounts.medium }}</div>
+                <div class="text-caption text-medium-emphasis">{{ $t('medium') || 'متوسط' }}</div>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" sm="6" md="3">
+        <v-card variant="elevated" class="stat-card low">
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center ga-4">
+              <v-avatar color="success" variant="tonal" size="50">
+                <v-icon size="28" color="success">mdi-information</v-icon>
+              </v-avatar>
+              <div class="stat-content">
+                <div class="text-h4 font-weight-bold text-white">{{ priorityCounts.low }}</div>
+                <div class="text-caption text-medium-emphasis">{{ $t('low') || 'منخفض' }}</div>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- Filter Tabs -->
+    <div class="filters-tabs mb-4">
+      <v-btn-toggle
+        v-model="currentFilterIndex"
+        variant="tonal"
+        color="primary"
+        class="filter-toggle"
+      >
+        <v-btn
+          value="all"
+          class="filter-tab"
+        >
+          {{ $t('all') || 'الكل' }}
+          <v-chip size="small" color="primary" variant="elevated" class="ms-2">
+            {{ alerts.length }}
+          </v-chip>
+        </v-btn>
+        <v-btn
+          value="unread"
+          class="filter-tab"
+        >
+          {{ $t('unread') || 'غير مقروء' }}
+          <v-chip size="small" color="primary" variant="elevated" class="ms-2">
+            {{ unreadCount }}
+          </v-chip>
+        </v-btn>
+        <v-btn
+          value="critical"
+          class="filter-tab"
+        >
+          {{ $t('critical') || 'حرج' }}
+          <v-chip size="small" color="error" variant="elevated" class="ms-2">
+            {{ priorityCounts.critical }}
+          </v-chip>
+        </v-btn>
+      </v-btn-toggle>
     </div>
 
-    <!-- إحصائيات سريعة -->
-    <div class="stats-cards" v-if="alerts.length">
-      <div class="stat-card critical">
-        <div class="stat-icon">
-          <i class="fa-solid fa-exclamation-triangle"></i>
-        </div>
-        <div class="stat-content">
-          <span class="stat-value">{{ priorityCounts.critical }}</span>
-          <span class="stat-label">حرج</span>
-        </div>
-      </div>
-
-      <div class="stat-card high">
-        <div class="stat-icon">
-          <i class="fa-solid fa-exclamation-circle"></i>
-        </div>
-        <div class="stat-content">
-          <span class="stat-value">{{ priorityCounts.high }}</span>
-          <span class="stat-label">عالي</span>
-        </div>
-      </div>
-
-      <div class="stat-card medium">
-        <div class="stat-icon">
-          <i class="fa-solid fa-exclamation"></i>
-        </div>
-        <div class="stat-content">
-          <span class="stat-value">{{ priorityCounts.medium }}</span>
-          <span class="stat-label">متوسط</span>
-        </div>
-      </div>
-
-      <div class="stat-card low">
-        <div class="stat-icon">
-          <i class="fa-solid fa-info-circle"></i>
-        </div>
-        <div class="stat-content">
-          <span class="stat-value">{{ priorityCounts.low }}</span>
-          <span class="stat-label">منخفض</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- تبويبات التصفية -->
-    <div class="filters-tabs">
-      <button
-        class="filter-tab"
-        :class="{ active: currentFilter === 'all' }"
-        @click="currentFilter = 'all'"
-      >
-        الكل
-        <span class="badge">{{ alerts.length }}</span>
-      </button>
-      <button
-        class="filter-tab"
-        :class="{ active: currentFilter === 'unread' }"
-        @click="currentFilter = 'unread'"
-      >
-        غير مقروء
-        <span class="badge">{{ unreadCount }}</span>
-      </button>
-      <button
-        class="filter-tab"
-        :class="{ active: currentFilter === 'critical' }"
-        @click="currentFilter = 'critical'"
-      >
-        حرج
-        <span class="badge critical">{{ priorityCounts.critical }}</span>
-      </button>
-    </div>
-
-    <!-- تصنيفات التنبيهات -->
-    <div class="category-tabs">
-      <button
+    <!-- Category Tabs -->
+    <div class="category-tabs mb-6">
+      <v-chip
         v-for="cat in categories"
         :key="cat.value"
-        class="category-tab"
-        :class="{ active: currentCategory === cat.value }"
+        :color="currentCategory === cat.value ? 'primary' : 'default'"
+        :variant="currentCategory === cat.value ? 'elevated' : 'tonal'"
+        clickable
+        class="category-chip"
         @click="currentCategory = cat.value"
       >
-        <i :class="cat.icon"></i>
-        <span>{{ cat.label }}</span>
-        <span class="badge" :style="{ background: cat.color }">{{
-          categoryCounts[cat.value] || 0
-        }}</span>
-      </button>
+        <v-icon start>{{ getMdiIcon(cat.icon) }}</v-icon>
+        {{ cat.label }}
+        <v-chip size="x-small" :color="cat.color" variant="elevated" class="ms-2">
+          {{ categoryCounts[cat.value] || 0 }}
+        </v-chip>
+      </v-chip>
     </div>
 
-    <!-- قائمة التنبيهات -->
-    <div class="alerts-list" v-if="filteredAlerts.length > 0">
-      <transition-group name="alert" tag="div">
-        <div
+    <!-- Alerts List -->
+    <div v-if="filteredAlerts.length > 0" class="alerts-list">
+      <transition-group name="alert-transition" tag="div">
+        <v-card
           v-for="alert in filteredAlerts"
           :key="alert.id"
-          class="alert-item"
+          variant="elevated"
+          class="alert-item mb-4"
           :class="[`severity-${alert.severity || 'low'}`, { 'alert-read': alert.read }]"
         >
-          <div class="alert-icon" :style="{ background: getCategoryColor(alert.category) + '20' }">
-            <i
-              :class="alert.icon || getDefaultIcon(alert)"
-              :style="{ color: getCategoryColor(alert.category) }"
-            ></i>
-          </div>
-
-          <div class="alert-content">
-            <div class="alert-header">
-              <h3 class="alert-title">{{ alert.title }}</h3>
-              <span class="alert-time">{{ formatTime(alert.timestamp) }}</span>
-            </div>
-
-            <p class="alert-message">{{ alert.message }}</p>
-
-            <div class="alert-meta">
-              <span
-                class="alert-category"
-                :style="{
-                  background: getCategoryColor(alert.category) + '20',
-                  color: getCategoryColor(alert.category),
-                }"
+          <v-card-text class="pa-4">
+            <div class="d-flex ga-4">
+              <!-- Alert Icon -->
+              <v-avatar
+                :color="getCategoryColor(alert.category) + '20'"
+                size="50"
+                class="alert-avatar"
               >
-                <i :class="getCategoryIcon(alert.category)"></i>
-                {{ getCategoryLabel(alert.category) }}
-              </span>
+                <v-icon :color="getCategoryColor(alert.category)" size="24">
+                  {{ getMdiIcon(alert.icon || getDefaultIcon(alert)) }}
+                </v-icon>
+              </v-avatar>
 
-              <span class="alert-severity" :class="alert.severity">
-                <i :class="getSeverityIcon(alert.severity)"></i>
-                {{ getSeverityLabel(alert.severity) }}
-              </span>
+              <!-- Alert Content -->
+              <div class="flex-grow-1">
+                <div class="d-flex align-center justify-space-between mb-2">
+                  <h3 class="text-h6 font-weight-medium text-white">{{ alert.title }}</h3>
+                  <span class="text-caption text-medium-emphasis">{{ formatTime(alert.timestamp) }}</span>
+                </div>
 
-              <span
-                v-if="alert.data?.daysRemaining"
-                class="alert-days"
-                :class="{ urgent: alert.data.daysRemaining < 7 }"
-              >
-                <i class="fa-solid fa-clock"></i>
-                {{ alert.data.daysRemaining }} يوم متبقي
-              </span>
+                <p class="text-body-2 text-medium-emphasis mb-3">{{ alert.message }}</p>
+
+                <!-- Alert Meta -->
+                <div class="d-flex flex-wrap ga-2 mb-3">
+                  <v-chip
+                    size="small"
+                    :color="getCategoryColor(alert.category)"
+                    variant="tonal"
+                  >
+                    <v-icon start size="16">{{ getMdiIcon(getCategoryIcon(alert.category)) }}</v-icon>
+                    {{ getCategoryLabel(alert.category) }}
+                  </v-chip>
+
+                  <v-chip
+                    size="small"
+                    :color="getSeverityColor(alert.severity)"
+                    variant="tonal"
+                  >
+                    <v-icon start size="16">{{ getMdiIcon(getSeverityIcon(alert.severity)) }}</v-icon>
+                    {{ getSeverityLabel(alert.severity) }}
+                  </v-chip>
+
+                  <v-chip
+                    v-if="alert.data?.daysRemaining"
+                    size="small"
+                    :color="alert.data.daysRemaining < 7 ? 'error' : 'warning'"
+                    variant="tonal"
+                  >
+                    <v-icon start size="16">mdi-clock</v-icon>
+                    {{ alert.data.daysRemaining }} {{ $t('daysRemaining') || 'يوم متبقي' }}
+                  </v-chip>
+                </div>
+
+                <!-- Additional Data -->
+                <div v-if="alert.data" class="alert-data">
+                  <div v-if="alert.data.productName" class="data-item d-flex align-center ga-2 mb-2">
+                    <v-icon size="16" color="primary">mdi-package</v-icon>
+                    <span class="text-body-2 text-medium-emphasis">{{ alert.data.productName }}</span>
+                  </div>
+                  <div v-if="alert.data.currentStock" class="data-item d-flex align-center ga-2 mb-2">
+                    <v-icon size="16" color="primary">mdi-warehouse</v-icon>
+                    <span class="text-body-2 text-medium-emphasis">{{ $t('stock') || 'المخزون' }}: {{ alert.data.currentStock }}</span>
+                  </div>
+                  <div v-if="alert.data.dailyAverage" class="data-item d-flex align-center ga-2 mb-2">
+                    <v-icon size="16" color="primary">mdi-chart-line</v-icon>
+                    <span class="text-body-2 text-medium-emphasis">{{ $t('average') || 'المتوسط' }}: {{ alert.data.dailyAverage }}/{{ $t('day') || 'يوم' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Alert Actions -->
+              <div class="alert-actions d-flex flex-column ga-2">
+                <v-btn
+                  v-if="!alert.read"
+                  @click="markAsRead(alert.id)"
+                  variant="tonal"
+                  color="success"
+                  size="small"
+                  icon="mdi-check"
+                  :title="$t('markAsRead') || 'تحديد كمقروء'"
+                />
+                <v-btn
+                  v-if="alert.actionable"
+                  @click="handleAction(alert)"
+                  variant="tonal"
+                  color="primary"
+                  size="small"
+                  icon="mdi-eye"
+                  :title="$t('viewDetails') || 'عرض التفاصيل'"
+                />
+                <v-btn
+                  @click="deleteAlert(alert.id)"
+                  variant="tonal"
+                  color="error"
+                  size="small"
+                  icon="mdi-delete"
+                  :title="$t('delete') || 'حذف'"
+                />
+              </div>
             </div>
-
-            <!-- بيانات إضافية حسب النوع -->
-            <div v-if="alert.data" class="alert-data">
-              <div v-if="alert.data.productName" class="data-item">
-                <i class="fa-solid fa-box"></i>
-                <span>{{ alert.data.productName }}</span>
-              </div>
-              <div v-if="alert.data.currentStock" class="data-item">
-                <i class="fa-solid fa-warehouse"></i>
-                <span>المخزون: {{ alert.data.currentStock }}</span>
-              </div>
-              <div v-if="alert.data.dailyAverage" class="data-item">
-                <i class="fa-solid fa-chart-line"></i>
-                <span>المتوسط: {{ alert.data.dailyAverage }}/يوم</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="alert-actions">
-            <button
-              v-if="!alert.read"
-              class="action-btn mark-read"
-              @click="markAsRead(alert.id)"
-              title="تحديد كمقروء"
-            >
-              <i class="fa-solid fa-check"></i>
-            </button>
-
-            <button
-              v-if="alert.actionable"
-              class="action-btn view"
-              @click="handleAction(alert)"
-              title="عرض التفاصيل"
-            >
-              <i class="fa-solid fa-eye"></i>
-            </button>
-
-            <button class="action-btn delete" @click="deleteAlert(alert.id)" title="حذف">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </div>
-        </div>
+          </v-card-text>
+        </v-card>
       </transition-group>
 
-      <!-- زر تحميل المزيد -->
-      <div class="load-more" v-if="hasMore">
-        <button @click="loadMore">تحميل المزيد</button>
+      <!-- Load More -->
+      <div v-if="hasMore" class="load-more text-center mt-4">
+        <v-btn
+          @click="loadMore"
+          variant="tonal"
+          color="primary"
+          prepend-icon="mdi-chevron-down"
+        >
+          {{ $t('loadMore') || 'تحميل المزيد' }}
+        </v-btn>
       </div>
     </div>
 
-    <!-- حالة عدم وجود تنبيهات -->
-    <div v-else class="empty-state">
-      <div class="empty-icon">
-        <i class="fa-solid fa-bell-slash"></i>
-      </div>
-      <h3>لا توجد تنبيهات</h3>
-      <p>كل شيء هادئ، لا توجد تنبيهات جديدة</p>
+    <!-- Empty State -->
+    <v-card v-else variant="elevated" class="empty-state text-center py-8">
+      <v-card-text class="pa-6">
+        <v-avatar size="80" color="primary" variant="tonal" class="mb-4">
+          <v-icon size="48" color="primary">mdi-bell-off</v-icon>
+        </v-avatar>
+        <h3 class="text-h5 font-weight-medium text-white mb-2">{{ $t('noAlerts') || 'لا توجد تنبيهات' }}</h3>
+        <p class="text-body-1 text-medium-emphasis">{{ $t('noAlertsMessage') || 'كل شيء هادئ، لا توجد تنبيهات جديدة' }}</p>
+      </v-card-text>
+    </v-card>
+
+    <!-- Loading State -->
+    <div v-if="loading" class="text-center py-8">
+      <v-progress-circular indeterminate color="primary" size="48" />
+      <p class="mt-4 text-medium-emphasis">{{ $t('loading') || 'جاري التحميل...' }}</p>
     </div>
-  </div>
+  </v-container>
 </template>
 
-<script>
-import AlertService from '@/integration/services/AlertService';
+<script setup>
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import { useStore } from 'vuex';
+import AlertService from '@/services/AlertService';
 
-export default {
-  name: 'AlertsCenter',
-  data() {
-    return {
-      alerts: [],
-      loading: false,
-      currentFilter: 'all',
-      currentCategory: 'all',
-      pageSize: 20,
-      currentPage: 1,
-      categories: [
-        { value: 'all', label: 'الكل', icon: 'fa-solid fa-bell', color: '#d4af37' },
-        { value: 'inventory', label: 'المخزون', icon: 'fa-solid fa-box', color: '#2196F3' },
-        { value: 'forecast', label: 'التوقعات', icon: 'fa-solid fa-chart-line', color: '#9c27b0' },
-        { value: 'seasonal', label: 'موسمي', icon: 'fa-solid fa-calendar-alt', color: '#ff9800' },
-        { value: 'abc', label: 'تحليل ABC', icon: 'fa-solid fa-chart-pie', color: '#4CAF50' },
-        { value: 'system', label: 'النظام', icon: 'fa-solid fa-cog', color: '#f44336' },
-      ],
-    };
-  },
-  computed: {
-    unreadCount() {
-      return this.alerts.filter((a) => !a.read).length;
-    },
+const router = useRouter();
+const { t } = useI18n();
+const store = useStore();
 
-    priorityCounts() {
-      const counts = { critical: 0, high: 0, medium: 0, low: 0 };
-      this.alerts.forEach((alert) => {
-        if (counts[alert.severity] !== undefined) {
-          counts[alert.severity]++;
-        }
-      });
-      return counts;
-    },
+// State
+const alerts = ref([]);
+const loading = ref(false);
+const currentFilter = ref('all');
+const currentCategory = ref('all');
+const pageSize = ref(20);
+const currentPage = ref(1);
 
-    categoryCounts() {
-      const counts = {};
-      this.alerts.forEach((alert) => {
-        counts[alert.category] = (counts[alert.category] || 0) + 1;
-      });
-      return counts;
-    },
+const categories = ref([
+  { value: 'all', label: 'الكل', icon: 'fa-solid fa-bell', color: '#d4af37' },
+  { value: 'inventory', label: 'المخزون', icon: 'fa-solid fa-box', color: '#2196F3' },
+  { value: 'forecast', label: 'التوقعات', icon: 'fa-solid fa-chart-line', color: '#9c27b0' },
+  { value: 'seasonal', label: 'موسمي', icon: 'fa-solid fa-calendar-alt', color: '#ff9800' },
+  { value: 'abc', label: 'تحليل ABC', icon: 'fa-solid fa-chart-pie', color: '#4CAF50' },
+  { value: 'system', label: 'النظام', icon: 'fa-solid fa-cog', color: '#f44336' },
+]);
 
-    filteredAlerts() {
-      let filtered = [...this.alerts];
+// Computed
+const currentFilterIndex = computed({
+  get: () => ['all', 'unread', 'critical'].indexOf(currentFilter.value),
+  set: (value) => {
+    currentFilter.value = ['all', 'unread', 'critical'][value];
+  }
+});
 
-      // تصفية حسب الحالة
-      if (this.currentFilter === 'unread') {
-        filtered = filtered.filter((a) => !a.read);
-      } else if (this.currentFilter === 'critical') {
-        filtered = filtered.filter((a) => a.severity === 'critical' || a.severity === 'high');
-      }
+const unreadCount = computed(() => {
+  return alerts.value.filter((a) => !a.read).length;
+});
 
-      // تصفية حسب التصنيف
-      if (this.currentCategory !== 'all') {
-        filtered = filtered.filter((a) => a.category === this.currentCategory);
-      }
+const priorityCounts = computed(() => {
+  const counts = { critical: 0, high: 0, medium: 0, low: 0 };
+  alerts.value.forEach((alert) => {
+    if (counts[alert.severity] !== undefined) {
+      counts[alert.severity]++;
+    }
+  });
+  return counts;
+});
 
-      // ترتيب حسب الأحدث
-      filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+const categoryCounts = computed(() => {
+  const counts = {};
+  alerts.value.forEach((alert) => {
+    counts[alert.category] = (counts[alert.category] || 0) + 1;
+  });
+  return counts;
+});
 
-      // تقسيم الصفحات
-      return filtered.slice(0, this.currentPage * this.pageSize);
-    },
+const filteredAlerts = computed(() => {
+  let filtered = [...alerts.value];
 
-    hasMore() {
-      let total = this.alerts.length;
-      if (this.currentFilter === 'unread') total = this.unreadCount;
-      if (this.currentFilter === 'critical')
-        total = this.priorityCounts.critical + this.priorityCounts.high;
-      if (this.currentCategory !== 'all') total = this.categoryCounts[this.currentCategory] || 0;
+  // Filter by status
+  if (currentFilter.value === 'unread') {
+    filtered = filtered.filter((a) => !a.read);
+  } else if (currentFilter.value === 'critical') {
+    filtered = filtered.filter((a) => a.severity === 'critical' || a.severity === 'high');
+  }
 
-      return this.filteredAlerts.length < total;
-    },
-  },
-  mounted() {
-    this.loadAlerts();
+  // Filter by category
+  if (currentCategory.value !== 'all') {
+    filtered = filtered.filter((a) => a.category === currentCategory.value);
+  }
 
-    // الاستماع للتحديثات
-    AlertService.subscribe(this.handleAlertUpdate);
-  },
-  beforeUnmount() {
-    // إلغاء الاشتراك
-    AlertService.unsubscribe(this.handleAlertUpdate);
-  },
-  methods: {
-    loadAlerts() {
-      this.loading = true;
-      try {
-        this.alerts = AlertService.getAlerts();
-        this.currentPage = 1;
-      } catch (error) {
-        console.error('خطأ في تحميل التنبيهات:', error);
-      } finally {
-        this.loading = false;
-      }
-    },
+  // Sort by newest
+  filtered.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-    handleAlertUpdate(alerts) {
-      this.alerts = alerts;
-    },
+  // Pagination
+  return filtered.slice(0, currentPage.value * pageSize.value);
+});
 
-    markAsRead(alertId) {
-      AlertService.markAsRead(alertId);
-    },
+const hasMore = computed(() => {
+  let total = alerts.value.length;
+  if (currentFilter.value === 'unread') total = unreadCount.value;
+  if (currentFilter.value === 'critical')
+    total = priorityCounts.value.critical + priorityCounts.value.high;
+  if (currentCategory.value !== 'all') total = categoryCounts.value[currentCategory.value] || 0;
 
-    markAllAsRead() {
-      AlertService.markAllAsRead();
-    },
+  return filteredAlerts.value.length < total;
+});
 
-    deleteAlert(alertId) {
-      AlertService.deleteAlert(alertId);
-    },
-
-    handleAction(alert) {
-      if (alert.action?.handler) {
-        const handler = alert.action.handler;
-        const params = alert.action.params || {};
-
-        if (handler === 'viewProduct' && params.productId) {
-          this.$router.push(`/dashboard/products?view=${params.productId}`);
-        } else if (handler === 'viewForecast') {
-          this.$router.push('/dashboard/forecast');
-        } else if (handler === 'viewSeasonality') {
-          this.$router.push('/dashboard/forecast?tab=seasonality');
-        }
-      }
-    },
-
-    loadMore() {
-      this.currentPage++;
-    },
-
-    formatTime(timestamp) {
-      if (!timestamp) return '';
-
-      const date = new Date(timestamp);
-      const now = new Date();
-      const diffMs = now - date;
-      const diffMins = Math.floor(diffMs / 60000);
-      const diffHours = Math.floor(diffMs / 3600000);
-      const diffDays = Math.floor(diffMs / 86400000);
-
-      if (diffMins < 1) return 'الآن';
-      if (diffMins < 60) return `منذ ${diffMins} دقيقة`;
-      if (diffHours < 24) return `منذ ${diffHours} ساعة`;
-      if (diffDays === 1) return 'أمس';
-      if (diffDays < 7) return `منذ ${diffDays} أيام`;
-
-      return date.toLocaleDateString('ar-SA');
-    },
-
-    getCategoryLabel(category) {
-      const cat = this.categories.find((c) => c.value === category);
-      return cat ? cat.label : category;
-    },
-
-    getCategoryIcon(category) {
-      const cat = this.categories.find((c) => c.value === category);
-      return cat ? cat.icon : 'fa-solid fa-bell';
-    },
-
-    getCategoryColor(category) {
-      const cat = this.categories.find((c) => c.value === category);
-      return cat ? cat.color : '#d4af37';
-    },
-
-    getDefaultIcon(alert) {
-      const icons = {
-        inventory: 'fa-solid fa-box',
-        forecast: 'fa-solid fa-chart-line',
-        seasonal: 'fa-solid fa-calendar-alt',
-        abc: 'fa-solid fa-chart-pie',
-        system: 'fa-solid fa-cog',
-      };
-      return icons[alert.category] || 'fa-solid fa-bell';
-    },
-
-    getSeverityIcon(severity) {
-      const icons = {
-        critical: 'fa-solid fa-exclamation-triangle',
-        high: 'fa-solid fa-exclamation-circle',
-        medium: 'fa-solid fa-exclamation',
-        low: 'fa-solid fa-info-circle',
-      };
-      return icons[severity] || 'fa-solid fa-bell';
-    },
-
-    getSeverityLabel(severity) {
-      const labels = {
-        critical: 'حرج',
-        high: 'عالي',
-        medium: 'متوسط',
-        low: 'منخفض',
-      };
-      return labels[severity] || severity;
-    },
-  },
+// Methods
+const loadAlerts = async () => {
+  try {
+    loading.value = true;
+    
+    const response = await AlertService.getAlerts();
+    if (response.success) {
+      alerts.value = response.data;
+    } else {
+      // Fallback to mock data
+      alerts.value = getMockAlerts();
+    }
+    
+    currentPage.value = 1;
+  } catch (error) {
+    console.error('Error loading alerts:', error);
+    
+    // Show error notification
+    store.dispatch('notifications/add', {
+      type: 'error',
+      title: t('error') || 'خطأ',
+      message: t('errorLoadingAlerts') || 'خطأ في تحميل التنبيهات',
+      timeout: 5000
+    });
+    
+    // Set fallback data
+    alerts.value = getMockAlerts();
+  } finally {
+    loading.value = false;
+  }
 };
+
+const getMockAlerts = () => {
+  return [
+    {
+      id: 1,
+      title: 'مخزون منخفض',
+      message: 'منتج فينيل ديكور ذهبي وصل إلى الحد الأدنى للمخزون',
+      category: 'inventory',
+      severity: 'critical',
+      read: false,
+      actionable: true,
+      timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+      data: {
+        productName: 'فينيل ديكور ذهبي',
+        currentStock: 5,
+        dailyAverage: 2,
+        daysRemaining: 2
+      },
+      action: {
+        handler: 'viewProduct',
+        params: { productId: 123 }
+      }
+    },
+    {
+      id: 2,
+      title: 'توقعات المبيعات',
+      message: 'زيادة متوقعة في مبيعات فئة الأبواب خلال الشهر القادم',
+      category: 'forecast',
+      severity: 'high',
+      read: false,
+      actionable: true,
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+      action: {
+        handler: 'viewForecast',
+        params: {}
+      }
+    },
+    {
+      id: 3,
+      title: 'تحديث النظام',
+      message: 'تم تحديث النظام بنجاح إلى الإصدار 2.1.0',
+      category: 'system',
+      severity: 'low',
+      read: true,
+      actionable: false,
+      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString()
+    }
+  ];
+};
+
+const handleAlertUpdate = (newAlerts) => {
+  alerts.value = newAlerts;
+};
+
+const markAsRead = async (alertId) => {
+  try {
+    const response = await AlertService.markAsRead(alertId);
+    
+    if (response.success) {
+      // Update local state
+      const alert = alerts.value.find(a => a.id === alertId);
+      if (alert) {
+        alert.read = true;
+      }
+      
+      // Show success notification
+      store.dispatch('notifications/add', {
+        type: 'success',
+        title: t('success') || 'نجاح',
+        message: t('alertMarkedAsRead') || 'تم تحديد التنبيه كمقروء',
+        timeout: 3000
+      });
+    }
+  } catch (error) {
+    console.error('Error marking alert as read:', error);
+  }
+};
+
+const markAllAsRead = async () => {
+  try {
+    const response = await AlertService.markAllAsRead();
+    
+    if (response.success) {
+      // Update local state
+      alerts.value.forEach(alert => {
+        alert.read = true;
+      });
+      
+      // Show success notification
+      store.dispatch('notifications/add', {
+        type: 'success',
+        title: t('success') || 'نجاح',
+        message: t('allAlertsMarkedAsRead') || 'تم تحديد جميع التنبيهات كمقروءة',
+        timeout: 3000
+      });
+    }
+  } catch (error) {
+    console.error('Error marking all alerts as read:', error);
+  }
+};
+
+const deleteAlert = async (alertId) => {
+  const confirmed = confirm(t('confirmDeleteAlert') || 'هل أنت متأكد من حذف هذا التنبيه؟');
+  
+  if (confirmed) {
+    try {
+      const response = await AlertService.deleteAlert(alertId);
+      
+      if (response.success) {
+        // Remove from local state
+        alerts.value = alerts.value.filter(alert => alert.id !== alertId);
+        
+        // Show success notification
+        store.dispatch('notifications/add', {
+          type: 'success',
+          title: t('success') || 'نجاح',
+          message: t('alertDeleted') || 'تم حذف التنبيه بنجاح',
+          timeout: 3000
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting alert:', error);
+    }
+  }
+};
+
+const handleAction = (alert) => {
+  if (alert.action?.handler) {
+    const handler = alert.action.handler;
+    const params = alert.action.params || {};
+
+    if (handler === 'viewProduct' && params.productId) {
+      router.push(`/dashboard/products?view=${params.productId}`);
+    } else if (handler === 'viewForecast') {
+      router.push('/dashboard/forecast');
+    } else if (handler === 'viewSeasonality') {
+      router.push('/dashboard/forecast?tab=seasonality');
+    }
+  }
+};
+
+const loadMore = () => {
+  currentPage.value++;
+};
+
+const formatTime = (timestamp) => {
+  if (!timestamp) return '';
+
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return t('now') || 'الآن';
+  if (diffMins < 60) return `${t('minutesAgo') || 'منذ'} ${diffMins} ${t('minutes') || 'دقيقة'}`;
+  if (diffHours < 24) return `${t('hoursAgo') || 'منذ'} ${diffHours} ${t('hours') || 'ساعة'}`;
+  if (diffDays === 1) return t('yesterday') || 'أمس';
+  if (diffDays < 7) return `${t('daysAgo') || 'منذ'} ${diffDays} ${t('days') || 'أيام'}`;
+
+  return date.toLocaleDateString('ar-SA');
+};
+
+const getCategoryLabel = (category) => {
+  const cat = categories.value.find((c) => c.value === category);
+  return cat ? cat.label : category;
+};
+
+const getCategoryIcon = (category) => {
+  const cat = categories.value.find((c) => c.value === category);
+  return cat ? cat.icon : 'fa-solid fa-bell';
+};
+
+const getCategoryColor = (category) => {
+  const cat = categories.value.find((c) => c.value === category);
+  return cat ? cat.color : '#d4af37';
+};
+
+const getDefaultIcon = (alert) => {
+  const icons = {
+    inventory: 'fa-solid fa-box',
+    forecast: 'fa-solid fa-chart-line',
+    seasonal: 'fa-solid fa-calendar-alt',
+    abc: 'fa-solid fa-chart-pie',
+    system: 'fa-solid fa-cog',
+  };
+  return icons[alert.category] || 'fa-solid fa-bell';
+};
+
+const getSeverityIcon = (severity) => {
+  const icons = {
+    critical: 'fa-solid fa-exclamation-triangle',
+    high: 'fa-solid fa-exclamation-circle',
+    medium: 'fa-solid fa-exclamation',
+    low: 'fa-solid fa-info-circle',
+  };
+  return icons[severity] || 'fa-solid fa-bell';
+};
+
+const getSeverityLabel = (severity) => {
+  const labels = {
+    critical: t('critical') || 'حرج',
+    high: t('high') || 'عالي',
+    medium: t('medium') || 'متوسط',
+    low: t('low') || 'منخفض',
+  };
+  return labels[severity] || severity;
+};
+
+const getSeverityColor = (severity) => {
+  const colors = {
+    critical: 'error',
+    high: 'warning',
+    medium: 'info',
+    low: 'success',
+  };
+  return colors[severity] || 'primary';
+};
+
+const getMdiIcon = (faIcon) => {
+  const iconMap = {
+    'fa-solid fa-bell': 'mdi-bell',
+    'fa-solid fa-box': 'mdi-package',
+    'fa-solid fa-chart-line': 'mdi-chart-line',
+    'fa-solid fa-calendar-alt': 'mdi-calendar',
+    'fa-solid fa-chart-pie': 'mdi-chart-pie',
+    'fa-solid fa-cog': 'mdi-cog',
+    'fa-solid fa-exclamation-triangle': 'mdi-alert-triangle',
+    'fa-solid fa-exclamation-circle': 'mdi-alert-circle',
+    'fa-solid fa-exclamation': 'mdi-alert',
+    'fa-solid fa-info-circle': 'mdi-information',
+    'fa-solid fa-check': 'mdi-check',
+    'fa-solid fa-eye': 'mdi-eye',
+    'fa-solid fa-trash': 'mdi-delete',
+    'fa-solid fa-clock': 'mdi-clock',
+    'fa-solid fa-warehouse': 'mdi-warehouse',
+    'fa-solid fa-bell-slash': 'mdi-bell-off',
+  };
+  return iconMap[faIcon] || 'mdi-bell';
+};
+
+// Watchers
+watch(() => currentFilter.value, () => {
+  currentPage.value = 1;
+});
+
+watch(() => currentCategory.value, () => {
+  currentPage.value = 1;
+});
+
+// Lifecycle
+onMounted(() => {
+  loadAlerts();
+  
+  // Subscribe to real-time updates
+  AlertService.subscribe(handleAlertUpdate);
+});
+
+onBeforeUnmount(() => {
+  // Unsubscribe from real-time updates
+  AlertService.unsubscribe(handleAlertUpdate);
+});
 </script>
 
 <style scoped>
-@import '@/assets/theme.css';
-
-.alerts-center {
-  padding: 25px;
-  min-height: 100vh;
-  background: var(--bg-primary);
-  animation: fadeIn 0.5s ease;
+/* Page Header */
+.page-header {
+  background: linear-gradient(135deg, rgba(var(--v-theme-primary), 0.1), rgba(var(--v-theme-secondary), 0.1));
+  border: 1px solid rgba(var(--v-theme-primary), 0.2);
+  transition: all 0.3s ease;
 }
 
+.page-header:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.15);
+}
+
+.header-icon {
+  animation: iconPulse 2s ease infinite;
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Statistics Cards */
+.stat-card {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.stat-card:hover::before {
+  left: 100%;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.15);
+}
+
+.stat-card.critical {
+  background: linear-gradient(135deg, rgb(var(--v-theme-error)), rgb(var(--v-theme-error-darken-1)));
+}
+
+.stat-card.high {
+  background: linear-gradient(135deg, rgb(var(--v-theme-warning)), rgb(var(--v-theme-warning-darken-1)));
+}
+
+.stat-card.medium {
+  background: linear-gradient(135deg, rgb(var(--v-theme-info)), rgb(var(--v-theme-info-darken-1)));
+}
+
+.stat-card.low {
+  background: linear-gradient(135deg, rgb(var(--v-theme-success)), rgb(var(--v-theme-success-darken-1)));
+}
+
+/* Filter Tabs */
+.filter-toggle {
+  background: transparent;
+}
+
+.filter-tab {
+  transition: all 0.3s ease;
+}
+
+.filter-tab:hover {
+  transform: translateY(-2px);
+}
+
+/* Category Chips */
+.category-chip {
+  transition: all 0.3s ease;
+}
+
+.category-chip:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.2);
+}
+
+/* Alert Items */
+.alert-item {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.alert-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+  transition: left 0.5s ease;
+}
+
+.alert-item:hover::before {
+  left: 100%;
+}
+
+.alert-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.15);
+}
+
+.alert-item.alert-read {
+  opacity: 0.7;
+  background: rgba(var(--v-theme-surface-variant), 0.5);
+}
+
+.alert-item.severity-critical {
+  border-left: 4px solid rgb(var(--v-theme-error));
+}
+
+.alert-item.severity-high {
+  border-left: 4px solid rgb(var(--v-theme-warning));
+}
+
+.alert-item.severity-medium {
+  border-left: 4px solid rgb(var(--v-theme-info));
+}
+
+.alert-item.severity-low {
+  border-left: 4px solid rgb(var(--v-theme-success));
+}
+
+.alert-avatar {
+  transition: all 0.3s ease;
+}
+
+.alert-item:hover .alert-avatar {
+  transform: scale(1.05);
+}
+
+/* Alert Actions */
+.alert-actions .v-btn {
+  transition: all 0.3s ease;
+}
+
+.alert-actions .v-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* Empty State */
+.empty-state {
+  background: linear-gradient(135deg, rgba(var(--v-theme-primary), 0.05), rgba(var(--v-theme-secondary), 0.05));
+  border: 1px solid rgba(var(--v-theme-primary), 0.1);
+  transition: all 0.3s ease;
+}
+
+.empty-state:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.15);
+}
+
+/* Transitions */
+.alert-transition-enter-active,
+.alert-transition-leave-active {
+  transition: all 0.3s ease;
+}
+
+.alert-transition-enter {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.alert-transition-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.alert-transition-move {
+  transition: transform 0.3s ease;
+}
+
+/* Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -446,257 +893,97 @@ export default {
   }
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-  background: var(--bg-card);
-  padding: 25px 30px;
-  border-radius: 24px;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-md);
+.alerts-center {
+  animation: fadeIn 0.5s ease;
 }
 
-.header-title h1 {
-  font-size: 2rem;
-  color: white;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-icon {
-  color: var(--gold-1);
-  font-size: 2rem;
-  animation: iconPulse 2s ease infinite;
-}
-
-@keyframes iconPulse {
-  0%,
-  100% {
-    transform: scale(1);
+/* Responsive Design */
+@media (max-width: 960px) {
+  .header-actions {
+    flex-direction: column;
+    gap: 8px;
   }
-  50% {
-    transform: scale(1.1);
+  
+  .category-tabs {
+    flex-wrap: wrap;
   }
 }
 
-.header-subtitle {
-  color: var(--text-dim);
-  font-size: 0.95rem;
+@media (max-width: 600px) {
+  .header-title h1 {
+    font-size: 1.5rem;
+  }
+  
+  .filter-toggle {
+    flex-direction: column;
+  }
+  
+  .alert-item .d-flex {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .alert-actions {
+    flex-direction: row;
+    justify-content: center;
+  }
 }
 
-.header-actions {
-  display: flex;
-  gap: 12px;
+/* Vuetify Overrides */
+:deep(.v-card) {
+  transition: all 0.3s ease;
 }
 
-.btn-refresh,
-.btn-mark-read {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 16px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s;
+:deep(.v-card:hover) {
+  transform: translateY(-2px);
 }
 
-.btn-refresh {
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  color: var(--gold-1);
+:deep(.v-btn) {
+  transition: all 0.3s ease;
 }
 
-.btn-mark-read {
-  background: var(--gold-gradient);
-  color: var(--bg-deep);
-  box-shadow: var(--shadow-gold);
+:deep(.v-btn:hover) {
+  transform: translateY(-2px);
 }
 
-.btn-refresh:hover,
-.btn-mark-read:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-gold-strong);
+:deep(.v-avatar) {
+  transition: all 0.3s ease;
 }
 
-/* إحصائيات */
-.stats-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 25px;
+:deep(.v-avatar:hover) {
+  transform: scale(1.05);
 }
 
-.stat-card {
-  background: var(--bg-card);
-  border-radius: 20px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  border: 1px solid var(--border-light);
-  transition: all 0.3s;
+:deep(.v-chip) {
+  transition: all 0.3s ease;
 }
 
-.stat-card:hover {
-  transform: translateY(-5px);
-  border-color: var(--gold-1);
-  box-shadow: var(--shadow-gold);
+:deep(.v-chip:hover) {
+  transform: translateY(-2px);
 }
 
-.stat-card.critical .stat-icon {
-  background: rgba(244, 67, 54, 0.1);
-  color: #f44336;
+:deep(.v-progress-circular) {
+  animation: spin 2s linear infinite;
 }
 
-.stat-card.high .stat-icon {
-  background: rgba(255, 152, 0, 0.1);
-  color: #ff9800;
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-.stat-card.medium .stat-icon {
-  background: rgba(33, 150, 243, 0.1);
-  color: #2196f3;
+:deep(.v-btn-toggle) {
+  background: transparent;
 }
 
-.stat-card.low .stat-icon {
-  background: rgba(76, 175, 80, 0.1);
-  color: #4caf50;
+:deep(.v-btn-toggle .v-btn) {
+  border: 1px solid rgba(var(--v-theme-primary), 0.2);
 }
 
-.stat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
+:deep(.v-btn-toggle .v-btn.v-btn--active) {
+  background: rgb(var(--v-theme-primary));
+  color: rgb(var(--v-theme-on-primary));
 }
-
-.stat-content {
-  flex: 1;
-}
-
-.stat-value {
-  display: block;
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 5px;
-}
-
-.stat-label {
-  color: var(--text-dim);
-  font-size: 0.9rem;
-}
-
-/* تبويبات */
-.filters-tabs {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.filter-tab {
-  padding: 10px 20px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  border-radius: 30px;
-  color: var(--text-dim);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s;
-}
-
-.filter-tab:hover {
-  border-color: var(--gold-1);
-  color: var(--gold-1);
-}
-
-.filter-tab.active {
-  background: var(--gold-gradient);
-  color: var(--bg-deep);
-  border-color: transparent;
-}
-
-.filter-tab .badge {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-}
-
-.filter-tab.active .badge {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.category-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 25px;
-}
-
-.category-tab {
-  padding: 8px 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  border-radius: 20px;
-  color: var(--text-dim);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s;
-}
-
-.category-tab:hover {
-  border-color: var(--gold-1);
-}
-
-.category-tab.active {
-  background: var(--gold-gradient-soft);
-  border-color: var(--gold-1);
-  color: var(--gold-1);
-}
-
-.category-tab .badge {
-  padding: 2px 6px;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  color: white;
-}
-
-/* قائمة التنبيهات */
-.alerts-list {
-  margin-top: 20px;
-}
-
-.alert-item {
-  background: var(--bg-card);
-  border-radius: 20px;
-  padding: 20px;
-  margin-bottom: 15px;
-  border: 1px solid var(--border-light);
-  display: flex;
-  gap: 20px;
-  transition: all 0.3s;
-  animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
+</style>
   }
   to {
     opacity: 1;

@@ -3,9 +3,9 @@ import { apolloClient } from './apolloClient';
 
 class ERPNextService {
   constructor() {
-    this.baseURL = process.env.VUE_APP_ERPNEXT_API_URL || '/api';
-    this.apiKey = process.env.VUE_APP_ERPNEXT_API_KEY || '';
-    this.apiSecret = process.env.VUE_APP_ERPNEXT_API_SECRET || '';
+    this.baseURL = import.meta.env.VITE_ERPNEXT_API_URL || '/api';
+    this.apiKey = import.meta.env.VITE_ERPNEXT_API_KEY || '';
+    this.apiSecret = import.meta.env.VITE_ERPNEXT_API_SECRET || '';
     this.client = apolloClient;
   }
 

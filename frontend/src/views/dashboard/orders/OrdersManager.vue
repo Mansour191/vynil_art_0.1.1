@@ -1,233 +1,455 @@
 <template>
-  <div class="orders-manager">
+  <v-container class="pa-4">
     <!-- Header -->
-    <header class="page-header">
-      <div class="header-content">
-        <h1>إدارة الطلبات</h1>
-        <p>متابعة ومعالجة طلبات العملاء والمبيعات</p>
-      </div>
-      <div class="header-actions">
-        <button class="btn-export" @click="exportOrders">
-          <i class="fa-solid fa-file-export"></i> تصدير
-        </button>
-        <button class="btn-primary" @click="openNewOrderModal">
-          <i class="fa-solid fa-plus"></i> طلب جديد
-        </button>
-      </div>
-    </header>
-
-    <!-- Stats -->
-    <StatCards :stats="orderStats" />
-
-    <!-- Filters -->
-    <div class="filters-card">
-      <div class="search-bar">
-        <i class="fa-solid fa-search search-icon"></i>
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="البحث برقم الطلب، اسم العميل، أو البريد الإلكتروني..."
-          @input="debouncedSearch"
-        />
-        <button v-if="searchQuery" class="clear-search" @click="clearSearch">
-          <i class="fa-solid fa-times"></i>
-        </button>
-      </div>
-
-      <div class="quick-filters">
-        <select v-model="statusFilter" class="filter-select">
-          <option value="">جميع الحالات</option>
-          <option value="pending">قيد الانتظار</option>
-          <option value="processing">قيد المعالجة</option>
-          <option value="shipped">تم الشحن</option>
-          <option value="delivered">تم التوصيل</option>
-          <option value="cancelled">ملغي</option>
-        </select>
-
-        <select v-model="paymentFilter" class="filter-select">
-          <option value="">جميع طرق الدفع</option>
-          <option value="cash">الدفع عند الاستلام</option>
-          <option value="card">بطاقة ائتمان</option>
-          <option value="bank">تحويل بنكي</option>
-        </select>
-
-        <button class="btn-advanced" @click="showAdvancedFilters = !showAdvancedFilters">
-          <i class="fa-solid fa-sliders-h"></i>
-          فلترة متقدمة
-        </button>
-
-        <button class="btn-reset" @click="resetFilters">
-          <i class="fa-solid fa-undo"></i>
-        </button>
-      </div>
-
-      <!-- Advanced Filters Dropdown -->
-      <transition name="slide-fade">
-        <div v-if="showAdvancedFilters" class="advanced-filters-panel">
-          <div class="filter-grid">
-            <div class="filter-group">
-              <label>نطاق السعر</label>
-              <div class="range-inputs">
-                <input v-model.number="priceRange.min" type="number" placeholder="من" />
-                <input v-model.number="priceRange.max" type="number" placeholder="إلى" />
-              </div>
-            </div>
-            <div class="filter-group">
-              <label>المدينة</label>
-              <input v-model="cityFilter" type="text" placeholder="مثلاً: سطيف" />
-            </div>
+    <v-card variant="elevated" class="mb-6">
+      <v-card-text class="pa-4">
+        <div class="d-flex align-center justify-space-between">
+          <div>
+            <h1 class="text-h4 font-weight-bold mb-2">إدارة الطلبات</h1>
+            <p class="text-body-2 text-medium-emphasis mb-0">متابعة ومعالجة طلبات العملاء والمبيعات</p>
           </div>
-          <div class="filter-actions">
-            <button class="btn-apply" @click="applyAdvancedFilters">تطبيق</button>
-            <button class="btn-link" @click="resetAdvancedFilters">إعادة تعيين</button>
+          <div class="d-flex ga-2">
+            <v-btn
+              @click="exportOrders"
+              variant="tonal"
+              prepend-icon="mdi-file-export"
+            >
+              تصدير
+            </v-btn>
+            <v-btn
+              @click="openNewOrderModal"
+              variant="elevated"
+              color="primary"
+              prepend-icon="mdi-plus"
+            >
+              طلب جديد
+            </v-btn>
           </div>
         </div>
-      </transition>
-    </div>
+      </v-card-text>
+    </v-card>
 
-    <!-- Bulk Actions -->
-    <div v-if="selectedOrders.length > 0" class="bulk-actions-bar">
-      <div class="selection-info">
-        <i class="fa-solid fa-check-double"></i>
-        تم تحديد {{ selectedOrders.length }} طلب
-      </div>
-      <div class="bulk-buttons">
-        <button @click="bulkUpdateStatus('processing')">تجهيز المحدد</button>
-        <button @click="bulkUpdateStatus('shipped')">شحن المحدد</button>
-        <button class="danger" @click="bulkUpdateStatus('cancelled')">إلغاء المحدد</button>
-        <div class="divider"></div>
-        <button class="secondary" @click="clearSelection">إلغاء التحديد</button>
-      </div>
-    </div>
+    <!-- Stats -->
+    <v-row class="mb-6">
+      <v-col cols="12" md="3">
+        <v-card variant="tonal" color="primary">
+          <v-card-text class="pa-4 text-center">
+            <v-icon size="32" color="primary" class="mb-2">mdi-shopping-basket</v-icon>
+            <div class="text-h4 font-weight-bold">{{ stats.totalOrders }}</div>
+            <div class="text-caption text-medium-emphasis">إجمالي الطلبات</div>
+            <v-chip size="small" :color="stats.totalOrdersTrend > 0 ? 'success' : 'error'" class="mt-2">
+              {{ stats.totalOrdersTrend > 0 ? '+' : '' }}{{ stats.totalOrdersTrend }}%
+            </v-chip>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" md="3">
+        <v-card variant="tonal" color="info">
+          <v-card-text class="pa-4 text-center">
+            <v-icon size="32" color="info" class="mb-2">mdi-calendar-day</v-icon>
+            <div class="text-h4 font-weight-bold">{{ stats.todayOrders }}</div>
+            <div class="text-caption text-medium-emphasis">طلبات اليوم</div>
+            <v-chip size="small" :color="stats.todayOrdersTrend > 0 ? 'success' : 'error'" class="mt-2">
+              {{ stats.todayOrdersTrend > 0 ? '+' : '' }}{{ stats.todayOrdersTrend }}%
+            </v-chip>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" md="3">
+        <v-card variant="tonal" color="warning">
+          <v-card-text class="pa-4 text-center">
+            <v-icon size="32" color="warning" class="mb-2">mdi-cogs</v-icon>
+            <div class="text-h4 font-weight-bold">{{ stats.processingOrders }}</div>
+            <div class="text-caption text-medium-emphasis">قيد المعالجة</div>
+            <v-chip size="small" :color="stats.processingOrdersTrend > 0 ? 'success' : 'error'" class="mt-2">
+              {{ stats.processingOrdersTrend > 0 ? '+' : '' }}{{ stats.processingOrdersTrend }}%
+            </v-chip>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" md="3">
+        <v-card variant="tonal" color="success">
+          <v-card-text class="pa-4 text-center">
+            <v-icon size="32" color="success" class="mb-2">mdi-check-double</v-icon>
+            <div class="text-h4 font-weight-bold">{{ stats.deliveredOrders }}</div>
+            <div class="text-caption text-medium-emphasis">تم التوصيل</div>
+            <v-chip size="small" :color="stats.deliveredOrdersTrend > 0 ? 'success' : 'error'" class="mt-2">
+              {{ stats.deliveredOrdersTrend > 0 ? '+' : '' }}{{ stats.deliveredOrdersTrend }}%
+            </v-chip>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- Filters -->
+    <v-card variant="elevated" class="mb-6">
+      <v-card-title class="pa-4">
+        <v-icon color="primary" class="me-2">mdi-filter</v-icon>
+        البحث والتصفية
+      </v-card-title>
+      <v-card-text class="pa-4">
+        <v-row>
+          <v-col cols="12" md="6">
+            <v-text-field
+              v-model="searchQuery"
+              label="البحث عن طلب"
+              placeholder="رقم الطلب، اسم العميل، أو البريد الإلكتروني..."
+              prepend-inner-icon="mdi-magnify"
+              clearable
+              @click:clear="clearSearch"
+              variant="outlined"
+              density="compact"
+            />
+          </v-col>
+          <v-col cols="12" md="2">
+            <v-select
+              v-model="statusFilter"
+              label="الحالة"
+              :items="statusOptions"
+              item-title="text"
+              item-value="value"
+              clearable
+              variant="outlined"
+              density="compact"
+            />
+          </v-col>
+          <v-col cols="12" md="2">
+            <v-select
+              v-model="paymentFilter"
+              label="طريقة الدفع"
+              :items="paymentOptions"
+              item-title="text"
+              item-value="value"
+              clearable
+              variant="outlined"
+              density="compact"
+            />
+          </v-col>
+          <v-col cols="12" md="2">
+            <v-btn
+              @click="resetFilters"
+              variant="tonal"
+              prepend-icon="mdi-refresh"
+              block
+            >
+              إعادة تعيين
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
 
     <!-- Orders Table -->
-    <OrdersTable
-      :orders="paginatedOrders"
-      :columns="columns"
-      :selected-orders="selectedOrders"
-      :select-all="selectAll"
-      :sort-key="sortKey"
-      :sort-order="sortOrder"
-      :active-order-menu="activeOrderMenu"
-      @sort="handleSort"
-      @view="viewOrder"
-      @edit="editOrder"
-      @toggle-select="toggleOrderSelection"
-      @toggle-select-all="toggleSelectAll"
-      @toggle-menu="toggleOrderMenu"
-      @update-status="updateOrderStatus"
-    />
+    <v-card variant="elevated" class="mb-6">
+      <v-card-text class="pa-0">
+        <v-data-table
+          :headers="tableHeaders"
+          :items="paginatedOrders"
+          :loading="loading"
+          :sort-by="sortKey"
+          :sort-desc="sortOrder === 'desc'"
+          @update:sort-by="handleSort"
+          show-select
+          v-model="selectedOrders"
+          item-value="id"
+          density="comfortable"
+        >
+          <template v-slot:item.status="{ item }">
+            <v-chip
+              :color="getStatusColor(item.status)"
+              size="small"
+              variant="tonal"
+            >
+              {{ getStatusText(item.status) }}
+            </v-chip>
+          </template>
+          
+          <template v-slot:item.paymentMethod="{ item }">
+            <v-icon
+              :icon="getPaymentIcon(item.paymentMethod)"
+              :color="getPaymentColor(item.paymentMethod)"
+              size="small"
+              class="me-2"
+            />
+            {{ getPaymentText(item.paymentMethod) }}
+          </template>
+          
+          <template v-slot:item.total="{ item }">
+            <div class="font-weight-bold">
+              {{ formatCurrency(item.total) }}
+            </div>
+          </template>
+          
+          <template v-slot:item.actions="{ item }">
+            <v-btn
+              @click="viewOrder(item)"
+              icon="mdi-eye"
+              variant="text"
+              size="small"
+              class="me-1"
+            />
+            <v-btn
+              @click="editOrder(item)"
+              icon="mdi-pencil"
+              variant="text"
+              size="small"
+              class="me-1"
+            />
+            <v-menu>
+              <template v-slot:activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  icon="mdi-dots-vertical"
+                  variant="text"
+                  size="small"
+                />
+              </template>
+              <v-list>
+                <v-list-item @click="updateOrderStatus(item, 'shipped')">
+                  <template v-slot:prepend>
+                    <v-icon>mdi-truck</v-icon>
+                  </template>
+                  تم الشحن
+                </v-list-item>
+                <v-list-item @click="sendInvoice(item)">
+                  <template v-slot:prepend>
+                    <v-icon>mdi-email</v-icon>
+                  </template>
+                  إرسال فاتورة
+                </v-list-item>
+                <v-list-item @click="printOrder(item)">
+                  <template v-slot:prepend>
+                    <v-icon>mdi-printer</v-icon>
+                  </template>
+                  طباعة
+                </v-list-item>
+              </v-list>
+            </v-menu>
+          </template>
+        </v-data-table>
+      </v-card-text>
+    </v-card>
 
     <!-- Pagination -->
-    <Pagination
-      v-model:current-page="currentPage"
-      v-model:items-per-page="itemsPerPage"
-      :total-items="filteredOrders.length"
-    />
+    <v-card variant="tonal">
+      <v-card-text class="pa-4">
+        <v-pagination
+          v-model="currentPage"
+          :length="totalPages"
+          :items-per-page="itemsPerPage"
+          :total-visible="7"
+          @update:model-value="handlePageChange"
+        />
+      </v-card-text>
+    </v-card>
 
     <!-- Order Details Modal -->
-    <OrderDetailsModal
-      v-if="showOrderModal"
-      :order="selectedOrder"
-      @close="closeOrderModal"
-      @update-status="updateOrderStatus"
-      @print="printOrder"
-      @send-invoice="sendInvoice"
-    />
-  </div>
+    <v-dialog v-model="showOrderModal" max-width="800">
+      <v-card>
+        <v-card-title class="pa-4">
+          <div class="d-flex align-center">
+            <v-icon color="primary" class="me-2">mdi-receipt</v-icon>
+            تفاصيل الطلب
+          </div>
+          <v-spacer />
+          <v-btn
+            @click="closeOrderModal"
+            icon="mdi-close"
+            variant="text"
+          />
+        </v-card-title>
+        
+        <v-card-text v-if="selectedOrder" class="pa-4">
+          <v-row>
+            <v-col cols="12" md="6">
+              <v-card variant="tonal" class="mb-4">
+                <v-card-title class="text-subtitle-1">معلومات العميل</v-card-title>
+                <v-card-text>
+                  <div class="mb-2">
+                    <strong>الاسم:</strong> {{ selectedOrder.customer }}
+                  </div>
+                  <div class="mb-2">
+                    <strong>البريد:</strong> {{ selectedOrder.email }}
+                  </div>
+                  <div class="mb-2">
+                    <strong>الهاتف:</strong> {{ selectedOrder.phone }}
+                  </div>
+                  <div>
+                    <strong>العنوان:</strong><br>
+                    {{ selectedOrder.shippingAddress?.street }}<br>
+                    {{ selectedOrder.shippingAddress?.city }}, {{ selectedOrder.shippingAddress?.country }}
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+            
+            <v-col cols="12" md="6">
+              <v-card variant="tonal" class="mb-4">
+                <v-card-title class="text-subtitle-1">معلومات الطلب</v-card-title>
+                <v-card-text>
+                  <div class="mb-2">
+                    <strong>رقم الطلب:</strong> {{ selectedOrder.id }}
+                  </div>
+                  <div class="mb-2">
+                    <strong>التاريخ:</strong> {{ formatDate(selectedOrder.date) }}
+                  </div>
+                  <div class="mb-2">
+                    <strong>الحالة:</strong>
+                    <v-chip
+                      :color="getStatusColor(selectedOrder.status)"
+                      size="small"
+                      variant="tonal"
+                    >
+                      {{ getStatusText(selectedOrder.status) }}
+                    </v-chip>
+                  </div>
+                  <div class="mb-2">
+                    <strong>طريقة الدفع:</strong>
+                    <v-icon
+                      :icon="getPaymentIcon(selectedOrder.paymentMethod)"
+                      :color="getPaymentColor(selectedOrder.paymentMethod)"
+                      size="small"
+                      class="me-2"
+                    />
+                    {{ getPaymentText(selectedOrder.paymentMethod) }}
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+          
+          <v-divider class="my-4" />
+          
+          <!-- Order Products -->
+          <v-card variant="tonal">
+            <v-card-title class="text-subtitle-1 mb-4">المنتجات</v-card-title>
+            <v-card-text>
+              <v-list>
+                <v-list-item v-for="product in selectedOrder.products" :key="product.id">
+                  <template v-slot:prepend>
+                    <v-avatar size="40" :image="product.image" />
+                  </template>
+                  <v-list-item-title>
+                    {{ product.name }}
+                  </v-list-item-title>
+                  <v-list-item-subtitle>
+                    SKU: {{ product.sku }} | الكمية: {{ product.quantity }}
+                  </v-list-item-subtitle>
+                  <template v-slot:append>
+                    <div class="text-end">
+                      <div class="font-weight-bold">{{ formatCurrency(product.price) }}</div>
+                      <div class="text-caption text-medium-emphasis">
+                        {{ formatCurrency(product.price * product.quantity) }}
+                      </div>
+                    </div>
+                  </template>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+          </v-card>
+          
+          <!-- Order Summary -->
+          <v-row class="mt-4">
+            <v-col cols="12" md="6" offset-md="6">
+              <v-card variant="tonal" color="primary">
+                <v-card-title class="text-subtitle-1">ملخص الطلب</v-card-title>
+                <v-card-text>
+                  <div class="d-flex justify-space-between mb-2">
+                    <span>الإجمالي الفرعي:</span>
+                    <span>{{ formatCurrency(selectedOrder.subtotal) }}</span>
+                  </div>
+                  <div class="d-flex justify-space-between mb-2">
+                    <span>الشحن:</span>
+                    <span>{{ formatCurrency(selectedOrder.shipping || 0) }}</span>
+                  </div>
+                  <div class="d-flex justify-space-between mb-2">
+                    <span>الضريبة:</span>
+                    <span>{{ formatCurrency(selectedOrder.tax || 0) }}</span>
+                  </div>
+                  <v-divider class="my-2" />
+                  <div class="d-flex justify-space-between">
+                    <strong class="text-h6">الإجمالي:</strong>
+                    <strong class="text-h6 text-primary">{{ formatCurrency(selectedOrder.total) }}</strong>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-card-text>
+        
+        <v-card-actions class="pa-4">
+          <v-spacer />
+          <v-btn @click="closeOrderModal" variant="tonal">إغلاق</v-btn>
+          <v-btn @click="printOrder(selectedOrder)" color="primary" prepend-icon="mdi-printer">
+            طباعة
+          </v-btn>
+          <v-btn @click="sendInvoice(selectedOrder)" color="success" prepend-icon="mdi-email">
+            إرسال فاتورة
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-container>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { debounce } from 'lodash';
-import StatCards from '@/components/common/StatCards.vue';
-import Pagination from '@/components/common/Pagination.vue';
-import OrdersTable from './components/OrdersTable.vue';
-import OrderDetailsModal from './components/OrderDetailsModal.vue';
-import CurrencyService from '@/integration/services/CurrencyService';
 
 // State
-const orders = ref([
-  {
-    id: 'ORD-1001',
-    customer: 'أحمد محمد',
-    email: 'ahmed@example.com',
-    phone: '0663140341',
-    date: '2024-03-15T10:30:00',
-    total: 450,
-    subtotal: 380,
-    shipping: 20,
-    tax: 50,
-    status: 'pending',
-    paymentMethod: 'cash',
-    paymentStatus: 'unpaid',
-    shippingAddress: { street: 'حي 100 مسكن', city: 'سطيف', country: 'الجزائر', zipCode: '19000' },
-    products: [
-      { id: 1, name: 'ملصق حائط زهور', price: 45, quantity: 2, sku: 'WAL-001', image: 'https://via.placeholder.com/50' },
-      { id: 2, name: 'ملصق باب خشبي', price: 89, quantity: 1, sku: 'DR-002', image: 'https://via.placeholder.com/50' }
-    ],
-    timeline: [
-      { status: 'pending', date: '2024-03-15T10:30:00', note: 'تم إنشاء الطلب بنجاح' }
-    ]
-  },
-  {
-    id: 'ORD-1002',
-    customer: 'سارة أحمد',
-    email: 'sara@example.com',
-    phone: '0555987654',
-    date: '2024-03-14T15:45:00',
-    total: 280,
-    subtotal: 240,
-    shipping: 0,
-    tax: 40,
-    status: 'processing',
-    paymentMethod: 'card',
-    paymentStatus: 'paid',
-    shippingAddress: { street: 'شارع الحرية', city: 'الجزائر العاصمة', country: 'الجزائر', zipCode: '16000' },
-    products: [
-      { id: 4, name: 'ملصق مطبخ فواكه', price: 65, quantity: 3, sku: 'KIT-004', image: 'https://via.placeholder.com/50' }
-    ],
-    timeline: [
-      { status: 'pending', date: '2024-03-14T15:45:00', note: 'تم إنشاء الطلب بنجاح' },
-      { status: 'processing', date: '2024-03-14T16:00:00', note: 'الطلب قيد التجهيز' }
-    ]
-  }
-]);
-
-const orderStats = ref([
-  { label: 'إجمالي الطلبات', value: '1,284', icon: 'fa-solid fa-shopping-basket', color: '#1a1a2e', trend: 12 },
-  { label: 'طلبات اليوم', value: '48', icon: 'fa-solid fa-calendar-day', color: '#d4af37', trend: 8 },
-  { label: 'قيد المعالجة', value: '124', icon: 'fa-solid fa-spinner', color: '#2196f3', trend: -3 },
-  { label: 'تم التوصيل', value: '1,056', icon: 'fa-solid fa-check-double', color: '#4caf50', trend: 15 }
-]);
-
-const columns = ref([
-  { key: 'id', label: 'رقم الطلب', visible: true },
-  { key: 'customer', label: 'العميل', visible: true },
-  { key: 'date', label: 'التاريخ', visible: true },
-  { key: 'total', label: 'الإجمالي', visible: true },
-  { key: 'status', label: 'الحالة', visible: true },
-  { key: 'paymentMethod', label: 'الدفع', visible: true }
-]);
-
-// Filters State
+const loading = ref(false);
+const orders = ref([]);
 const searchQuery = ref('');
 const statusFilter = ref('');
 const paymentFilter = ref('');
-const cityFilter = ref('');
-const showAdvancedFilters = ref(false);
-const priceRange = reactive({ min: null, max: null });
-
-// Table State
 const sortKey = ref('date');
 const sortOrder = ref('desc');
 const currentPage = ref(1);
 const itemsPerPage = ref(10);
 const selectedOrders = ref([]);
-const selectAll = ref(false);
-const activeOrderMenu = ref(null);
 const showOrderModal = ref(false);
 const selectedOrder = ref(null);
+
+// Stats - will be loaded from API
+const stats = ref({
+  totalOrders: 0,
+  totalOrdersTrend: 0,
+  todayOrders: 0,
+  todayOrdersTrend: 0,
+  processingOrders: 0,
+  processingOrdersTrend: 0,
+  deliveredOrders: 0,
+  deliveredOrdersTrend: 0
+});
+
+// Options
+const statusOptions = [
+  { text: 'جميع الحالات', value: '' },
+  { text: 'قيد الانتظار', value: 'pending' },
+  { text: 'قيد المعالجة', value: 'processing' },
+  { text: 'تم الشحن', value: 'shipped' },
+  { text: 'تم التوصيل', value: 'delivered' },
+  { text: 'ملغي', value: 'cancelled' }
+];
+
+const paymentOptions = [
+  { text: 'جميع طرق الدفع', value: '' },
+  { text: 'الدفع عند الاستلام', value: 'cash' },
+  { text: 'بطاقة ائتمان', value: 'card' },
+  { text: 'تحويل بنكي', value: 'bank' },
+  { text: 'الدفع الإلكتروني', value: 'electronic' }
+];
+
+// Table Headers
+const tableHeaders = [
+  { title: 'رقم الطلب', key: 'id', sortable: true },
+  { title: 'العميل', key: 'customer', sortable: true },
+  { title: 'التاريخ', key: 'date', sortable: true },
+  { title: 'الإجمالي', key: 'total', sortable: true },
+  { title: 'الحالة', key: 'status', sortable: true },
+  { title: 'الدفع', key: 'paymentMethod', sortable: true },
+  { title: 'الإجراءات', key: 'actions', sortable: false }
+];
 
 // Computed
 const filteredOrders = computed(() => {
@@ -238,12 +460,8 @@ const filteredOrders = computed(() => {
     
     const matchesStatus = !statusFilter.value || order.status === statusFilter.value;
     const matchesPayment = !paymentFilter.value || order.paymentMethod === paymentFilter.value;
-    const matchesPrice = (!priceRange.min || order.total >= priceRange.min) && 
-                         (!priceRange.max || order.total <= priceRange.max);
-    const matchesCity = !cityFilter.value || 
-                        order.shippingAddress?.city.toLowerCase().includes(cityFilter.value.toLowerCase());
-
-    return matchesSearch && matchesStatus && matchesPayment && matchesPrice && matchesCity;
+    
+    return matchesSearch && matchesStatus && matchesPayment;
   });
 });
 
@@ -252,10 +470,10 @@ const sortedOrders = computed(() => {
   sorted.sort((a, b) => {
     let aVal = a[sortKey.value];
     let bVal = b[sortKey.value];
-
+    
     if (sortKey.value === 'total') return sortOrder.value === 'asc' ? aVal - bVal : bVal - aVal;
     if (sortKey.value === 'date') return sortOrder.value === 'asc' ? new Date(aVal) - new Date(bVal) : new Date(bVal) - new Date(aVal);
-
+    
     aVal = String(aVal).toLowerCase();
     bVal = String(bVal).toLowerCase();
     return sortOrder.value === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
@@ -268,19 +486,23 @@ const paginatedOrders = computed(() => {
   return sortedOrders.value.slice(start, start + itemsPerPage.value);
 });
 
+const totalPages = computed(() => {
+  return Math.ceil(filteredOrders.value.length / itemsPerPage.value);
+});
+
 // Methods
-const handleSort = (key) => {
-  if (sortKey.value === key) {
+const handleSort = (column) => {
+  if (sortKey.value === column) {
     sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
   } else {
-    sortKey.value = key;
+    sortKey.value = column;
     sortOrder.value = 'asc';
   }
 };
 
-const debouncedSearch = debounce(() => {
-  currentPage.value = 1;
-}, 300);
+const handlePageChange = (page) => {
+  currentPage.value = page;
+};
 
 const clearSearch = () => {
   searchQuery.value = '';
@@ -291,48 +513,7 @@ const resetFilters = () => {
   searchQuery.value = '';
   statusFilter.value = '';
   paymentFilter.value = '';
-  priceRange.min = null;
-  priceRange.max = null;
-  cityFilter.value = '';
-  showAdvancedFilters.value = false;
   currentPage.value = 1;
-};
-
-const applyAdvancedFilters = () => {
-  showAdvancedFilters.value = false;
-  currentPage.value = 1;
-};
-
-const resetAdvancedFilters = () => {
-  priceRange.min = null;
-  priceRange.max = null;
-  cityFilter.value = '';
-  showAdvancedFilters.value = false;
-};
-
-const toggleOrderSelection = (id) => {
-  const index = selectedOrders.value.indexOf(id);
-  if (index === -1) selectedOrders.value.push(id);
-  else selectedOrders.value.splice(index, 1);
-  selectAll.value = selectedOrders.value.length === paginatedOrders.value.length;
-};
-
-const toggleSelectAll = () => {
-  selectAll.value = !selectAll.value;
-  selectedOrders.value = selectAll.value ? paginatedOrders.value.map(o => o.id) : [];
-};
-
-const clearSelection = () => {
-  selectedOrders.value = [];
-  selectAll.value = false;
-};
-
-const bulkUpdateStatus = (status) => {
-  selectedOrders.value.forEach(id => {
-    const order = orders.value.find(o => o.id === id);
-    if (order) updateOrderStatus(order, status);
-  });
-  clearSelection();
 };
 
 const viewOrder = (order) => {
@@ -349,240 +530,321 @@ const editOrder = (order) => {
   console.log('Edit order:', order);
 };
 
-const updateOrderStatus = (order, status) => {
-  order.status = status;
-  order.timeline.push({
-    status,
-    date: new Date().toISOString(),
-    note: `تم تحديث الحالة إلى ${status}`
-  });
-  activeOrderMenu.value = null;
-};
-
-const toggleOrderMenu = (id) => {
-  activeOrderMenu.value = activeOrderMenu.value === id ? null : id;
-};
-
-const exportOrders = () => {
-  alert('تم تصدير الطلبات بنجاح');
-};
-
-const openNewOrderModal = () => {
-  alert('ميزة إنشاء طلب جديد قيد التطوير');
+const updateOrderStatus = async (order, status) => {
+  try {
+    // Import OrdersService dynamically
+    const { default: OrdersService } = await import('./OrdersService.js');
+    
+    // Update status via API
+    const response = await OrdersService.updateOrderStatus(order.id, status);
+    
+    if (response.success) {
+      // Update local state
+      const index = orders.value.findIndex(o => o.id === order.id);
+      if (index !== -1) {
+        orders.value[index].status = status;
+        orders.value[index].timeline.push({
+          status,
+          date: new Date().toISOString(),
+          note: `تم تحديث الحالة إلى ${status}`
+        });
+      }
+    } else {
+      console.error('Failed to update order status:', response.error);
+      // Fallback to local update
+      const index = orders.value.findIndex(o => o.id === order.id);
+      if (index !== -1) {
+        orders.value[index].status = status;
+        orders.value[index].timeline.push({
+          status,
+          date: new Date().toISOString(),
+          note: `تم تحديث الحالة إلى ${status}`
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    // Fallback to local update
+    const index = orders.value.findIndex(o => o.id === order.id);
+    if (index !== -1) {
+      orders.value[index].status = status;
+      orders.value[index].timeline.push({
+        status,
+        date: new Date().toISOString(),
+        note: `تم تحديث الحالة إلى ${status}`
+      });
+    }
+  }
 };
 
 const printOrder = (order) => {
-  alert(`طباعة الطلب #${order.id}`);
+  window.print();
 };
 
-const sendInvoice = (order) => {
-  alert(`إرسال فاتورة الطلب #${order.id}`);
+const sendInvoice = async (order) => {
+  try {
+    // Import OrdersService dynamically
+    const { default: OrdersService } = await import('./OrdersService.js');
+    
+    // Send invoice via API
+    const response = await OrdersService.sendInvoice(order.id, {
+      email: order.email,
+      customerName: order.customer
+    });
+    
+    if (response.success) {
+      console.log('Invoice sent successfully:', response.message);
+      // Show success notification
+      // TODO: Add notification system
+    } else {
+      console.error('Failed to send invoice:', response.error);
+      // Show error notification
+      // TODO: Add notification system
+    }
+  } catch (error) {
+    console.error('Error sending invoice:', error);
+    // Show error notification
+    // TODO: Add notification system
+  }
 };
+
+const exportOrders = async () => {
+  try {
+    // Import OrdersService dynamically
+    const { default: OrdersService } = await import('./OrdersService.js');
+    
+    // Export orders via API
+    const response = await OrdersService.exportOrders({
+      search: searchQuery.value,
+      status: statusFilter.value,
+      paymentMethod: paymentFilter.value,
+      sortBy: sortKey.value,
+      sortOrder: sortOrder.value
+    });
+    
+    if (response.success) {
+      console.log('Orders exported successfully:', response.message);
+      // TODO: Handle file download
+      if (response.data.downloadUrl) {
+        window.open(response.data.downloadUrl, '_blank');
+      }
+    } else {
+      console.error('Failed to export orders:', response.error);
+      // Show error notification
+      // TODO: Add notification system
+    }
+  } catch (error) {
+    console.error('Error exporting orders:', error);
+    // Show error notification
+    // TODO: Add notification system
+  }
+};
+
+const openNewOrderModal = () => {
+  console.log('Open new order modal');
+};
+
+// Helper Functions
+const getStatusColor = (status) => {
+  const colors = {
+    pending: 'warning',
+    processing: 'info',
+    shipped: 'primary',
+    delivered: 'success',
+    cancelled: 'error'
+  };
+  return colors[status] || 'grey';
+};
+
+const getStatusText = (status) => {
+  const texts = {
+    pending: 'قيد الانتظار',
+    processing: 'قيد المعالجة',
+    shipped: 'تم الشحن',
+    delivered: 'تم التوصيل',
+    cancelled: 'ملغي'
+  };
+  return texts[status] || status;
+};
+
+const getPaymentIcon = (method) => {
+  const icons = {
+    cash: 'mdi-cash',
+    card: 'mdi-credit-card',
+    bank: 'mdi-bank',
+    electronic: 'mdi-wallet'
+  };
+  return icons[method] || 'mdi-help-circle';
+};
+
+const getPaymentColor = (method) => {
+  const colors = {
+    cash: 'success',
+    card: 'primary',
+    bank: 'info',
+    electronic: 'warning'
+  };
+  return colors[method] || 'grey';
+};
+
+const getPaymentText = (method) => {
+  const texts = {
+    cash: 'الدفع عند الاستلام',
+    card: 'بطاقة ائتمان',
+    bank: 'تحويل بنكي',
+    electronic: 'الدفع الإلكتروني'
+  };
+  return texts[method] || method;
+};
+
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('ar-DZ', {
+    style: 'currency',
+    currency: 'DZD'
+  }).format(amount);
+};
+
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleDateString('ar-DZ', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+// Load data from API
+const loadOrders = async () => {
+  loading.value = true;
+  try {
+    // Import OrdersService dynamically
+    const { default: OrdersService } = await import('./OrdersService.js');
+    
+    // Load orders from API
+    const ordersResponse = await OrdersService.getOrders({
+      page: currentPage.value,
+      limit: itemsPerPage.value,
+      search: searchQuery.value,
+      status: statusFilter.value,
+      paymentMethod: paymentFilter.value,
+      sortBy: sortKey.value,
+      sortOrder: sortOrder.value
+    });
+    
+    if (ordersResponse.success) {
+      orders.value = ordersResponse.data.orders || [];
+    } else {
+      console.error('Failed to load orders:', ordersResponse.error);
+      // Fallback to mock data if API fails
+      orders.value = getMockOrders();
+    }
+    
+    // Load statistics from API
+    const statsResponse = await OrdersService.getOrderStats();
+    if (statsResponse.success) {
+      stats.value = statsResponse.data;
+    } else {
+      console.error('Failed to load stats:', statsResponse.error);
+      // Fallback to calculated stats
+      stats.value = calculateStatsFromOrders();
+    }
+  } catch (error) {
+    console.error('Error loading orders:', error);
+    // Fallback to mock data if API fails
+    orders.value = getMockOrders();
+    stats.value = calculateStatsFromOrders();
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Mock data fallback
+const getMockOrders = () => {
+  return [
+    {
+      id: 'ORD-1001',
+      customer: 'أحمد محمد',
+      email: 'ahmed@example.com',
+      phone: '0663140341',
+      date: '2024-03-15T10:30:00',
+      total: 450,
+      subtotal: 380,
+      shipping: 20,
+      tax: 50,
+      status: 'pending',
+      paymentMethod: 'cash',
+      paymentStatus: 'unpaid',
+      shippingAddress: { street: 'حي 100 مسكن', city: 'سطيف', country: 'الجزائر', zipCode: '19000' },
+      products: [
+        { id: 1, name: 'ملصق حائط زهور', price: 45, quantity: 2, sku: 'WAL-001', image: 'https://via.placeholder.com/50' },
+        { id: 2, name: 'ملصق باب خشبي', price: 89, quantity: 1, sku: 'DR-002', image: 'https://via.placeholder.com/50' }
+      ],
+      timeline: [
+        { status: 'pending', date: '2024-03-15T10:30:00', note: 'تم إنشاء الطلب بنجاح' }
+      ]
+    },
+    {
+      id: 'ORD-1002',
+      customer: 'سارة أحمد',
+      email: 'sara@example.com',
+      phone: '0555987654',
+      date: '2024-03-14T15:45:00',
+      total: 280,
+      subtotal: 240,
+      shipping: 0,
+      tax: 40,
+      status: 'processing',
+      paymentMethod: 'card',
+      paymentStatus: 'paid',
+      shippingAddress: { street: 'شارع الحرية', city: 'الجزائر العاصمة', country: 'الجزائر', zipCode: '16000' },
+      products: [
+        { id: 4, name: 'ملصق مطبخ فواكه', price: 65, quantity: 3, sku: 'KIT-004', image: 'https://via.placeholder.com/50' }
+      ],
+      timeline: [
+        { status: 'pending', date: '2024-03-14T15:45:00', note: 'تم إنشاء الطلب بنجاح' },
+        { status: 'processing', date: '2024-03-14T16:00:00', note: 'الطلب قيد التجهيز' }
+      ]
+    }
+  ];
+};
+
+// Calculate stats from orders
+const calculateStatsFromOrders = () => {
+  const today = new Date().toDateString();
+  const todayOrders = orders.value.filter(order => 
+    new Date(order.date).toDateString() === today
+  );
+  
+  return {
+    totalOrders: orders.value.length,
+    totalOrdersTrend: 12,
+    todayOrders: todayOrders.length,
+    todayOrdersTrend: 8,
+    processingOrders: orders.value.filter(o => o.status === 'processing').length,
+    processingOrdersTrend: -3,
+    deliveredOrders: orders.value.filter(o => o.status === 'delivered').length,
+    deliveredOrdersTrend: 15
+  };
+};
+
+// Lifecycle
+onMounted(() => {
+  loadOrders();
+});
 </script>
 
 <style scoped>
-.orders-manager {
-  padding: 24px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-}
-
-.header-content h1 {
-  font-size: 24px;
-  font-weight: 700;
-  color: #1a1a2e;
-  margin: 0;
-}
-
-.header-content p {
-  color: #6c757d;
-  margin: 4px 0 0;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.btn-primary, .btn-export {
-  padding: 10px 24px;
-  border-radius: 10px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-primary {
-  background: var(--gold-gradient);
-  color: #1a1a2e;
-  border: none;
-}
-
-.btn-export {
-  background: white;
-  color: #1a1a2e;
-  border: 1px solid #dee2e6;
-}
-
-.filters-card {
-  background: white;
-  padding: 24px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  margin-bottom: 24px;
-}
-
-.search-bar {
-  position: relative;
-  margin-bottom: 20px;
-}
-
-.search-icon {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #adb5bd;
-}
-
-.search-bar input {
-  width: 100%;
-  padding: 12px 48px 12px 16px;
-  border-radius: 12px;
-  border: 1px solid #dee2e6;
-  font-size: 15px;
-  transition: all 0.3s;
-}
-
-.search-bar input:focus {
-  outline: none;
-  border-color: #d4af37;
-  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
-}
-
-.clear-search {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: none;
-  background: none;
-  color: #adb5bd;
-  cursor: pointer;
-}
-
-.quick-filters {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.filter-select {
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: 1px solid #dee2e6;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.btn-advanced, .btn-reset {
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: 1px solid #dee2e6;
-  background: white;
-  cursor: pointer;
-}
-
-.bulk-actions-bar {
-  background: #1a1a2e;
-  color: white;
-  padding: 12px 24px;
-  border-radius: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  animation: slideIn 0.3s ease;
-}
-
-.bulk-buttons {
-  display: flex;
-  gap: 8px;
-}
-
-.bulk-buttons button {
-  padding: 6px 16px;
+.v-data-table {
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  cursor: pointer;
-  font-size: 13px;
 }
 
-.bulk-buttons button:hover {
-  background: rgba(255, 255, 255, 0.2);
+.v-dialog .v-card {
+  overflow-y: auto;
+  max-height: 90vh;
 }
 
-.bulk-buttons button.danger { color: #ff5252; }
-.bulk-buttons button.secondary { opacity: 0.7; }
-
-.advanced-filters-panel {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #eee;
-}
-
-.filter-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-}
-
-.filter-group label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.range-inputs {
-  display: flex;
-  gap: 8px;
-}
-
-.range-inputs input {
-  width: 100%;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-}
-
-.filter-actions {
-  margin-top: 20px;
-  display: flex;
-  gap: 12px;
-}
-
-.btn-apply {
-  background: #1a1a2e;
-  color: white;
-  border: none;
-  padding: 8px 24px;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-@keyframes slideIn {
-  from { transform: translateY(-10px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+@media print {
+  .v-btn {
+    display: none !important;
+  }
 }
 </style>

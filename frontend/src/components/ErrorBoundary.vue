@@ -8,7 +8,7 @@
     >
       <v-alert-title class="d-flex align-center ga-3">
         <v-icon size="large" color="error">mdi-alert-circle</v-icon>
-        <span>عذراً، حدث خطأ غير متوقع</span>
+        <span>{{ $t('unexpectedError') || 'عذراً، حدث خطأ غير متوقع' }}</span>
       </v-alert-title>
       <v-alert-text>{{ errorMessage }}</v-alert-text>
       <v-alert-actions>
@@ -18,7 +18,7 @@
           variant="elevated"
           color="primary"
         >
-          إعادة المحاولة
+          {{ $t('retry') || 'إعادة المحاولة' }}
         </v-btn>
       </v-alert-actions>
     </v-alert>

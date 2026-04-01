@@ -16,7 +16,7 @@ import AIService from '@/services/AIService'  // Import class directly
 import AIMonitorService from '@/services/AIMonitorService'
 import PricingService from '@/services/PricingService'  // Import class directly
 import ChatService from '@/integration/services/ChatService'
-import AILearningService from '@/services/AILearningService'
+import AILearningService, { initializeLearningSystem } from './services/AILearningService.js';
 import apiErrorLogger from '@/services/ApiErrorLogger.js'
 import { httpClient } from '@/services/HttpClient.js'
 
@@ -154,7 +154,7 @@ initializeAIServices();
 // Initialize AI Learning System - Prevent duplicate initialization
 console.log('🎓 Starting AI Learning System...')
 if (!AILearningService.isInitialized) {
-  AILearningService.initializeLearningSystem().then(() => {
+  initializeLearningSystem().then(() => {
     console.log('✅ AI Learning System Started Successfully')
   }).catch(error => {
     console.warn('⚠️ AI Learning System Warning:', error)

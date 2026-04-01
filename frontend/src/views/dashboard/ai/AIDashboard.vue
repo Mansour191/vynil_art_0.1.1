@@ -1,299 +1,476 @@
 <template>
-  <div class="ai-dashboard">
+  <v-container class="pa-4">
     <!-- Header -->
-    <header class="dashboard-header">
-      <div class="header-content">
-        <h1 class="text-3xl font-bold gold-text mb-2">
-          <i class="fa-solid fa-brain me-3"></i>
-          لوحة تحكم الذكاء الاصطناعي
-        </h1>
-        <p class="text-dim">مراقبة وإدارة جميع أنظمة الذكاء الاصطناعي والتدريب</p>
-      </div>
-      <div class="header-actions">
-        <button class="btn-primary" @click="goToTraining">
-          <i class="fa-solid fa-graduation-cap me-2"></i>
-          منصة التدريب
-        </button>
-        <button class="btn-secondary" @click="goToMonitoring">
-          <i class="fa-solid fa-heartbeat me-2"></i>
-          المراقبة
-        </button>
-      </div>
-    </header>
+    <v-card variant="elevated" class="mb-6 dashboard-header">
+      <v-card-text class="pa-6">
+        <div class="d-flex align-center justify-space-between">
+          <div class="header-content">
+            <h1 class="text-h3 font-weight-bold text-primary mb-2 d-flex align-center ga-3">
+              <v-icon color="primary" size="40">mdi-brain</v-icon>
+              {{ $t('aiDashboard') || 'لوحة تحكم الذكاء الاصطناعي' }}
+            </h1>
+            <p class="text-body-1 text-medium-emphasis mb-0">
+              {{ $t('aiDashboardSubtitle') || 'مراقبة وإدارة جميع أنظمة الذكاء الاصطناعي والتدريب' }}
+            </p>
+          </div>
+          <div class="header-actions d-flex ga-3">
+            <v-btn
+              @click="goToTraining"
+              variant="elevated"
+              color="primary"
+              prepend-icon="mdi-school"
+            >
+              {{ $t('trainingPlatform') || 'منصة التدريب' }}
+            </v-btn>
+            <v-btn
+              @click="goToMonitoring"
+              variant="tonal"
+              color="primary"
+              prepend-icon="mdi-heart-pulse"
+            >
+              {{ $t('monitoring') || 'المراقبة' }}
+            </v-btn>
+          </div>
+        </div>
+      </v-card-text>
+    </v-card>
 
     <!-- Quick Stats -->
-    <div class="quick-stats mb-8">
-      <div class="stats-grid">
-        <div class="stat-card glass-card">
-          <div class="stat-icon">
-            <i class="fa-solid fa-brain"></i>
-          </div>
-          <div class="stat-info">
-            <h3>{{ aiStatus.overall === 'healthy' ? 'نشط' : 'محدود' }}</h3>
-            <p>حالة الذكاء الاصطناعي</p>
-          </div>
-        </div>
-        
-        <div class="stat-card glass-card">
-          <div class="stat-icon">
-            <i class="fa-solid fa-graduation-cap"></i>
-          </div>
-          <div class="stat-info">
-            <h3>{{ learningStats.totalSessions }}</h3>
-            <p>جلسات التدريب</p>
-          </div>
-        </div>
-        
-        <div class="stat-card glass-card">
-          <div class="stat-icon">
-            <i class="fa-solid fa-chart-line"></i>
-          </div>
-          <div class="stat-info">
-            <h3>{{ learningStats.averageAccuracy }}%</h3>
-            <p>متوسط دقة النماذج</p>
-          </div>
-        </div>
-        
-        <div class="stat-card glass-card">
-          <div class="stat-icon">
-            <i class="fa-solid fa-cogs"></i>
-          </div>
-          <div class="stat-info">
-            <h3>{{ systemStatus.activeServices }}/{{ systemStatus.totalServices }}</h3>
-            <p>الخدمات النشطة</p>
-          </div>
-        </div>
-      </div>
-    </div>
+    <v-row class="mb-6">
+      <v-col cols="12" sm="6" md="3">
+        <v-card variant="elevated" class="stat-card">
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center ga-4">
+              <v-avatar color="primary" variant="tonal" size="50">
+                <v-icon size="28" color="primary">mdi-brain</v-icon>
+              </v-avatar>
+              <div class="stat-info">
+                <h3 class="text-h4 font-weight-bold text-white mb-1">
+                  {{ aiStatus.overall === 'healthy' ? ($t('active') || 'نشط') : ($t('limited') || 'محدود') }}
+                </h3>
+                <p class="text-caption text-medium-emphasis mb-0">
+                  {{ $t('aiStatus') || 'حالة الذكاء الاصطناعي' }}
+                </p>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" sm="6" md="3">
+        <v-card variant="elevated" class="stat-card">
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center ga-4">
+              <v-avatar color="success" variant="tonal" size="50">
+                <v-icon size="28" color="success">mdi-school</v-icon>
+              </v-avatar>
+              <div class="stat-info">
+                <h3 class="text-h4 font-weight-bold text-white mb-1">{{ learningStats.totalSessions }}</h3>
+                <p class="text-caption text-medium-emphasis mb-0">
+                  {{ $t('trainingSessions') || 'جلسات التدريب' }}
+                </p>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" sm="6" md="3">
+        <v-card variant="elevated" class="stat-card">
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center ga-4">
+              <v-avatar color="info" variant="tonal" size="50">
+                <v-icon size="28" color="info">mdi-chart-line</v-icon>
+              </v-avatar>
+              <div class="stat-info">
+                <h3 class="text-h4 font-weight-bold text-white mb-1">{{ learningStats.averageAccuracy }}%</h3>
+                <p class="text-caption text-medium-emphasis mb-0">
+                  {{ $t('averageModelAccuracy') || 'متوسط دقة النماذج' }}
+                </p>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+      <v-col cols="12" sm="6" md="3">
+        <v-card variant="elevated" class="stat-card">
+          <v-card-text class="pa-4">
+            <div class="d-flex align-center ga-4">
+              <v-avatar color="warning" variant="tonal" size="50">
+                <v-icon size="28" color="warning">mdi-cogs</v-icon>
+              </v-avatar>
+              <div class="stat-info">
+                <h3 class="text-h4 font-weight-bold text-white mb-1">{{ systemStatus.activeServices }}/{{ systemStatus.totalServices }}</h3>
+                <p class="text-caption text-medium-emphasis mb-0">
+                  {{ $t('activeServices') || 'الخدمات النشطة' }}
+                </p>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
 
     <!-- Main Services Grid -->
-    <div class="services-grid mb-8">
+    <v-row class="mb-6">
       <!-- AI Service Status -->
-      <div class="service-panel glass-card">
-        <div class="panel-header">
-          <h3>
-            <i class="fa-solid fa-brain me-2"></i>
-            خدمة الذكاء الاصطناعي
-          </h3>
-          <div class="status-indicator" :class="{ online: aiStatus.overall === 'healthy', offline: aiStatus.overall !== 'healthy' }">
-            <i class="fa-solid fa-circle"></i>
-            {{ aiStatus.overall === 'healthy' ? 'نشط' : 'محدود' }}
-          </div>
-        </div>
-        
-        <div class="service-content">
-          <div class="service-metrics">
-            <div class="metric">
-              <span>الخدمات الفرعية:</span>
-              <span>{{ aiStatus.services?.length || 0 }}</span>
+      <v-col cols="12" md="4">
+        <v-card variant="elevated" class="service-panel">
+          <v-card-text class="pa-4">
+            <div class="panel-header d-flex align-center justify-space-between mb-4">
+              <h3 class="text-h6 font-weight-medium text-white d-flex align-center ga-2">
+                <v-icon color="primary" size="20">mdi-brain</v-icon>
+                {{ $t('aiService') || 'خدمة الذكاء الاصطناعي' }}
+              </h3>
+              <v-chip
+                :color="aiStatus.overall === 'healthy' ? 'success' : 'error'"
+                variant="tonal"
+                size="small"
+              >
+                <v-icon start size="12">mdi-circle</v-icon>
+                {{ aiStatus.overall === 'healthy' ? ($t('active') || 'نشط') : ($t('limited') || 'محدود') }}
+              </v-chip>
             </div>
-            <div class="metric">
-              <span>نظام التشغيل:</span>
-              <span>{{ aiStatus.fallbackMode ? 'احتياطي' : 'أساسي' }}</span>
+            
+            <div class="service-content">
+              <div class="service-metrics mb-4">
+                <div class="d-flex justify-space-between align-center mb-2">
+                  <span class="text-caption text-medium-emphasis">{{ $t('subServices') || 'الخدمات الفرعية' }}:</span>
+                  <span class="text-body-2 text-white">{{ aiStatus.services?.length || 0 }}</span>
+                </div>
+                <div class="d-flex justify-space-between align-center mb-2">
+                  <span class="text-caption text-medium-emphasis">{{ $t('operatingSystem') || 'نظام التشغيل' }}:</span>
+                  <span class="text-body-2 text-white">{{ aiStatus.fallbackMode ? ($t('backup') || 'احتياطي') : ($t('primary') || 'أساسي') }}</span>
+                </div>
+                <div class="d-flex justify-space-between align-center">
+                  <span class="text-caption text-medium-emphasis">{{ $t('uptime') || 'وقت التشغيل' }}:</span>
+                  <span class="text-body-2 text-white">{{ systemStatus.uptime }}</span>
+                </div>
+              </div>
+              
+              <div class="service-actions d-flex ga-2">
+                <v-btn
+                  @click="testAIService"
+                  variant="tonal"
+                  color="primary"
+                  size="small"
+                  prepend-icon="mdi-flask"
+                >
+                  {{ $t('test') || 'اختبار' }}
+                </v-btn>
+                <v-btn
+                  @click="restartAIService"
+                  variant="tonal"
+                  color="secondary"
+                  size="small"
+                  prepend-icon="mdi-refresh"
+                >
+                  {{ $t('restart') || 'إعادة التشغيل' }}
+                </v-btn>
+              </div>
             </div>
-            <div class="metric">
-              <span>وقت التشغيل:</span>
-              <span>{{ systemStatus.uptime }}</span>
-            </div>
-          </div>
-          
-          <div class="service-actions">
-            <button class="btn-sm" @click="testAIService">
-              <i class="fa-solid fa-flask"></i>
-              اختبار
-            </button>
-            <button class="btn-sm btn-secondary" @click="restartAIService">
-              <i class="fa-solid fa-sync"></i>
-              إعادة التشغيل
-            </button>
-          </div>
-        </div>
-      </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
 
       <!-- Learning System Status -->
-      <div class="service-panel glass-card">
-        <div class="panel-header">
-          <h3>
-            <i class="fa-solid fa-graduation-cap me-2"></i>
-            نظام التعلم
-          </h3>
-          <div class="status-indicator" :class="{ online: learningStatus.isActive, offline: !learningStatus.isActive }">
-            <i class="fa-solid fa-circle"></i>
-            {{ learningStatus.isActive ? 'نشط' : 'غير نشط' }}
-          </div>
-        </div>
-        
-        <div class="service-content">
-          <div class="service-metrics">
-            <div class="metric">
-              <span>معدل التعلم:</span>
-              <span>{{ learningStats.learningRate }}%</span>
+      <v-col cols="12" md="4">
+        <v-card variant="elevated" class="service-panel">
+          <v-card-text class="pa-4">
+            <div class="panel-header d-flex align-center justify-space-between mb-4">
+              <h3 class="text-h6 font-weight-medium text-white d-flex align-center ga-2">
+                <v-icon color="primary" size="20">mdi-school</v-icon>
+                {{ $t('learningSystem') || 'نظام التعلم' }}
+              </h3>
+              <v-chip
+                :color="learningStatus.isActive ? 'success' : 'error'"
+                variant="tonal"
+                size="small"
+              >
+                <v-icon start size="12">mdi-circle</v-icon>
+                {{ learningStatus.isActive ? ($t('active') || 'نشط') : ($t('inactive') || 'غير نشط') }}
+              </v-chip>
             </div>
-            <div class="metric">
-              <span>التحسين:</span>
-              <span>{{ learningStats.improvementRate }}%</span>
+            
+            <div class="service-content">
+              <div class="service-metrics mb-4">
+                <div class="d-flex justify-space-between align-center mb-2">
+                  <span class="text-caption text-medium-emphasis">{{ $t('learningRate') || 'معدل التعلم' }}:</span>
+                  <span class="text-body-2 text-white">{{ learningStats.learningRate }}%</span>
+                </div>
+                <div class="d-flex justify-space-between align-center mb-2">
+                  <span class="text-caption text-medium-emphasis">{{ $t('improvement') || 'التحسين' }}:</span>
+                  <span class="text-body-2 text-white">{{ learningStats.improvementRate }}%</span>
+                </div>
+                <div class="d-flex justify-space-between align-center mb-2">
+                  <span class="text-caption text-medium-emphasis">{{ $t('models') || 'النماذج' }}:</span>
+                  <span class="text-body-2 text-white">{{ learningStats.totalModels }}</span>
+                </div>
+                <div class="d-flex justify-space-between align-center">
+                  <span class="text-caption text-medium-emphasis">{{ $t('lastUpdate') || 'آخر تحديث' }}:</span>
+                  <span class="text-body-2 text-white">{{ formatTime(learningStats.lastUpdate) }}</span>
+                </div>
+              </div>
+              
+              <div class="service-actions d-flex ga-2">
+                <v-btn
+                  @click="viewTrainingDetails"
+                  variant="tonal"
+                  color="primary"
+                  size="small"
+                  prepend-icon="mdi-chart-bar"
+                >
+                  {{ $t('details') || 'التفاصيل' }}
+                </v-btn>
+                <v-btn
+                  @click="startQuickTraining"
+                  variant="elevated"
+                  color="primary"
+                  size="small"
+                  prepend-icon="mdi-play"
+                >
+                  {{ $t('quickTraining') || 'تدريب سريع' }}
+                </v-btn>
+              </div>
             </div>
-            <div class="metric">
-              <span>النماذج:</span>
-              <span>{{ learningStats.totalModels }}</span>
-            </div>
-            <div class="metric">
-              <span>آخر تحديث:</span>
-              <span>{{ formatTime(learningStats.lastUpdate) }}</span>
-            </div>
-          </div>
-          
-          <div class="service-actions">
-            <button class="btn-sm" @click="viewTrainingDetails">
-              <i class="fa-solid fa-chart-bar"></i>
-              التفاصيل
-            </button>
-            <button class="btn-sm btn-primary" @click="startQuickTraining">
-              <i class="fa-solid fa-play"></i>
-              تدريب سريع
-            </button>
-          </div>
-        </div>
-      </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
 
       <!-- Performance Monitor -->
-      <div class="service-panel glass-card">
-        <div class="panel-header">
-          <h3>
-            <i class="fa-solid fa-tachometer-alt me-2"></i>
-            مراقبة الأداء
-          </h3>
-          <div class="status-indicator" :class="{ online: systemStatus.healthy, offline: !systemStatus.healthy }">
-            <i class="fa-solid fa-circle"></i>
-            {{ systemStatus.healthy ? 'طبيعي' : 'يحتاج انتباه' }}
-          </div>
-        </div>
-        
-        <div class="service-content">
-          <div class="performance-chart">
-            <canvas ref="performanceChart"></canvas>
-          </div>
-          
-          <div class="performance-metrics">
-            <div class="metric-row">
-              <span class="metric-label">استخدام المعالج:</span>
-              <div class="metric-bar">
-                <div class="metric-fill" :style="{ width: performanceMetrics.cpuUsage + '%' }"></div>
+      <v-col cols="12" md="4">
+        <v-card variant="elevated" class="service-panel">
+          <v-card-text class="pa-4">
+            <div class="panel-header d-flex align-center justify-space-between mb-4">
+              <h3 class="text-h6 font-weight-medium text-white d-flex align-center ga-2">
+                <v-icon color="primary" size="20">mdi-gauge</v-icon>
+                {{ $t('performanceMonitor') || 'مراقبة الأداء' }}
+              </h3>
+              <v-chip
+                :color="systemStatus.healthy ? 'success' : 'warning'"
+                variant="tonal"
+                size="small"
+              >
+                <v-icon start size="12">mdi-circle</v-icon>
+                {{ systemStatus.healthy ? ($t('normal') || 'طبيعي') : ($t('needsAttention') || 'يحتاج انتباه') }}
+              </v-chip>
+            </div>
+            
+            <div class="service-content">
+              <div class="performance-chart mb-4" style="height: 120px;">
+                <canvas ref="performanceChart"></canvas>
               </div>
-              <span>{{ performanceMetrics.cpuUsage }}%</span>
-            </div>
-            
-            <div class="metric-row">
-              <span class="metric-label">استخدام الذاكرة:</span>
-              <div class="metric-bar">
-                <div class="metric-fill" :style="{ width: performanceMetrics.memoryUsage + '%' }"></div>
+              
+              <div class="performance-metrics">
+                <div class="metric-row mb-3">
+                  <span class="metric-label text-caption text-medium-emphasis">{{ $t('cpuUsage') || 'استخدام المعالج' }}:</span>
+                  <div class="d-flex align-center ga-2">
+                    <v-progress-linear
+                      :model-value="performanceMetrics.cpuUsage"
+                      color="primary"
+                      height="6"
+                      rounded
+                    />
+                    <span class="text-body-2 text-white">{{ performanceMetrics.cpuUsage }}%</span>
+                  </div>
+                </div>
+                
+                <div class="metric-row mb-3">
+                  <span class="metric-label text-caption text-medium-emphasis">{{ $t('memoryUsage') || 'استخدام الذاكرة' }}:</span>
+                  <div class="d-flex align-center ga-2">
+                    <v-progress-linear
+                      :model-value="performanceMetrics.memoryUsage"
+                      color="success"
+                      height="6"
+                      rounded
+                    />
+                    <span class="text-body-2 text-white">{{ performanceMetrics.memoryUsage }}%</span>
+                  </div>
+                </div>
+                
+                <div class="metric-row mb-3">
+                  <span class="metric-label text-caption text-medium-emphasis">{{ $t('responseTime') || 'وقت الاستجابة' }}:</span>
+                  <span class="text-body-2 text-white">{{ performanceMetrics.responseTime }}ms</span>
+                </div>
+                
+                <div class="metric-row">
+                  <span class="metric-label text-caption text-medium-emphasis">{{ $t('errorRate') || 'معدل الخطأ' }}:</span>
+                  <span class="text-body-2 text-white">{{ performanceMetrics.errorRate }}%</span>
+                </div>
               </div>
-              <span>{{ performanceMetrics.memoryUsage }}%</span>
             </div>
-            
-            <div class="metric-row">
-              <span class="metric-label">وقت الاستجابة:</span>
-              <span>{{ performanceMetrics.responseTime }}ms</span>
-            </div>
-            
-            <div class="metric-row">
-              <span class="metric-label">معدل الخطأ:</span>
-              <span>{{ performanceMetrics.errorRate }}%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
 
     <!-- Recent Activity -->
-    <div class="activity-section mb-8">
-      <div class="glass-card">
-        <div class="section-header">
-          <h3>
-            <i class="fa-solid fa-history me-2"></i>
-            النشاط الحديث
+    <v-card variant="elevated" class="mb-6">
+      <v-card-text class="pa-4">
+        <div class="section-header d-flex align-center justify-space-between mb-4">
+          <h3 class="text-h6 font-weight-medium text-white d-flex align-center ga-2">
+            <v-icon color="primary" size="20">mdi-history</v-icon>
+            {{ $t('recentActivity') || 'النشاط الحديث' }}
           </h3>
-          <button class="btn-sm" @click="refreshActivity">
-            <i class="fa-solid fa-sync"></i>
-            تحديث
-          </button>
+          <v-btn
+            @click="refreshActivity"
+            variant="tonal"
+            color="primary"
+            size="small"
+            prepend-icon="mdi-refresh"
+          >
+            {{ $t('refresh') || 'تحديث' }}
+          </v-btn>
         </div>
         
         <div class="activity-list">
-          <div v-for="activity in recentActivities" :key="activity.id" class="activity-item">
-            <div class="activity-icon">
-              <i :class="getActivityIcon(activity.type)"></i>
-            </div>
-            <div class="activity-content">
-              <div class="activity-header">
-                <span class="activity-title">{{ activity.title }}</span>
-                <span class="activity-time">{{ formatTime(activity.timestamp) }}</span>
+          <v-card
+            v-for="activity in recentActivities"
+            :key="activity.id"
+            variant="outlined"
+            class="activity-item mb-2"
+          >
+            <v-card-text class="pa-3">
+              <div class="d-flex align-center ga-3">
+                <v-avatar
+                  :color="getActivityColor(activity.type)"
+                  variant="tonal"
+                  size="40"
+                >
+                  <v-icon :color="getActivityColor(activity.type)">
+                    {{ getActivityIcon(activity.type) }}
+                  </v-icon>
+                </v-avatar>
+                
+                <div class="flex-grow-1">
+                  <div class="d-flex align-center justify-space-between mb-1">
+                    <span class="text-body-2 font-weight-medium text-white">{{ activity.title }}</span>
+                    <span class="text-caption text-medium-emphasis">{{ formatTime(activity.timestamp) }}</span>
+                  </div>
+                  <div class="text-caption text-medium-emphasis mb-2">{{ activity.description }}</div>
+                </div>
+                
+                <v-chip
+                  :color="getStatusColor(activity.status)"
+                  variant="tonal"
+                  size="small"
+                >
+                  {{ getStatusText(activity.status) }}
+                </v-chip>
               </div>
-              <div class="activity-description">{{ activity.description }}</div>
-            </div>
-            <div class="activity-status" :class="activity.status">
-              {{ getStatusText(activity.status) }}
-            </div>
-          </div>
+            </v-card-text>
+          </v-card>
         </div>
-      </div>
-    </div>
+      </v-card-text>
+    </v-card>
 
     <!-- Quick Actions -->
-    <div class="quick-actions">
-      <div class="glass-card">
-        <h3 class="text-xl font-bold mb-4">
-          <i class="fa-solid fa-bolt me-2"></i>
-          إجراءات سريعة
+    <v-card variant="elevated">
+      <v-card-text class="pa-4">
+        <h3 class="text-h5 font-weight-bold text-white mb-4 d-flex align-center ga-2">
+          <v-icon color="primary" size="24">mdi-lightning-bolt</v-icon>
+          {{ $t('quickActions') || 'إجراءات سريعة' }}
         </h3>
         
-        <div class="actions-grid">
-          <button class="action-btn" @click="optimizeAllModels">
-            <i class="fa-solid fa-magic"></i>
-            تحسين جميع النماذج
-          </button>
-          
-          <button class="action-btn" @click="backupAllData">
-            <i class="fa-solid fa-download"></i>
-            نسخ احتياطي للبيانات
-          </button>
-          
-          <button class="action-btn" @click="runDiagnostics">
-            <i class="fa-solid fa-stethoscope"></i>
-            تشخيص النظام
-          </button>
-          
-          <button class="action-btn" @click="clearAllCaches">
-            <i class="fa-solid fa-broom"></i>
-            مسح جميع الكاشات
-          </button>
-          
-          <button class="action-btn btn-warning" @click="emergencyMode">
-            <i class="fa-solid fa-exclamation-triangle"></i>
-            وضع الطوارئ
-          </button>
-          
-          <button class="action-btn btn-danger" @click="shutdownAllServices">
-            <i class="fa-solid fa-power-off"></i>
-            إيقاف جميع الخدمات
-          </button>
-        </div>
-      </div>
+        <v-row>
+          <v-col cols="12" sm="6" md="4">
+            <v-btn
+              @click="optimizeAllModels"
+              variant="tonal"
+              color="primary"
+              prepend-icon="mdi-auto-fix"
+              block
+              class="action-btn"
+            >
+              {{ $t('optimizeAllModels') || 'تحسين جميع النماذج' }}
+            </v-btn>
+          </v-col>
+          <v-col cols="12" sm="6" md="4">
+            <v-btn
+              @click="backupAllData"
+              variant="tonal"
+              color="primary"
+              prepend-icon="mdi-download"
+              block
+              class="action-btn"
+            >
+              {{ $t('backupAllData') || 'نسخ احتياطي للبيانات' }}
+            </v-btn>
+          </v-col>
+          <v-col cols="12" sm="6" md="4">
+            <v-btn
+              @click="runDiagnostics"
+              variant="tonal"
+              color="primary"
+              prepend-icon="mdi-stethoscope"
+              block
+              class="action-btn"
+            >
+              {{ $t('runDiagnostics') || 'تشخيص النظام' }}
+            </v-btn>
+          </v-col>
+          <v-col cols="12" sm="6" md="4">
+            <v-btn
+              @click="clearAllCaches"
+              variant="tonal"
+              color="primary"
+              prepend-icon="mdi-broom"
+              block
+              class="action-btn"
+            >
+              {{ $t('clearAllCaches') || 'مسح جميع الكاشات' }}
+            </v-btn>
+          </v-col>
+          <v-col cols="12" sm="6" md="4">
+            <v-btn
+              @click="emergencyMode"
+              variant="tonal"
+              color="warning"
+              prepend-icon="mdi-alert-triangle"
+              block
+              class="action-btn"
+            >
+              {{ $t('emergencyMode') || 'وضع الطوارئ' }}
+            </v-btn>
+          </v-col>
+          <v-col cols="12" sm="6" md="4">
+            <v-btn
+              @click="shutdownAllServices"
+              variant="tonal"
+              color="error"
+              prepend-icon="mdi-power"
+              block
+              class="action-btn"
+            >
+              {{ $t('shutdownAllServices') || 'إيقاف جميع الخدمات' }}
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
+
+    <!-- Loading State -->
+    <div v-if="loading" class="text-center py-8">
+      <v-progress-circular indeterminate color="primary" size="48" />
+      <p class="mt-4 text-medium-emphasis">{{ $t('loading') || 'جاري التحميل...' }}</p>
     </div>
-  </div>
+  </v-container>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import { useStore } from 'vuex';
 import AIService from '@/services/AIService';
 import AIMonitorService from '@/services/AIMonitorService';
 import AILearningService from '@/services/AILearningService';
 import Chart from 'chart.js/auto';
 
 const router = useRouter();
+const { t } = useI18n();
+const store = useStore();
 
 // State
+const loading = ref(false);
 const aiStatus = ref({
   overall: 'unknown',
   services: [],
@@ -333,25 +510,50 @@ const performanceChart = ref(null);
 // Computed
 const getActivityIcon = (type) => {
   const icons = {
-    training: 'fa-solid fa-graduation-cap',
-    monitoring: 'fa-solid fa-heartbeat',
-    error: 'fa-solid fa-exclamation-triangle',
-    success: 'fa-solid fa-check-circle',
-    warning: 'fa-solid fa-exclamation-circle',
-    info: 'fa-solid fa-info-circle'
+    training: 'mdi-school',
+    monitoring: 'mdi-heart-pulse',
+    error: 'mdi-alert-triangle',
+    success: 'mdi-check-circle',
+    warning: 'mdi-alert-circle',
+    info: 'mdi-information',
+    test: 'mdi-flask'
   };
-  return icons[type] || 'fa-solid fa-cog';
+  return icons[type] || 'mdi-cog';
+};
+
+const getActivityColor = (type) => {
+  const colors = {
+    training: 'primary',
+    monitoring: 'success',
+    error: 'error',
+    success: 'success',
+    warning: 'warning',
+    info: 'info',
+    test: 'primary'
+  };
+  return colors[type] || 'default';
 };
 
 const getStatusText = (status) => {
   const statusTexts = {
-    completed: 'مكتمل',
-    running: 'جاري التشغيل',
-    failed: 'فشل',
-    warning: 'تحذير',
-    info: 'معلومات'
+    completed: t('completed') || 'مكتمل',
+    running: t('running') || 'جاري التشغيل',
+    failed: t('failed') || 'فشل',
+    warning: t('warning') || 'تحذير',
+    info: t('info') || 'معلومات'
   };
   return statusTexts[status] || status;
+};
+
+const getStatusColor = (status) => {
+  const colors = {
+    completed: 'success',
+    running: 'info',
+    failed: 'error',
+    warning: 'warning',
+    info: 'info'
+  };
+  return colors[status] || 'default';
 };
 
 const formatTime = (timestamp) => {
@@ -366,83 +568,159 @@ const formatTime = (timestamp) => {
 // Methods
 const loadStatusData = async () => {
   try {
+    loading.value = true;
+    
     // Load AI Service Status
-    const aiServiceStatus = AIService.getServiceStatus();
-    aiStatus.value = aiServiceStatus;
+    const aiServiceStatus = await AIService.getServiceStatus();
+    if (aiServiceStatus.success) {
+      aiStatus.value = aiServiceStatus.data;
+    } else {
+      // Fallback to mock data
+      aiStatus.value = getMockAIStatus();
+    }
     
     // Load Learning System Stats
-    const learningAnalytics = AILearningService.getLearningAnalytics();
-    learningStats.value = {
-      ...learningAnalytics,
-      isActive: true
-    };
+    const learningAnalytics = await AILearningService.getLearningAnalytics();
+    if (learningAnalytics.success) {
+      learningStats.value = {
+        ...learningAnalytics.data,
+        isActive: true
+      };
+    } else {
+      // Fallback to mock data
+      learningStats.value = getMockLearningStats();
+    }
     
     // Load System Status
-    const monitorStatus = AIMonitorService.getServiceStatus();
-    systemStatus.value = monitorStatus;
+    const monitorStatus = await AIMonitorService.getServiceStatus();
+    if (monitorStatus.success) {
+      systemStatus.value = monitorStatus.data;
+    } else {
+      // Fallback to mock data
+      systemStatus.value = getMockSystemStatus();
+    }
     
     // Load Performance Metrics
-    performanceMetrics.value = {
-      cpuUsage: Math.random() * 30 + 20, // Simulated
-      memoryUsage: Math.random() * 40 + 30,
-      responseTime: Math.random() * 100 + 50,
-      errorRate: Math.random() * 2
-    };
+    const performance = await AIMonitorService.getPerformanceMetrics();
+    if (performance.success) {
+      performanceMetrics.value = performance.data;
+    } else {
+      // Fallback to mock data
+      performanceMetrics.value = getMockPerformanceMetrics();
+    }
     
     // Load Recent Activities
     await loadRecentActivities();
     
   } catch (error) {
     console.error('Error loading AI dashboard data:', error);
+    
+    // Show error notification
+    store.dispatch('notifications/add', {
+      type: 'error',
+      title: t('error') || 'خطأ',
+      message: t('errorLoadingAIData') || 'خطأ في تحميل بيانات الذكاء الاصطناعي',
+      timeout: 5000
+    });
+    
+    // Set fallback data
+    aiStatus.value = getMockAIStatus();
+    learningStats.value = getMockLearningStats();
+    systemStatus.value = getMockSystemStatus();
+    performanceMetrics.value = getMockPerformanceMetrics();
+  } finally {
+    loading.value = false;
   }
 };
 
+const getMockAIStatus = () => ({
+  overall: 'healthy',
+  services: ['chatbot', 'recommendation', 'sentiment'],
+  fallbackMode: false,
+  uptime: '5d 12h 30m'
+});
+
+const getMockLearningStats = () => ({
+  totalSessions: 156,
+  averageAccuracy: 92,
+  learningRate: 85,
+  improvementRate: 12,
+  totalModels: 8,
+  lastUpdate: new Date().toISOString(),
+  isActive: true
+});
+
+const getMockSystemStatus = () => ({
+  healthy: true,
+  activeServices: 4,
+  totalServices: 5,
+  uptime: '5d 12h 30m'
+});
+
+const getMockPerformanceMetrics = () => ({
+  cpuUsage: 35,
+  memoryUsage: 45,
+  responseTime: 85,
+  errorRate: 0.5
+});
+
 const loadRecentActivities = async () => {
-  const activities = [
-    {
-      id: 1,
-      type: 'training',
-      title: 'تدريب نموذج المساعد',
-      description: 'تم تدريب نموذج المساعد الذكي بدقة 92%',
-      status: 'completed',
-      timestamp: new Date(Date.now() - 3600000).toISOString()
-    },
-    {
-      id: 2,
-      type: 'monitoring',
-      title: 'فحص صحة النظام',
-      description: 'تم إجراء فحص شامل لجميع خدمات الذكاء الاصطناعي',
-      status: 'success',
-      timestamp: new Date(Date.now() - 7200000).toISOString()
-    },
-    {
-      id: 3,
-      type: 'info',
-      title: 'تحديث نموذج التسعير',
-      description: 'تم تحديث نموذج التسعير الذكي ببيانات جديدة',
-      status: 'completed',
-      timestamp: new Date(Date.now() - 10800000).toISOString()
-    },
-    {
-      id: 4,
-      type: 'warning',
-      title: 'استخدام عالي للذاكرة',
-      description: 'استخدام الذاكرة تجاوز 85% من السعة المتاحة',
-      status: 'warning',
-      timestamp: new Date(Date.now() - 14400000).toISOString()
-    },
-    {
-      id: 5,
-      type: 'success',
-      title: 'تحسين دقة النموذج',
-      description: 'تحسنت دقة نموذج تحليل المشاعر بنسبة 3%',
-      status: 'completed',
-      timestamp: new Date(Date.now() - 18000000).toISOString()
+  try {
+    const response = await AIMonitorService.getRecentActivities();
+    if (response.success) {
+      recentActivities.value = response.data;
+    } else {
+      // Fallback to mock data
+      recentActivities.value = getMockActivities();
     }
-  ];
-  
-  recentActivities.value = activities;
+  } catch (error) {
+    console.error('Error loading recent activities:', error);
+    recentActivities.value = getMockActivities();
+  }
 };
+
+const getMockActivities = () => [
+  {
+    id: 1,
+    type: 'training',
+    title: t('chatbotTraining') || 'تدريب نموذج المساعد',
+    description: t('chatbotTrainingDesc') || 'تم تدريب نموذج المساعد الذكي بدقة 92%',
+    status: 'completed',
+    timestamp: new Date(Date.now() - 3600000).toISOString()
+  },
+  {
+    id: 2,
+    type: 'monitoring',
+    title: t('systemHealthCheck') || 'فحص صحة النظام',
+    description: t('systemHealthCheckDesc') || 'تم إجراء فحص شامل لجميع خدمات الذكاء الاصطناعي',
+    status: 'success',
+    timestamp: new Date(Date.now() - 7200000).toISOString()
+  },
+  {
+    id: 3,
+    type: 'info',
+    title: t('pricingModelUpdate') || 'تحديث نموذج التسعير',
+    description: t('pricingModelUpdateDesc') || 'تم تحديث نموذج التسعير الذكي ببيانات جديدة',
+    status: 'completed',
+    timestamp: new Date(Date.now() - 10800000).toISOString()
+  },
+  {
+    id: 4,
+    type: 'warning',
+    title: t('highMemoryUsage') || 'استخدام عالي للذاكرة',
+    description: t('highMemoryUsageDesc') || 'استخدام الذاكرة تجاوز 85% من السعة المتاحة',
+    status: 'warning',
+    timestamp: new Date(Date.now() - 14400000).toISOString()
+  },
+  {
+    id: 5,
+    type: 'success',
+    title: t('modelAccuracyImprovement') || 'تحسين دقة النموذج',
+    description: t('modelAccuracyImprovementDesc') || 'تحسنت دقة نموذج تحليل المشاعر بنسبة 3%',
+    status: 'completed',
+    timestamp: new Date(Date.now() - 18000000).toISOString()
+  }
+];
 
 const goToTraining = () => {
   router.push('/dashboard/ai/training');
@@ -455,20 +733,36 @@ const goToMonitoring = () => {
 const testAIService = async () => {
   try {
     const result = await AIService.healthCheck();
-    addActivity('test', 'اختبار خدمة الذكاء الاصطناعي', 
-               result.status === 'healthy' ? 'نجح الاختبار' : 'فشل الاختبار', 
+    addActivity('test', t('testAIService') || 'اختبار خدمة الذكاء الاصطناعي', 
+               result.status === 'healthy' ? (t('testPassed') || 'نجح الاختبار') : (t('testFailed') || 'فشل الاختبار'), 
                result.status === 'healthy' ? 'success' : 'failed');
+    
+    // Show notification
+    store.dispatch('notifications/add', {
+      type: result.status === 'healthy' ? 'success' : 'error',
+      title: t('aiServiceTest') || 'اختبار خدمة الذكاء الاصطناعي',
+      message: result.status === 'healthy' ? (t('serviceHealthy') || 'الخدمة تعمل بشكل طبيعي') : (t('serviceIssues') || 'هناك مشاكل في الخدمة'),
+      timeout: 3000
+    });
   } catch (error) {
-    addActivity('error', 'خطأ في اختبار الذكاء الاصطناعي', error.message, 'failed');
+    addActivity('error', t('errorTestingAI') || 'خطأ في اختبار الذكاء الاصطناعي', error.message, 'failed');
   }
 };
 
 const restartAIService = async () => {
   try {
-    await AIService.initializeAISystems();
-    addActivity('info', 'إعادة تشغيل خدمة الذكاء الاصطناعي', 'تمت إعادة التشغيل بنجاح', 'success');
+    const result = await AIService.initializeAISystems();
+    addActivity('info', t('restartAIService') || 'إعادة تشغيل خدمة الذكاء الاصطناعي', t('restartSuccess') || 'تمت إعادة التشغيل بنجاح', 'success');
+    
+    // Show notification
+    store.dispatch('notifications/add', {
+      type: 'success',
+      title: t('aiServiceRestart') || 'إعادة تشغيل خدمة الذكاء الاصطناعي',
+      message: t('restartSuccess') || 'تمت إعادة التشغيل بنجاح',
+      timeout: 3000
+    });
   } catch (error) {
-    addActivity('error', 'خطأ في إعادة تشغيل الذكاء الاصطناعي', error.message, 'failed');
+    addActivity('error', t('errorRestartingAI') || 'خطأ في إعادة تشغيل الذكاء الاصطناعي', error.message, 'failed');
   }
 };
 
@@ -478,30 +772,57 @@ const viewTrainingDetails = () => {
 
 const startQuickTraining = async () => {
   try {
-    await AILearningService.startTraining('chatbot');
-    addActivity('training', 'تدريب سريع للمساعد', 'بدء تدريب نموذج المساعد', 'running');
+    const result = await AILearningService.startTraining('chatbot');
+    addActivity('training', t('quickTraining') || 'تدريب سريع للمساعد', t('trainingStarted') || 'بدء تدريب نموذج المساعد', 'running');
+    
+    // Show notification
+    store.dispatch('notifications/add', {
+      type: 'info',
+      title: t('trainingStarted') || 'بدء التدريب',
+      message: t('quickTrainingStarted') || 'بدء التدريب السريع لنموذج المساعد',
+      timeout: 3000
+    });
   } catch (error) {
-    addActivity('error', 'خطأ في التدريب السريع', error.message, 'failed');
+    addActivity('error', t('errorQuickTraining') || 'خطأ في التدريب السريع', error.message, 'failed');
   }
 };
 
 const optimizeAllModels = async () => {
   try {
     const results = await AILearningService.forceRetraining();
-    addActivity('info', 'تحسين جميع النماذج', 
-               `تم تحسين ${results.filter(r => r.success).length} نماذج بنجاح`, 'success');
+    const successCount = results.filter(r => r.success).length;
+    addActivity('info', t('optimizeAllModels') || 'تحسين جميع النماذج', 
+               `${t('optimizedModels') || 'تم تحسين'} ${successCount} ${t('modelsSuccessfully') || 'نماذج بنجاح'}`, 'success');
+    
+    // Show notification
+    store.dispatch('notifications/add', {
+      type: 'success',
+      title: t('modelOptimization') || 'تحسين النماذج',
+      message: `${successCount} ${t('modelsOptimized') || 'نماذج تم تحسينها بنجاح'}`,
+      timeout: 3000
+    });
   } catch (error) {
-    addActivity('error', 'خطأ في تحسين النماذج', error.message, 'failed');
+    addActivity('error', t('errorOptimizingModels') || 'خطأ في تحسين النماذج', error.message, 'failed');
   }
 };
 
-const backupAllData = () => {
+const backupAllData = async () => {
   try {
-    AILearningService.exportLearningData();
-    AIService.exportServiceStatus();
-    addActivity('info', 'نسخ احتياطي', 'تم تصدير جميع بيانات الذكاء الاصطناعي', 'success');
+    await Promise.all([
+      AILearningService.exportLearningData(),
+      AIService.exportServiceStatus()
+    ]);
+    addActivity('info', t('backup') || 'نسخ احتياطي', t('backupSuccess') || 'تم تصدير جميع بيانات الذكاء الاصطناعي', 'success');
+    
+    // Show notification
+    store.dispatch('notifications/add', {
+      type: 'success',
+      title: t('backupCompleted') || 'اكتمل النسخ الاحتياطي',
+      message: t('backupSuccess') || 'تم تصدير جميع بيانات الذكاء الاصطناعي',
+      timeout: 3000
+    });
   } catch (error) {
-    addActivity('error', 'خطأ في النسخ الاحتياطي', error.message, 'failed');
+    addActivity('error', t('errorBackup') || 'خطأ في النسخ الاحتياطي', error.message, 'failed');
   }
 };
 
@@ -513,10 +834,18 @@ const runDiagnostics = async () => {
       AILearningService.getLearningAnalytics()
     ]);
     
-    addActivity('info', 'تشخيص النظام', 
-               'اكتمل التشخيص بنجاح - جميع الأنظمة تعمل بشكل طبيعي', 'success');
+    addActivity('info', t('systemDiagnostics') || 'تشخيص النظام', 
+               t('diagnosticsSuccess') || 'اكتمل التشخيص بنجاح - جميع الأنظمة تعمل بشكل طبيعي', 'success');
+    
+    // Show notification
+    store.dispatch('notifications/add', {
+      type: 'success',
+      title: t('diagnosticsCompleted') || 'اكتمل التشخيص',
+      message: t('allSystemsHealthy') || 'جميع الأنظمة تعمل بشكل طبيعي',
+      timeout: 3000
+    });
   } catch (error) {
-    addActivity('error', 'خطأ في التشخيص', error.message, 'failed');
+    addActivity('error', t('errorDiagnostics') || 'خطأ في التشخيص', error.message, 'failed');
   }
 };
 
@@ -527,34 +856,68 @@ const clearAllCaches = () => {
     localStorage.removeItem('ai_training_sessions');
     localStorage.removeItem('ai_models');
     
-    addActivity('info', 'مسح الكاشات', 'تم مسح جميع الكاشات بنجاح', 'success');
+    addActivity('info', t('clearCaches') || 'مسح الكاشات', t('cachesCleared') || 'تم مسح جميع الكاشات بنجاح', 'success');
+    
+    // Show notification
+    store.dispatch('notifications/add', {
+      type: 'success',
+      title: t('cachesCleared') || 'تم مسح الكاشات',
+      message: t('allCachesCleared') || 'تم مسح جميع الكاشات بنجاح',
+      timeout: 3000
+    });
   } catch (error) {
-    addActivity('error', 'خطأ في مسح الكاشات', error.message, 'failed');
+    addActivity('error', t('errorClearingCaches') || 'خطأ في مسح الكاشات', error.message, 'failed');
   }
 };
 
 const emergencyMode = async () => {
   try {
     await AIMonitorService.emergencyRecovery();
-    addActivity('warning', 'تفعيل وضع الطوارئ', 'تم تفعيل وضع الطوارئ', 'warning');
+    addActivity('warning', t('activateEmergencyMode') || 'تفعيل وضع الطوارئ', t('emergencyModeActivated') || 'تم تفعيل وضع الطوارئ', 'warning');
+    
+    // Show notification
+    store.dispatch('notifications/add', {
+      type: 'warning',
+      title: t('emergencyMode') || 'وضع الطوارئ',
+      message: t('emergencyModeActivated') || 'تم تفعيل وضع الطوارئ',
+      timeout: 5000
+    });
   } catch (error) {
-    addActivity('error', 'خطأ في وضع الطوارئ', error.message, 'failed');
+    addActivity('error', t('errorEmergencyMode') || 'خطأ في وضع الطوارئ', error.message, 'failed');
   }
 };
 
 const shutdownAllServices = () => {
-  if (confirm('هل أنت متأكد من إيقاف جميع خدمات الذكاء الاصطناعي؟')) {
+  const confirmed = confirm(t('confirmShutdownServices') || 'هل أنت متأكد من إيقاف جميع خدمات الذكاء الاصطناعي؟');
+  
+  if (confirmed) {
     try {
       AIMonitorService.stopMonitoring();
-      addActivity('warning', 'إيقاف الخدمات', 'تم إيقاف جميع خدمات الذكاء الاصطناعي', 'warning');
+      addActivity('warning', t('shutdownServices') || 'إيقاف الخدمات', t('servicesShutdown') || 'تم إيقاف جميع خدمات الذكاء الاصطناعي', 'warning');
+      
+      // Show notification
+      store.dispatch('notifications/add', {
+        type: 'warning',
+        title: t('servicesShutdown') || 'إيقاف الخدمات',
+        message: t('allServicesStopped') || 'تم إيقاف جميع خدمات الذكاء الاصطناعي',
+        timeout: 5000
+      });
     } catch (error) {
-      addActivity('error', 'خطأ في إيقاف الخدمات', error.message, 'failed');
+      addActivity('error', t('errorShutdownServices') || 'خطأ في إيقاف الخدمات', error.message, 'failed');
     }
   }
 };
 
 const refreshActivity = async () => {
   await loadRecentActivities();
+  
+  // Show notification
+  store.dispatch('notifications/add', {
+    type: 'info',
+    title: t('refreshActivity') || 'تحديث النشاط',
+    message: t('activityRefreshed') || 'تم تحديث قائمة النشاط',
+    timeout: 2000
+  });
 };
 
 const addActivity = (type, title, description, status) => {
@@ -582,16 +945,16 @@ const updatePerformanceChart = () => {
       data: {
         labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
         datasets: [{
-          label: 'استخدام المعالج (%)',
+          label: t('cpuUsage') || 'استخدام المعالج (%)',
           data: [25, 30, 45, 60, 55, 40],
-          borderColor: '#d4af37',
-          backgroundColor: 'rgba(212, 175, 55, 0.1)',
+          borderColor: 'rgb(var(--v-theme-primary))',
+          backgroundColor: 'rgba(var(--v-theme-primary), 0.1)',
           tension: 0.4
         }, {
-          label: 'استخدام الذاكرة (%)',
+          label: t('memoryUsage') || 'استخدام الذاكرة (%)',
           data: [35, 40, 55, 70, 65, 50],
-          borderColor: '#4caf50',
-          backgroundColor: 'rgba(76, 175, 80, 0.1)',
+          borderColor: 'rgb(var(--v-theme-success))',
+          backgroundColor: 'rgba(var(--v-theme-success), 0.1)',
           tension: 0.4
         }]
       },
@@ -635,65 +998,319 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.ai-dashboard {
-  padding: 20px;
-  min-height: 100vh;
-}
-
+/* Dashboard Header */
 .dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  padding: 20px;
-  background: var(--bg-card);
-  border-radius: 15px;
-  border: 1px solid var(--border-light);
+  position: relative;
+  overflow: hidden;
 }
 
-.header-content h1 {
-  margin: 0 0 5px 0;
-  color: #fff;
+.dashboard-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+  transition: left 0.5s ease;
 }
 
-.header-content p {
-  margin: 0;
-  color: var(--text-dim);
+.dashboard-header:hover::before {
+  left: 100%;
 }
 
-.header-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.quick-stats {
-  margin-bottom: 30px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-}
-
+/* Statistics Cards */
 .stat-card {
-  background: var(--bg-card);
-  border-radius: 15px;
-  border: 1px solid var(--border-light);
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
   transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+  transition: left 0.5s ease;
+}
+
+.stat-card:hover::before {
+  left: 100%;
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
-  border-color: #d4af37;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.15);
 }
 
-.stat-icon {
-  width: 50px;
+.stat-info h3 {
+  position: relative;
+}
+
+.stat-info h3::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 30px;
+  height: 2px;
+  background: linear-gradient(90deg, rgb(var(--v-theme-primary)), rgb(var(--v-theme-secondary)));
+  border-radius: 1px;
+}
+
+/* Service Panels */
+.service-panel {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.service-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+  transition: left 0.5s ease;
+}
+
+.service-panel:hover::before {
+  left: 100%;
+}
+
+.service-panel:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.15);
+}
+
+.panel-header {
+  position: relative;
+}
+
+.panel-header::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  background: linear-gradient(90deg, rgb(var(--v-theme-primary)), rgb(var(--v-theme-secondary)));
+  border-radius: 1px;
+}
+
+.service-metrics {
+  border-top: 1px solid rgba(var(--v-theme-primary), 0.1);
+  border-bottom: 1px solid rgba(var(--v-theme-primary), 0.1);
+  padding: 1rem 0;
+}
+
+.service-actions .v-btn {
+  transition: all 0.3s ease;
+}
+
+.service-actions .v-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* Performance Metrics */
+.performance-chart {
+  background: rgba(var(--v-theme-surface-variant), 0.3);
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid rgba(var(--v-theme-primary), 0.1);
+}
+
+.metric-row {
+  transition: all 0.3s ease;
+}
+
+.metric-row:hover {
+  transform: translateX(4px);
+}
+
+/* Activity List */
+.activity-item {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.activity-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+  transition: left 0.5s ease;
+}
+
+.activity-item:hover::before {
+  left: 100%;
+}
+
+.activity-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.15);
+}
+
+/* Quick Actions */
+.action-btn {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.action-btn:hover::before {
+  left: 100%;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.15);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stat-card {
+  animation: fadeIn 0.6s ease forwards;
+}
+
+.stat-card:nth-child(1) { animation-delay: 0.1s; }
+.stat-card:nth-child(2) { animation-delay: 0.2s; }
+.stat-card:nth-child(3) { animation-delay: 0.3s; }
+.stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+.service-panel {
+  animation: fadeIn 0.8s ease forwards;
+}
+
+.service-panel:nth-child(1) { animation-delay: 0.2s; }
+.service-panel:nth-child(2) { animation-delay: 0.4s; }
+.service-panel:nth-child(3) { animation-delay: 0.6s; }
+
+.activity-item {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.action-btn {
+  animation: fadeIn 0.4s ease forwards;
+}
+
+/* Responsive Design */
+@media (max-width: 960px) {
+  .dashboard-header .d-flex {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .dashboard-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .stat-info h3 {
+    font-size: 1.2rem;
+  }
+  
+  .activity-item .d-flex {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+/* Vuetify Overrides */
+:deep(.v-card) {
+  transition: all 0.3s ease;
+}
+
+:deep(.v-card:hover) {
+  transform: translateY(-2px);
+}
+
+:deep(.v-btn) {
+  transition: all 0.3s ease;
+}
+
+:deep(.v-btn:hover) {
+  transform: translateY(-2px);
+}
+
+:deep(.v-avatar) {
+  transition: all 0.3s ease;
+}
+
+:deep(.v-avatar:hover) {
+  transform: scale(1.05);
+}
+
+:deep(.v-chip) {
+  transition: all 0.3s ease;
+}
+
+:deep(.v-chip:hover) {
+  transform: translateY(-2px);
+}
+
+:deep(.v-progress-linear) {
+  transition: all 0.3s ease;
+}
+
+:deep(.v-progress-linear:hover) {
+  transform: scale(1.02);
+}
+
+:deep(.v-progress-circular) {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+:deep(.v-icon) {
+  transition: all 0.3s ease;
+}
+
+:deep(.v-icon:hover) {
+  transform: scale(1.1);
+}
+</style>
   height: 50px;
   border-radius: 12px;
   background: rgba(212, 175, 55, 0.2);

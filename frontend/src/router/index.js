@@ -34,10 +34,11 @@ router.beforeEach((to, from, next) => {
   const requiresAdmin = to.matched.some(record => record.meta.isAdmin)
   const requiresInvestor = to.matched.some(record => record.meta.isInvestor)
   const requiredRole = to.meta.role
+  const isPublicRouteMeta = to.matched.some(record => record.meta.isPublic)
   
   // Public routes that don't require authentication
-  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/verify-email']
-  const isPublicRoute = publicRoutes.includes(to.path) || to.path.startsWith('/auth/')
+  const publicRoutes = ['/', '/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/getlocation']
+  const isPublicRoute = publicRoutes.includes(to.path) || to.path.startsWith('/auth/') || isPublicRouteMeta
   
   console.log(`🔐 Route Guard: ${to.path} | Auth: ${isUserAuthenticated} | Role: ${currentUserRole}`)
   

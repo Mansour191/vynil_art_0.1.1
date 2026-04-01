@@ -9,7 +9,3 @@ export { AIServiceGraphQL as AIService };
 
 // Add static getInstance method to the exported class
 AIServiceGraphQL.getInstance = AIServiceGraphQL.getInstance;
-
-// Create singleton instance for backward compatibility
-const aiServiceInstance = AIServiceGraphQL.getInstance();
-export { aiServiceInstance };

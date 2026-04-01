@@ -347,8 +347,8 @@ const showPasswordDialog = ref(false);
 const showDevicesDialog = ref(false);
 const profileFormValid = ref(false);
 const passwordFormValid = ref(false);
-const profileForm = ref(null);
-const passwordForm = ref(null);
+const profileFormRef = ref(null);
+const passwordFormRef = ref(null);
 
 const profileForm = reactive({
   firstName: '',
@@ -863,19 +863,6 @@ const tabs = [
   { id: 'notifications', label: 'الإشعارات', icon: 'fa-solid fa-bell' },
   { id: 'privacy', label: 'الخصوصية', icon: 'fa-solid fa-lock' }
 ];
-
-const profileForm = reactive({
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: ''
-});
-
-const passwordForm = reactive({
-  oldPassword: '',
-  newPassword: '',
-  confirmPassword: ''
-});
 
 const passwordStrength = reactive({
   score: 0,

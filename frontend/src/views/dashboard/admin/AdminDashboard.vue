@@ -1,125 +1,240 @@
 <template>
-  <div class="admin-dashboard">
+  <v-app>
+    <!-- Admin Sidebar -->
     <AdminSidebar :collapsed="sidebarCollapsed" @toggle="sidebarCollapsed = !sidebarCollapsed" />
 
-    <div class="main-content" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
+    <!-- Main Content -->
+    <v-main :class="{ 'sidebar-collapsed': sidebarCollapsed }" class="admin-main">
+      <!-- Admin Header -->
       <AdminHeader
         :sidebar-collapsed="sidebarCollapsed"
         @toggle-sidebar="sidebarCollapsed = !sidebarCollapsed"
       />
 
-      <div class="content">
-        <h1 class="page-title">{{ $t('dashboard') }}</h1>
+      <!-- Page Content -->
+      <v-container class="pa-4">
+        <!-- Page Title -->
+        <h1 class="text-h3 font-weight-bold text-primary mb-6">
+          {{ $t('dashboard') || 'لوحة التحكم' }}
+        </h1>
 
-        <!-- بطاقات الإحصائيات -->
-        <div class="stats-grid">
-          <StatsCard
-            icon="fa-solid fa-newspaper"
-            :title="$t('totalPosts')"
-            :value="stats.posts"
-            color="#D4AF37"
-          />
-          <StatsCard
-            icon="fa-solid fa-tags"
-            :title="$t('totalCategories')"
-            :value="stats.categories"
-            color="#4CAF50"
-          />
-          <StatsCard
-            icon="fa-solid fa-couch"
-            :title="$t('totalProducts')"
-            :value="stats.products"
-            color="#2196F3"
-          />
-          <StatsCard
-            icon="fa-solid fa-comments"
-            :title="$t('totalComments')"
-            :value="stats.comments"
-            color="#FF9800"
-          />
-          <StatsCard
-            icon="fa-solid fa-users"
-            :title="$t('totalUsers')"
-            :value="stats.users"
-            color="#9C27B0"
-          />
-          <StatsCard
-            icon="fa-solid fa-eye"
-            :title="$t('totalViews')"
-            :value="stats.views"
-            color="#F44336"
-          />
-        </div>
+        <!-- Statistics Cards -->
+        <v-row class="mb-6">
+          <v-col cols="12" sm="6" md="4" lg="2">
+            <StatsCard
+              icon="mdi-newspaper"
+              :title="$t('totalPosts') || 'إجمالي المقالات'"
+              :value="stats.posts"
+              color="#D4AF37"
+            />
+          </v-col>
+          <v-col cols="12" sm="6" md="4" lg="2">
+            <StatsCard
+              icon="mdi-tag"
+              :title="$t('totalCategories') || 'إجمالي الفئات'"
+              :value="stats.categories"
+              color="#4CAF50"
+            />
+          </v-col>
+          <v-col cols="12" sm="6" md="4" lg="2">
+            <StatsCard
+              icon="mdi-couch"
+              :title="$t('totalProducts') || 'إجمالي المنتجات'"
+              :value="stats.products"
+              color="#2196F3"
+            />
+          </v-col>
+          <v-col cols="12" sm="6" md="4" lg="2">
+            <StatsCard
+              icon="mdi-comment"
+              :title="$t('totalComments') || 'إجمالي التعليقات'"
+              :value="stats.comments"
+              color="#FF9800"
+            />
+          </v-col>
+          <v-col cols="12" sm="6" md="4" lg="2">
+            <StatsCard
+              icon="mdi-account-group"
+              :title="$t('totalUsers') || 'إجمالي المستخدمين'"
+              :value="stats.users"
+              color="#9C27B0"
+            />
+          </v-col>
+          <v-col cols="12" sm="6" md="4" lg="2">
+            <StatsCard
+              icon="mdi-eye"
+              :title="$t('totalViews') || 'إجمالي المشاهدات'"
+              :value="stats.views"
+              color="#F44336"
+            />
+          </v-col>
+        </v-row>
 
-        <!-- رسالة ترحيب -->
-        <div class="welcome-card">
-          <i class="fa-solid fa-crown welcome-icon"></i>
-          <div class="welcome-text">
-            <h2>{{ $t('welcomeAdmin') }}</h2>
-            <p>{{ $t('welcomeAdminMessage') }}</p>
+        <!-- Welcome Card -->
+        <v-card variant="elevated" class="mb-6 welcome-card">
+          <v-card-text class="pa-6">
+            <div class="d-flex align-center ga-6">
+              <v-avatar size="80" color="primary" variant="tonal">
+                <v-icon size="48" color="primary">mdi-crown</v-icon>
+              </v-avatar>
+              <div class="welcome-text">
+                <h2 class="text-h4 font-weight-bold text-primary mb-2">
+                  {{ $t('welcomeAdmin') || 'مرحباً بك أيها المدير' }}
+                </h2>
+                <p class="text-body-1 text-medium-emphasis">
+                  {{ $t('welcomeAdminMessage') || 'نحن سعداء بوجودك في لوحة التحكم. يمكنك إدارة المحتوى والمنتجات والمستخدمين من هنا.' }}
+                </p>
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+
+        <!-- Recent Posts Section -->
+        <div class="section-header mb-4">
+          <div class="d-flex align-center justify-space-between">
+            <h2 class="text-h5 font-weight-bold text-primary d-flex align-center ga-2">
+              <v-icon color="primary">mdi-clock</v-icon>
+              {{ $t('recentPosts') || 'المقالات الأخيرة' }}
+            </h2>
+            <v-btn
+              to="/admin/posts"
+              variant="tonal"
+              color="primary"
+              append-icon="mdi-arrow-left"
+            >
+              {{ $t('viewAll') || 'عرض الكل' }}
+            </v-btn>
           </div>
         </div>
 
-        <!-- آخر المقالات -->
-        <div class="section-header">
-          <h2><i class="fa-solid fa-clock"></i> {{ $t('recentPosts') }}</h2>
-          <router-link to="/admin/posts" class="view-all">
-            {{ $t('viewAll') }} <i class="fa-solid fa-arrow-left"></i>
-          </router-link>
-        </div>
+        <!-- Recent Posts Grid -->
+        <v-row>
+          <v-col
+            v-for="post in recentPosts"
+            :key="post.id"
+            cols="12"
+            md="6"
+            lg="4"
+          >
+            <v-card variant="elevated" class="recent-post-card">
+              <v-card-text class="pa-4">
+                <div class="d-flex ga-4">
+                  <!-- Post Image -->
+                  <v-avatar size="80" rounded="lg">
+                    <v-img :src="post.image" :alt="post.title" />
+                  </v-avatar>
+                  
+                  <!-- Post Info -->
+                  <div class="flex-grow-1">
+                    <h3 class="text-h6 font-weight-medium mb-2">{{ post.title }}</h3>
+                    
+                    <!-- Post Meta -->
+                    <div class="d-flex ga-4 mb-3">
+                      <div class="d-flex align-center ga-1 text-caption text-medium-emphasis">
+                        <v-icon size="16" color="primary">mdi-calendar</v-icon>
+                        {{ post.date }}
+                      </div>
+                      <div class="d-flex align-center ga-1 text-caption text-medium-emphasis">
+                        <v-icon size="16" color="primary">mdi-eye</v-icon>
+                        {{ post.views }}
+                      </div>
+                      <div class="d-flex align-center ga-1 text-caption text-medium-emphasis">
+                        <v-icon size="16" color="primary">mdi-comment</v-icon>
+                        {{ post.comments }}
+                      </div>
+                    </div>
+                    
+                    <!-- Post Actions -->
+                    <div class="d-flex ga-2">
+                      <v-btn
+                        :to="`/admin/posts/edit/${post.id}`"
+                        variant="tonal"
+                        color="primary"
+                        size="small"
+                        icon="mdi-pencil"
+                      />
+                      <v-btn
+                        @click="deletePost(post.id)"
+                        variant="tonal"
+                        color="error"
+                        size="small"
+                        icon="mdi-delete"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </v-card-text>
+            </v-card>
+          </v-col>
+        </v-row>
 
-        <div class="recent-posts-grid">
-          <div v-for="post in recentPosts" :key="post.id" class="recent-post-card">
-            <div class="post-image">
-              <img :src="post.image" :alt="post.title" />
-            </div>
-            <div class="post-info">
-              <h3>{{ post.title }}</h3>
-              <div class="post-meta">
-                <span><i class="fa-solid fa-calendar"></i> {{ post.date }}</span>
-                <span><i class="fa-solid fa-eye"></i> {{ post.views }}</span>
-                <span><i class="fa-solid fa-comment"></i> {{ post.comments }}</span>
-              </div>
-              <div class="post-actions">
-                <router-link :to="`/admin/posts/edit/${post.id}`" class="btn-edit">
-                  <i class="fa-solid fa-edit"></i>
-                </router-link>
-                <button class="btn-delete" @click="deletePost(post.id)">
-                  <i class="fa-solid fa-trash"></i>
-                </button>
-              </div>
-            </div>
-          </div>
+        <!-- Loading State -->
+        <div v-if="loading" class="text-center py-8">
+          <v-progress-circular indeterminate color="primary" size="48" />
+          <p class="mt-4 text-medium-emphasis">
+            {{ $t('loading') || 'جاري التحميل...' }}
+          </p>
         </div>
-      </div>
-    </div>
-  </div>
+      </v-container>
+    </v-main>
+  </v-app>
 </template>
 
-<script>
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import { useStore } from 'vuex';
 import AdminSidebar from './components/Sidebar.vue';
 import AdminHeader from './components/Header.vue';
 import StatsCard from './components/StatsCard.vue';
+import AdminService from '@/services/AdminService';
 
-export default {
-  name: 'AdminDashboard',
-  components: {
-    AdminSidebar,
-    AdminHeader,
-    StatsCard,
-  },
-  data() {
-    return {
-      sidebarCollapsed: false,
-      stats: {
+const router = useRouter();
+const { t } = useI18n();
+const store = useStore();
+
+// State
+const sidebarCollapsed = ref(false);
+const loading = ref(false);
+const stats = ref({
+  posts: 0,
+  categories: 0,
+  products: 0,
+  comments: 0,
+  users: 0,
+  views: '0',
+});
+const recentPosts = ref([]);
+
+// Methods
+const fetchDashboardData = async () => {
+  try {
+    loading.value = true;
+    
+    // Fetch statistics
+    const statsResponse = await AdminService.getDashboardStats();
+    if (statsResponse.success) {
+      stats.value = statsResponse.data;
+    } else {
+      // Fallback to mock data
+      stats.value = {
         posts: 128,
         categories: 8,
         products: 256,
         comments: 342,
         users: 89,
         views: '45.2K',
-      },
-      recentPosts: [
+      };
+    }
+    
+    // Fetch recent posts
+    const postsResponse = await AdminService.getRecentPosts();
+    if (postsResponse.success) {
+      recentPosts.value = postsResponse.data;
+    } else {
+      // Fallback to mock data
+      recentPosts.value = [
         {
           id: 1,
           title: 'كيف تختار الفينيل المناسب لمشروعك؟',
@@ -144,241 +259,274 @@ export default {
           views: 2100,
           comments: 42,
         },
-      ],
-    };
-  },
-  methods: {
-    deletePost(id) {
-      if (confirm('هل أنت متأكد من حذف هذا المقال؟')) {
-        // منطق الحذف
-        console.log('Deleting post:', id);
-      }
-    },
-  },
-  beforeRouteEnter(to, from, next) {
-    // التحقق من تسجيل الدخول
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
-      next('/admin/login');
-    } else {
-      next();
+      ];
     }
-  },
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    
+    // Show error notification
+    store.dispatch('notifications/add', {
+      type: 'error',
+      title: t('error') || 'خطأ',
+      message: t('errorLoadingData') || 'خطأ في تحميل البيانات',
+      timeout: 5000
+    });
+    
+    // Set fallback data
+    stats.value = {
+      posts: 128,
+      categories: 8,
+      products: 256,
+      comments: 342,
+      users: 89,
+      views: '45.2K',
+    };
+    
+    recentPosts.value = [
+      {
+        id: 1,
+        title: 'كيف تختار الفينيل المناسب لمشروعك؟',
+        image: 'https://i.postimg.cc/0QKmBBJ9/kitchen2.png',
+        date: '15 مارس 2026',
+        views: 1234,
+        comments: 23,
+      },
+      {
+        id: 2,
+        title: '10 أفكار لتجديد غرفة نوم أطفالك بالفينيل',
+        image: 'https://i.postimg.cc/7L0DfPgY/Entrance1.png',
+        date: '12 مارس 2026',
+        views: 856,
+        comments: 15,
+      },
+      {
+        id: 3,
+        title: '5 أخطاء شائعة عند تركيب الفينيل',
+        image: 'https://i.postimg.cc/htCcH3cZ/table1.png',
+        date: '10 مارس 2026',
+        views: 2100,
+        comments: 42,
+      },
+    ];
+  } finally {
+    loading.value = false;
+  }
 };
+
+const deletePost = async (postId) => {
+  const confirmed = confirm(t('confirmDeletePost') || 'هل أنت متأكد من حذف هذا المقال؟');
+  
+  if (confirmed) {
+    try {
+      loading.value = true;
+      
+      const response = await AdminService.deletePost(postId);
+      
+      if (response.success) {
+        // Remove post from local state
+        recentPosts.value = recentPosts.value.filter(post => post.id !== postId);
+        
+        // Update stats
+        stats.value.posts -= 1;
+        
+        // Show success notification
+        store.dispatch('notifications/add', {
+          type: 'success',
+          title: t('success') || 'نجاح',
+          message: t('postDeleted') || 'تم حذف المقال بنجاح',
+          timeout: 3000
+        });
+      } else {
+        throw new Error(response.error || 'Failed to delete post');
+      }
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      
+      // Show error notification
+      store.dispatch('notifications/add', {
+        type: 'error',
+        title: t('error') || 'خطأ',
+        message: t('errorDeletingPost') || 'خطأ في حذف المقال',
+        timeout: 5000
+      });
+    } finally {
+      loading.value = false;
+    }
+  }
+};
+
+const checkAuth = () => {
+  const token = localStorage.getItem('adminToken');
+  if (!token) {
+    router.push('/admin/login');
+  }
+};
+
+// Lifecycle
+onMounted(() => {
+  checkAuth();
+  fetchDashboardData();
+});
 </script>
 
 <style scoped>
-.admin-dashboard {
-  display: flex;
-  min-height: 100vh;
-  background: var(--bg-deep);
-}
-
-.main-content {
-  flex: 1;
+/* Admin Main Layout */
+.admin-main {
+  transition: margin-right 0.3s ease;
   margin-right: 280px;
-  transition: margin-right 0.3s;
 }
 
-[dir='ltr'] .main-content {
+.admin-main.sidebar-collapsed {
+  margin-right: 80px;
+}
+
+/* RTL Support */
+[dir='ltr'] .admin-main {
   margin-right: 0;
   margin-left: 280px;
 }
 
-.main-content.sidebar-collapsed {
-  margin-right: 80px;
-}
-
-[dir='ltr'] .main-content.sidebar-collapsed {
+[dir='ltr'] .admin-main.sidebar-collapsed {
   margin-right: 0;
   margin-left: 80px;
 }
 
-.content {
-  padding: 80px 30px 30px;
-}
-
-.page-title {
-  color: var(--gold-primary);
-  font-size: 2rem;
-  margin-bottom: 30px;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-@media (max-width: 1400px) {
-  .stats-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (max-width: 768px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
+/* Welcome Card */
 .welcome-card {
-  background: var(--bg-card);
-  border-radius: 20px;
-  padding: 30px;
-  margin-bottom: 30px;
-  display: flex;
-  align-items: center;
-  gap: 30px;
-  border: 1px solid var(--border-subtle);
+  background: linear-gradient(135deg, rgba(var(--v-theme-primary), 0.05), rgba(var(--v-theme-secondary), 0.05));
+  border: 1px solid rgba(var(--v-theme-primary), 0.1);
+  transition: all 0.3s ease;
 }
 
-.welcome-icon {
-  font-size: 4rem;
-  color: var(--gold-primary);
+.welcome-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.15);
 }
 
 .welcome-text h2 {
-  color: var(--gold-primary);
-  font-size: 1.8rem;
-  margin-bottom: 10px;
+  background: linear-gradient(45deg, rgb(var(--v-theme-primary)), rgb(var(--v-theme-secondary)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.welcome-text p {
-  color: var(--text-secondary);
-  font-size: 1.1rem;
+/* Recent Posts Cards */
+.recent-post-card {
+  transition: all 0.3s ease;
+  overflow: hidden;
 }
 
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 30px 0 20px;
+.recent-post-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.15);
 }
 
+.recent-post-card .v-card-text {
+  position: relative;
+}
+
+.recent-post-card .v-card-text::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+  transition: left 0.5s ease;
+}
+
+.recent-post-card:hover .v-card-text::before {
+  left: 100%;
+}
+
+/* Section Header */
 .section-header h2 {
-  color: var(--gold-primary);
-  font-size: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  position: relative;
 }
 
-.view-all {
-  color: var(--gold-primary);
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: gap 0.3s;
+.section-header h2::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 50px;
+  height: 3px;
+  background: linear-gradient(90deg, rgb(var(--v-theme-primary)), rgb(var(--v-theme-secondary)));
+  border-radius: 2px;
 }
 
-.view-all:hover {
-  gap: 12px;
-}
-
-.recent-posts-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-
-@media (max-width: 992px) {
-  .recent-posts-grid {
-    grid-template-columns: repeat(2, 1fr);
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-}
-
-@media (max-width: 768px) {
-  .recent-posts-grid {
-    grid-template-columns: 1fr;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 .recent-post-card {
-  background: var(--bg-card);
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid var(--border-subtle);
-  display: flex;
-  gap: 15px;
-  padding: 15px;
+  animation: fadeInUp 0.6s ease forwards;
 }
 
-.post-image {
-  width: 80px;
-  height: 80px;
-  border-radius: 10px;
-  overflow: hidden;
-  flex-shrink: 0;
+.recent-post-card:nth-child(1) { animation-delay: 0.1s; }
+.recent-post-card:nth-child(2) { animation-delay: 0.2s; }
+.recent-post-card:nth-child(3) { animation-delay: 0.3s; }
+
+/* Responsive Design */
+@media (max-width: 960px) {
+  .admin-main {
+    margin-right: 0;
+    margin-left: 0;
+  }
 }
 
-.post-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+@media (max-width: 600px) {
+  .welcome-card .d-flex {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .recent-post-card .d-flex {
+    flex-direction: column;
+    text-align: center;
+  }
 }
 
-.post-info {
-  flex: 1;
+/* Vuetify Overrides */
+:deep(.v-card) {
+  transition: all 0.3s ease;
 }
 
-.post-info h3 {
-  color: var(--text-primary);
-  font-size: 1rem;
-  margin-bottom: 8px;
+:deep(.v-card:hover) {
+  transform: translateY(-2px);
 }
 
-.post-meta {
-  display: flex;
-  gap: 15px;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  margin-bottom: 8px;
+:deep(.v-btn) {
+  transition: all 0.3s ease;
 }
 
-.post-meta i {
-  color: var(--gold-primary);
-  margin-left: 3px;
+:deep(.v-btn:hover) {
+  transform: translateY(-2px);
 }
 
-.post-actions {
-  display: flex;
-  gap: 8px;
+:deep(.v-avatar) {
+  transition: all 0.3s ease;
 }
 
-.btn-edit,
-.btn-delete {
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.3s;
+:deep(.v-avatar:hover) {
+  transform: scale(1.05);
 }
 
-.btn-edit {
-  background: rgba(33, 150, 243, 0.1);
-  color: #2196f3;
-  text-decoration: none;
+:deep(.v-progress-circular) {
+  animation: spin 2s linear infinite;
 }
 
-.btn-edit:hover {
-  background: #2196f3;
-  color: white;
-}
-
-.btn-delete {
-  background: rgba(244, 67, 54, 0.1);
-  color: #f44336;
-}
-
-.btn-delete:hover {
-  background: #f44336;
-  color: white;
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 </style>

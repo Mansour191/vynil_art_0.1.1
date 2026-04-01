@@ -387,7 +387,7 @@ const saving = ref(false);
 const showAddForm = ref(false);
 const editingPaymentMethod = ref(null);
 const formValid = ref(false);
-const paymentForm = ref(null);
+const paymentFormRef = ref(null);
 
 const paymentMethods = ref([]);
 const paymentForm = reactive({
@@ -868,25 +868,6 @@ const showAddForm = ref(false);
 const editingPayment = ref(null);
 
 const paymentMethods = ref([]);
-
-const paymentForm = reactive({
-  type: '',
-  title: '',
-  // Card fields
-  cardholderName: '',
-  cardNumber: '',
-  expiryMonth: '',
-  expiryYear: '',
-  cvv: '',
-  // Bank fields
-  bankName: '',
-  accountName: '',
-  accountNumber: '',
-  iban: '',
-  // Wallet fields
-  walletProvider: '',
-  phoneNumber: ''
-});
 
 const paymentTypes = [
   { value: 'card', label: 'بطاقة ائتمان', icon: 'fa-solid fa-credit-card' },

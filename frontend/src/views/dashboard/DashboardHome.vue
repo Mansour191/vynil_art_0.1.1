@@ -1,128 +1,280 @@
 <template>
-  <div class="dashboard-home">
-    <!-- بطاقات الإحصائيات المتحركة -->
-    <div class="stats-grid">
-      <div
-        class="stat-card"
-        v-for="(stat, index) in stats"
-        :key="stat.title"
-        :style="{ animationDelay: index * 0.1 + 's' }"
-      >
-        <div class="stat-icon" :style="{ background: stat.color + '20' }">
-          <i :class="stat.icon" :style="{ color: stat.color }"></i>
-        </div>
-        <div class="stat-info">
-          <h3>{{ stat.value }}</h3>
-          <p>{{ stat.title }}</p>
-          <div class="stat-trend">
-            <i :class="stat.trend > 0 ? 'fa-solid fa-arrow-up' : 'fa-solid fa-arrow-down'"></i>
-            <span :class="{ positive: stat.trend > 0, negative: stat.trend < 0 }">
-              {{ Math.abs(stat.trend) }}%
-            </span>
-          </div>
-        </div>
-      </div>
+  <v-container class="pa-4">
+    <!-- Loading State -->
+    <div v-if="loading" class="text-center py-16">
+      <v-progress-circular indeterminate color="primary" size="64" class="mb-4" />
+      <h3 class="text-h5 font-weight-medium mb-2">
+        {{ $t('loadingDashboard') || 'جاري تحميل لوحة التحكم...' }}
+      </h3>
+      <p class="text-body-1 text-medium-emphasis">
+        {{ $t('pleaseWait') || 'يرجى الانتظار' }}
+      </p>
     </div>
 
-    <!-- الرسوم البيانية والمحتوى -->
-    <div class="content-grid">
-      <!-- الرسم البياني للمبيعات -->
-      <div class="chart-card">
-        <div class="card-header">
-          <h3 v-ai-t>المبيعات الشهرية</h3>
-          <select class="chart-filter">
-            <option v-ai-t>آخر 7 أيام</option>
-            <option v-ai-t>آخر 30 يوم</option>
-            <option v-ai-t>آخر 3 شهور</option>
-          </select>
-        </div>
-        <div class="chart-container">
-          <!-- يمكن إضافة رسم بياني لاحقاً -->
-          <div class="chart-placeholder">
-            <div class="bar-chart">
-              <div v-for="n in 7" :key="n" class="bar-wrapper">
-                <div class="bar" :style="{ height: Math.random() * 150 + 50 + 'px' }"></div>
-                <span>يوم {{ n }}</span>
+    <!-- Error State -->
+    <v-alert
+      v-else-if="error"
+      type="error"
+      variant="tonal"
+      class="mb-6"
+      closable
+      @click:close="error = null"
+    >
+      <v-alert-title class="d-flex align-center ga-2">
+        <v-icon>mdi-alert-circle</v-icon>
+        {{ $t('errorLoadingDashboard') || 'خطأ في تحميل لوحة التحكم' }}
+      </v-alert-title>
+      <v-alert-text>
+        {{ error }}
+      </v-alert-text>
+    </v-alert>
+
+    <!-- Dashboard Content -->
+    <div v-else>
+      <!-- Statistics Cards -->
+      <v-row class="mb-6">
+        <v-col
+          v-for="(stat, index) in formattedStats"
+          :key="stat.title"
+          cols="12"
+          sm="6"
+          lg="3"
+        >
+          <v-card
+            variant="elevated"
+            class="stat-card"
+            :style="{ animationDelay: index * 0.1 + 's' }"
+          >
+            <v-card-text class="pa-4">
+              <div class="d-flex align-center ga-4">
+                <v-avatar
+                  size="56"
+                  :color="stat.color + '20'"
+                  class="stat-icon"
+                >
+                  <v-icon :color="stat.color" size="28">
+                    {{ stat.icon }}
+                  </v-icon>
+                </v-avatar>
+                
+                <div class="flex-grow-1">
+                  <h3 class="text-h4 font-weight-bold mb-1">
+                    {{ stat.value }}
+                  </h3>
+                  <p class="text-body-2 text-medium-emphasis mb-2">
+                    {{ stat.title }}
+                  </p>
+                  <div class="d-flex align-center ga-1">
+                    <v-icon
+                      :color="stat.trend > 0 ? 'success' : 'error'"
+                      size="16"
+                    >
+                      {{ stat.trend > 0 ? 'mdi-trending-up' : 'mdi-trending-down' }}
+                    </v-icon>
+                    <span
+                      :class="[
+                        'text-caption font-weight-medium',
+                        stat.trend > 0 ? 'text-success' : 'text-error'
+                      ]"
+                    >
+                      {{ Math.abs(stat.trend) }}%
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
 
-      <!-- المنتجات الأكثر مبيعاً -->
-      <div class="top-products-card">
-        <div class="card-header">
-          <h3 v-ai-t>المنتجات الأكثر مبيعاً</h3>
-          <a href="#" class="view-all" v-ai-t>عرض الكل</a>
-        </div>
-        <div class="products-list">
-          <div v-for="product in topProducts" :key="product.id" class="product-item">
-            <div class="product-info">
-              <img :src="product.image" :alt="product.name" />
-              <div>
-                <h4 v-ai-t>{{ product.name }}</h4>
-                <p class="product-category" v-ai-t>{{ product.category }}</p>
+      <!-- Charts and Content -->
+      <v-row class="mb-6">
+        <!-- Sales Chart -->
+        <v-col cols="12" lg="8">
+          <v-card variant="elevated" class="chart-card">
+            <v-card-title class="d-flex align-center justify-space-between pa-4">
+              <span class="text-h6 font-weight-bold">
+                <v-icon class="me-2" color="primary">mdi-chart-line</v-icon>
+                {{ $t('monthlySales') || 'المبيعات الشهرية' }}
+              </span>
+              <v-select
+                v-model="selectedPeriod"
+                :items="periodOptions"
+                item-title="text"
+                item-value="value"
+                variant="outlined"
+                density="compact"
+                hide-details
+                @update:model-value="handlePeriodChange"
+              />
+            </v-card-title>
+            
+            <v-divider />
+            
+            <v-card-text class="pa-4">
+              <div class="chart-container">
+                <!-- Simple Bar Chart -->
+                <div class="bar-chart">
+                  <div
+                    v-for="(data, index) in chartData"
+                    :key="index"
+                    class="bar-wrapper"
+                  >
+                    <div
+                      class="bar"
+                      :style="{ height: data.height + 'px' }"
+                    ></div>
+                    <span class="text-caption text-medium-emphasis">
+                      {{ data.label }}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="product-stats">
-              <span class="sales-count" v-ai-t>{{ product.sales }} مبيعات</span>
-              <span class="revenue">{{ product.revenue }} ر.س</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
 
-    <!-- الطلبات الأخيرة -->
-    <div class="recent-orders-card">
-      <div class="card-header">
-        <h3>الطلبات الأخيرة</h3>
-        <a href="#" class="view-all">عرض الكل</a>
-      </div>
+        <!-- Top Products -->
+        <v-col cols="12" lg="4">
+          <v-card variant="elevated" class="top-products-card">
+            <v-card-title class="d-flex align-center justify-space-between pa-4">
+              <span class="text-h6 font-weight-bold">
+                <v-icon class="me-2" color="primary">mdi-trophy</v-icon>
+                {{ $t('topSellingProducts') || 'المنتجات الأكثر مبيعاً' }}
+              </span>
+              <v-btn
+                variant="text"
+                color="primary"
+                size="small"
+                prepend-icon="mdi-eye"
+              >
+                {{ $t('viewAll') || 'عرض الكل' }}
+              </v-btn>
+            </v-card-title>
+            
+            <v-divider />
+            
+            <v-card-text class="pa-4">
+              <div class="products-list">
+                <v-list density="compact">
+                  <v-list-item
+                    v-for="product in topProducts"
+                    :key="product.id"
+                    class="product-item"
+                  >
+                    <template v-slot:prepend>
+                      <v-avatar size="40" class="me-3">
+                        <v-img :src="product.image" :alt="product.name" />
+                      </v-avatar>
+                    </template>
+                    
+                    <v-list-item-title class="text-body-1 font-weight-medium">
+                      {{ product.name }}
+                    </v-list-item-title>
+                    <v-list-item-subtitle class="text-caption text-medium-emphasis">
+                      {{ product.category }}
+                    </v-list-item-subtitle>
+                    
+                    <template v-slot:append>
+                      <div class="text-end">
+                        <div class="text-caption text-medium-emphasis">
+                          {{ product.sales }} {{ $t('sales') || 'مبيعات' }}
+                        </div>
+                        <div class="text-body-2 font-weight-bold text-primary">
+                          {{ product.revenue }} {{ $t('currency') || 'ر.س' }}
+                        </div>
+                      </div>
+                    </template>
+                  </v-list-item>
+                </v-list>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
 
-      <div class="table-responsive">
-        <table class="orders-table">
-          <thead>
-            <tr>
-              <th>رقم الطلب</th>
-              <th>العميل</th>
-              <th>التاريخ</th>
-              <th>المبلغ</th>
-              <th>الحالة</th>
-              <th>الإجراءات</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="order in recentOrders" :key="order.id">
-              <td>
-                <span class="order-id">#{{ order.id }}</span>
-              </td>
-              <td>{{ order.customer }}</td>
-              <td>{{ order.date }}</td>
-              <td>
-                <span class="amount">{{ order.amount }} ر.س</span>
-              </td>
-              <td>
-                <span :class="['status-badge', order.status]">
-                  {{ order.statusText }}
-                </span>
-              </td>
-              <td>
-                <button class="action-btn" @click="viewOrder(order.id)">
-                  <i class="fa-solid fa-eye"></i>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <!-- Recent Orders -->
+      <v-row>
+        <v-col cols="12">
+          <v-card variant="elevated" class="recent-orders-card">
+            <v-card-title class="d-flex align-center justify-space-between pa-4">
+              <span class="text-h6 font-weight-bold">
+                <v-icon class="me-2" color="primary">mdi-receipt-text</v-icon>
+                {{ $t('recentOrders') || 'الطلبات الأخيرة' }}
+              </span>
+              <v-btn
+                variant="text"
+                color="primary"
+                size="small"
+                prepend-icon="mdi-eye"
+                to="/dashboard/orders"
+              >
+                {{ $t('viewAll') || 'عرض الكل' }}
+              </v-btn>
+            </v-card-title>
+            
+            <v-divider />
+            
+            <v-card-text class="pa-0">
+              <v-data-table
+                :headers="orderHeaders"
+                :items="recentOrders"
+                :loading="loading"
+                density="compact"
+                hide-default-footer
+                class="orders-table"
+              >
+                <template v-slot:item.orderId="{ item }">
+                  <span class="text-primary font-weight-bold">
+                    #{{ item.id }}
+                  </span>
+                </template>
+                
+                <template v-slot:item.amount="{ item }">
+                  <span class="font-weight-bold">
+                    {{ item.amount }} {{ $t('currency') || 'ر.س' }}
+                  </span>
+                </template>
+                
+                <template v-slot:item.status="{ item }">
+                  <v-chip
+                    :color="getStatusColor(item.status)"
+                    size="small"
+                    variant="tonal"
+                  >
+                    {{ item.statusText }}
+                  </v-chip>
+                </template>
+                
+                <template v-slot:item.actions="{ item }">
+                  <v-btn
+                    icon="mdi-eye"
+                    variant="text"
+                    size="small"
+                    color="primary"
+                    @click="viewOrder(item.id)"
+                  >
+                  </v-btn>
+                </template>
+              </v-data-table>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
     </div>
-  </div>
+  </v-container>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+import { useStore } from 'vuex';
 import DashboardService from '@/services/DashboardService';
+
+const router = useRouter();
+const { t } = useI18n();
+const store = useStore();
 
 // State
 const loading = ref(true);
@@ -133,12 +285,38 @@ const recentOrders = ref([]);
 const salesData = ref([]);
 const selectedPeriod = ref('7days');
 
+// Period options for chart filter
+const periodOptions = computed(() => [
+  { text: t('last7Days') || 'آخر 7 أيام', value: '7days' },
+  { text: t('last30Days') || 'آخر 30 يوم', value: '30days' },
+  { text: t('last3Months') || 'آخر 3 شهور', value: '3months' }
+]);
+
+// Order table headers
+const orderHeaders = computed(() => [
+  { title: t('orderNumber') || 'رقم الطلب', key: 'orderId', sortable: false },
+  { title: t('customer') || 'العميل', key: 'customer', sortable: false },
+  { title: t('date') || 'التاريخ', key: 'date', sortable: false },
+  { title: t('amount') || 'المبلغ', key: 'amount', sortable: false },
+  { title: t('status') || 'الحالة', key: 'status', sortable: false },
+  { title: t('actions') || 'الإجراءات', key: 'actions', sortable: false, align: 'end' }
+]);
+
+// Chart data for visualization
+const chartData = computed(() => {
+  const days = parseInt(selectedPeriod.value.replace(/\D/g, '')) || 7;
+  return Array.from({ length: Math.min(days, 7) }, (_, i) => ({
+    label: t('day') || 'يوم' + ' ' + (i + 1),
+    height: Math.random() * 150 + 50
+  }));
+});
+
 // Computed
 const formattedStats = computed(() => {
   return stats.value.map(stat => ({
     title: stat.title,
     value: formatValue(stat.value, stat.type),
-    icon: stat.icon,
+    icon: getStatIcon(stat.icon),
     color: stat.color,
     trend: stat.trend || 0,
   }));
@@ -150,7 +328,7 @@ const formatValue = (value, type = 'number') => {
     case 'currency':
       return new Intl.NumberFormat('ar-SA', {
         style: 'currency',
-        currency: 'DZD'
+        currency: 'SAR'
       }).format(value);
     case 'percentage':
       return `${value}%`;
@@ -159,12 +337,36 @@ const formatValue = (value, type = 'number') => {
   }
 };
 
+const getStatIcon = (iconClass) => {
+  const iconMap = {
+    'fa-solid fa-wallet': 'mdi-wallet',
+    'fa-solid fa-shopping-bag': 'mdi-shopping',
+    'fa-solid fa-users': 'mdi-account-group',
+    'fa-solid fa-chart-line': 'mdi-chart-line'
+  };
+  return iconMap[iconClass] || 'mdi-chart-line';
+};
+
+const getStatusColor = (status) => {
+  const colorMap = {
+    'completed': 'success',
+    'processing': 'info',
+    'pending': 'warning',
+    'cancelled': 'error'
+  };
+  return colorMap[status] || 'default';
+};
+
+const viewOrder = (orderId) => {
+  router.push(`/dashboard/orders/${orderId}`);
+};
+
 const fetchDashboardData = async () => {
   try {
     loading.value = true;
     error.value = null;
 
-    // Use GraphQL API instead of DashboardService
+    // Try to use API services first
     const { default: GraphQLService } = await import('@/services/GraphQLService');
     const graphQLService = new GraphQLService();
 
@@ -177,10 +379,11 @@ const fetchDashboardData = async () => {
     ] = await Promise.all([
         graphQLService.getDashboardStats('monthly'),
         graphQLService.getTopProducts(5),
-        // graphQLService.getRecentOrders(5), // Need to implement this
-        graphQLService.getSalesForecasts() // For sales chart data
+        graphQLService.getRecentOrders(5),
+        graphQLService.getSalesForecasts()
       ]);
 
+    // Process stats data
     stats.value = statsData.map(stat => ({
       title: getTotalSalesTitle(stat.period),
       value: stat.totalSales,
@@ -190,26 +393,36 @@ const fetchDashboardData = async () => {
       trend: calculateTrend(stat)
     }));
     
+    // Process products data
     topProducts.value = productsData.map(product => ({
       id: product.product.id,
       name: product.product.nameEn,
       image: product.product.image,
-      category: product.product.category?.nameEn || 'Unknown',
+      category: product.product.category?.nameEn || t('unknown') || 'Unknown',
       sales: product.sales,
       revenue: product.revenue
     }));
     
-    recentOrders.value = ordersData;
+    // Process orders data
+    recentOrders.value = ordersData.map(order => ({
+      id: order.id,
+      customer: order.customer?.name || t('unknownCustomer') || 'عميل غير معروف',
+      date: formatDate(order.createdAt),
+      amount: order.totalAmount,
+      status: order.status,
+      statusText: getStatusText(order.status)
+    }));
+    
     salesData.value = salesChartData;
 
   } catch (err) {
     console.error('Error fetching dashboard data:', err);
-    error.value = 'فشل في تحميل بيانات لوحة التحكم';
+    error.value = t('errorLoadingDashboard') || 'فشل في تحميل بيانات لوحة التحكم';
     
     // Fallback to mock data if backend fails
     stats.value = [
       {
-        title: 'إجمالي المبيعات',
+        title: t('totalSales') || 'إجمالي المبيعات',
         value: 45280,
         type: 'currency',
         icon: 'fa-solid fa-wallet',
@@ -217,7 +430,7 @@ const fetchDashboardData = async () => {
         trend: 12.5,
       },
       {
-        title: 'الطلبات الجديدة',
+        title: t('newOrders') || 'الطلبات الجديدة',
         value: 156,
         type: 'number',
         icon: 'fa-solid fa-shopping-bag',
@@ -225,7 +438,7 @@ const fetchDashboardData = async () => {
         trend: 8.2,
       },
       {
-        title: 'العملاء النشطون',
+        title: t('activeCustomers') || 'العملاء النشطون',
         value: 2420,
         type: 'number',
         icon: 'fa-solid fa-users',
@@ -233,13 +446,69 @@ const fetchDashboardData = async () => {
         trend: -2.4,
       },
       {
-        title: 'متوسط قيمة الطلب',
+        title: t('averageOrderValue') || 'متوسط قيمة الطلب',
         value: 290,
         type: 'currency',
         icon: 'fa-solid fa-chart-line',
         color: '#9C27B0',
         trend: 5.1,
       },
+    ];
+    
+    // Mock top products
+    topProducts.value = [
+      {
+        id: 1,
+        name: 'Vinyl Art Premium',
+        image: '/images/products/product1.jpg',
+        category: 'Wall Art',
+        sales: 45,
+        revenue: 13500
+      },
+      {
+        id: 2,
+        name: 'Custom Vinyl Design',
+        image: '/images/products/product2.jpg',
+        category: 'Custom Design',
+        sales: 38,
+        revenue: 11400
+      },
+      {
+        id: 3,
+        name: 'Modern Wall Decor',
+        image: '/images/products/product3.jpg',
+        category: 'Home Decor',
+        sales: 32,
+        revenue: 9600
+      }
+    ];
+    
+    // Mock recent orders
+    recentOrders.value = [
+      {
+        id: 1001,
+        customer: 'أحمد محمد',
+        date: '2024-03-15',
+        amount: 450,
+        status: 'completed',
+        statusText: t('completed') || 'مكتمل'
+      },
+      {
+        id: 1002,
+        customer: 'فاطمة العلي',
+        date: '2024-03-14',
+        amount: 320,
+        status: 'processing',
+        statusText: t('processing') || 'قيد المعالجة'
+      },
+      {
+        id: 1003,
+        customer: 'محمد العبدالله',
+        date: '2024-03-14',
+        amount: 180,
+        status: 'pending',
+        statusText: t('pending') || 'في الانتظار'
+      }
     ];
   } finally {
     loading.value = false;
@@ -249,12 +518,12 @@ const fetchDashboardData = async () => {
 // Helper functions
 const getTotalSalesTitle = (period) => {
   const titles = {
-    'daily': 'إجمالي المبيعات اليومية',
-    'weekly': 'إجمالي المبيعات الأسبوعية',
-    'monthly': 'إجمالي المبيعات الشهرية',
-    'yearly': 'إجمالي المبيعات السنوية'
+    'daily': t('dailySales') || 'إجمالي المبيعات اليومية',
+    'weekly': t('weeklySales') || 'إجمالي المبيعات الأسبوعية',
+    'monthly': t('monthlySales') || 'إجمالي المبيعات الشهرية',
+    'yearly': t('yearlySales') || 'إجمالي المبيعات السنوية'
   };
-  return titles[period] || 'إجمالي المبيعات';
+  return titles[period] || t('totalSales') || 'إجمالي المبيعات';
 };
 
 const calculateTrend = (stat) => {
@@ -262,13 +531,33 @@ const calculateTrend = (stat) => {
   return Math.random() * 20 - 10; // Random between -10 and 10
 };
 
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleDateString('ar-SA');
+};
+
+const getStatusText = (status) => {
+  const statusMap = {
+    'completed': t('completed') || 'مكتمل',
+    'processing': t('processing') || 'قيد المعالجة',
+    'pending': t('pending') || 'في الانتظار',
+    'cancelled': t('cancelled') || 'ملغي'
+  };
+  return statusMap[status] || status;
+};
+
 const handlePeriodChange = async (period) => {
-  selectedPeriod.value = period;
   try {
     const salesChartData = await DashboardService.getSalesData(period);
     salesData.value = salesChartData;
   } catch (err) {
     console.error('Error fetching sales data:', err);
+    // Show notification to user
+    store.dispatch('notifications/add', {
+      type: 'warning',
+      title: t('warning') || 'تحذير',
+      message: t('errorLoadingSalesData') || 'خطأ في تحميل بيانات المبيعات',
+      timeout: 5000
+    });
   }
 };
 
@@ -278,8 +567,23 @@ const updateOrderStatus = async (orderId, newStatus) => {
     // Refresh orders list
     const ordersData = await DashboardService.getRecentOrders(5);
     recentOrders.value = ordersData;
+    
+    // Show success notification
+    store.dispatch('notifications/add', {
+      type: 'success',
+      title: t('success') || 'نجاح',
+      message: t('orderStatusUpdated') || 'تم تحديث حالة الطلب بنجاح',
+      timeout: 3000
+    });
   } catch (err) {
     console.error('Error updating order status:', err);
+    // Show error notification
+    store.dispatch('notifications/add', {
+      type: 'error',
+      title: t('error') || 'خطأ',
+      message: t('errorUpdatingOrder') || 'خطأ في تحديث حالة الطلب',
+      timeout: 5000
+    });
   }
 };
 
@@ -290,42 +594,25 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.dashboard-home {
-  padding: 20px;
-  animation: fadeIn 0.5s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* بطاقات الإحصائيات */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-bottom: 25px;
-}
-
+/* Statistics Cards */
 .stat-card {
-  background: var(--bg-card);
-  border-radius: 20px;
-  padding: 25px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  border: 1px solid var(--border-light);
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   animation: slideUp 0.5s ease forwards;
   opacity: 0;
   transform: translateY(20px);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.15);
+}
+
+.stat-icon {
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover .stat-icon {
+  transform: scale(1.1);
 }
 
 @keyframes slideUp {
@@ -335,102 +622,9 @@ onMounted(() => {
   }
 }
 
-.stat-card:hover {
-  transform: translateY(-5px);
-  border-color: var(--gold-primary);
-  box-shadow: var(--shadow-gold);
-}
-
-.stat-icon {
-  width: 70px;
-  height: 70px;
-  border-radius: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-}
-
-.stat-info h3 {
-  font-size: 1.8rem;
-  color: white;
-  margin-bottom: 5px;
-}
-
-.stat-info p {
-  color: var(--text-muted);
-  margin-bottom: 8px;
-}
-
-.stat-trend {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.9rem;
-}
-
-.stat-trend .positive {
-  color: var(--success);
-}
-
-.stat-trend .negative {
-  color: var(--danger);
-}
-
-/* شبكة المحتوى */
-.content-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 20px;
-  margin-bottom: 25px;
-}
-
-/* بطاقة الرسم البياني */
-.chart-card,
-.top-products-card,
-.recent-orders-card {
-  background: var(--bg-card);
-  border-radius: 20px;
-  padding: 20px;
-  border: 1px solid var(--border-light);
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.card-header h3 {
-  color: white;
-  font-size: 1.2rem;
-}
-
-.chart-filter {
-  background: var(--bg-primary);
-  color: var(--text-secondary);
-  border: 1px solid var(--border-light);
-  padding: 8px 15px;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-
-.view-all {
-  color: var(--gold-primary);
-  text-decoration: none;
-  font-size: 0.9rem;
-  transition: color 0.3s;
-}
-
-.view-all:hover {
-  color: var(--gold-light);
-}
-
-/* الرسم البياني التجريبي */
-.chart-placeholder {
-  height: 250px;
+/* Chart Container */
+.chart-container {
+  height: 300px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -439,9 +633,10 @@ onMounted(() => {
 .bar-chart {
   display: flex;
   align-items: flex-end;
-  gap: 20px;
+  gap: 16px;
   height: 100%;
   width: 100%;
+  padding: 0 16px;
 }
 
 .bar-wrapper {
@@ -449,15 +644,16 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  max-width: 60px;
 }
 
 .bar {
   width: 100%;
-  background: var(--gold-gradient);
-  border-radius: 10px 10px 0 0;
+  background: linear-gradient(135deg, rgb(var(--v-theme-primary)), rgb(var(--v-theme-secondary)));
+  border-radius: 8px 8px 0 0;
   min-height: 30px;
-  transition: height 0.3s;
+  transition: height 0.3s ease;
   animation: barGrow 1s ease;
 }
 
@@ -471,176 +667,130 @@ onMounted(() => {
 }
 
 .bar-wrapper span {
-  color: var(--text-muted);
-  font-size: 0.8rem;
+  color: rgb(var(--v-theme-on-surface-variant));
+  font-size: 0.75rem;
+  text-align: center;
 }
 
-/* قائمة المنتجات */
+/* Products List */
 .products-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.products-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.products-list::-webkit-scrollbar-track {
+  background: rgba(var(--v-theme-surface-variant), 0.3);
+  border-radius: 2px;
+}
+
+.products-list::-webkit-scrollbar-thumb {
+  background: rgba(var(--v-theme-primary), 0.5);
+  border-radius: 2px;
+}
+
+.products-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--v-theme-primary), 0.7);
 }
 
 .product-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px;
-  border-radius: 12px;
-  transition: background 0.3s;
+  transition: all 0.3s ease;
 }
 
 .product-item:hover {
-  background: var(--bg-primary);
+  background: rgba(var(--v-theme-primary), 0.05);
 }
 
-.product-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.product-info img {
-  width: 50px;
-  height: 50px;
-  border-radius: 12px;
-  object-fit: cover;
-  border: 1px solid var(--border-light);
-}
-
-.product-info h4 {
-  color: white;
-  font-size: 0.95rem;
-  margin-bottom: 3px;
-}
-
-.product-category {
-  color: var(--text-muted);
-  font-size: 0.8rem;
-}
-
-.product-stats {
-  text-align: left;
-}
-
-.sales-count {
-  display: block;
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  margin-bottom: 3px;
-}
-
-.revenue {
-  color: var(--gold-primary);
-  font-weight: 600;
-}
-
-/* جدول الطلبات */
-.recent-orders-card {
-  overflow-x: auto;
-}
-
-.table-responsive {
-  overflow-x: auto;
-}
-
+/* Orders Table */
 .orders-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.orders-table th {
-  text-align: right;
-  padding: 15px;
-  color: var(--text-muted);
-  font-weight: 500;
-  font-size: 0.9rem;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.orders-table td {
-  padding: 12px 15px;
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--border-light);
-}
-
-.order-id {
-  color: var(--gold-primary);
-  font-weight: 600;
-}
-
-.amount {
-  color: white;
-  font-weight: 600;
-}
-
-.status-badge {
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.status-badge.completed {
-  background: rgba(76, 175, 80, 0.2);
-  color: #4caf50;
-}
-
-.status-badge.processing {
-  background: rgba(33, 150, 243, 0.2);
-  color: #2196f3;
-}
-
-.status-badge.pending {
-  background: rgba(255, 152, 0, 0.2);
-  color: #ff9800;
-}
-
-.action-btn {
-  width: 35px;
-  height: 35px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-light);
   border-radius: 8px;
-  color: var(--gold-primary);
-  cursor: pointer;
-  transition: all 0.3s;
+  overflow: hidden;
 }
 
-.action-btn:hover {
-  background: var(--gold-primary);
-  color: var(--bg-primary);
-  border-color: var(--gold-primary);
+.orders-table :deep(.v-data-table__tr:hover) {
+  background: rgba(var(--v-theme-primary), 0.05);
 }
 
-/* استجابة للشاشات الصغيرة */
-@media (max-width: 992px) {
-  .content-grid {
-    grid-template-columns: 1fr;
+/* Card Animations */
+.v-card {
+  transition: all 0.3s ease;
+}
+
+.v-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.15);
+}
+
+/* Button Animations */
+.v-btn {
+  transition: all 0.3s ease;
+}
+
+.v-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* Loading Animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
   }
 }
 
-@media (max-width: 768px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
+.v-progress-circular {
+  animation: pulse 2s infinite;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 960px) {
+  .bar-chart {
+    gap: 8px;
+    padding: 0 8px;
+  }
+  
+  .bar-wrapper {
+    max-width: 40px;
   }
 }
 
-@media (max-width: 480px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
+@media (max-width: 600px) {
+  .chart-container {
+    height: 250px;
   }
+  
+  .bar-chart {
+    gap: 4px;
+    padding: 0 4px;
+  }
+  
+  .bar-wrapper {
+    max-width: 30px;
+  }
+  
+  .bar-wrapper span {
+    font-size: 0.65rem;
+  }
+}
 
-  .product-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+/* Fade in animation for the whole dashboard */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-  .product-stats {
-    text-align: right;
-    width: 100%;
-  }
+.v-container {
+  animation: fadeIn 0.5s ease;
 }
 </style>

@@ -1,295 +1,480 @@
 // src/views/dashboard/NavigationPage.vue
 <template>
-  <div class="navigation-page">
-    <div class="page-header">
-      <h1 class="page-title">خريطة الموقع</h1>
-      <p class="page-description">جميع الروابط والأقسام المتاحة في الموقع</p>
+  <v-container class="pa-4">
+    <!-- Page Header -->
+    <div class="page-header text-center mb-8">
+      <h1 class="text-h3 font-weight-bold mb-2">
+        <v-icon class="me-2" color="primary">mdi-map</v-icon>
+        {{ $t('siteMap') || 'خريطة الموقع' }}
+      </h1>
+      <p class="text-body-1 text-medium-emphasis">
+        {{ $t('allLinksAndSections') || 'جميع الروابط والأقسام المتاحة في الموقع' }}
+      </p>
     </div>
 
-    <div class="navigation-grid">
-      <!-- الصفحات الرئيسية -->
-      <div class="nav-section">
-        <h2 class="section-title">
-          <i class="fa-solid fa-home section-icon"></i>
-          الصفحات الرئيسية
-        </h2>
-        <div class="nav-items">
-          <router-link to="/" class="nav-item">
-            <i class="fa-solid fa-home item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">الرئيسية</span>
-              <span class="item-description">الصفحة الرئيسية للموقع</span>
-            </div>
-          </router-link>
-          <router-link to="/about" class="nav-item">
-            <i class="fa-solid fa-info-circle item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">من نحن</span>
-              <span class="item-description">معلومات عن الشركة</span>
-            </div>
-          </router-link>
-          <router-link to="/contact" class="nav-item">
-            <i class="fa-solid fa-phone item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">اتصل بنا</span>
-              <span class="item-description">طرق التواصل معنا</span>
-            </div>
-          </router-link>
-          <router-link to="/gallery" class="nav-item">
-            <i class="fa-solid fa-images item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">معرض الأعمال</span>
-              <span class="item-description">صور ومشاريع سابقة</span>
-            </div>
-          </router-link>
-        </div>
-      </div>
+    <!-- Navigation Grid -->
+    <v-row>
+      <!-- Main Pages -->
+      <v-col cols="12" md="6" lg="4">
+        <v-card variant="elevated" class="nav-section h-100">
+          <v-card-title class="d-flex align-center ga-3 pa-4">
+            <v-avatar color="primary" variant="tonal">
+              <v-icon>mdi-home</v-icon>
+            </v-avatar>
+            <span class="text-h6 font-weight-bold">
+              {{ $t('mainPages') || 'الصفحات الرئيسية' }}
+            </span>
+          </v-card-title>
+          
+          <v-divider />
+          
+          <v-card-text class="pa-4">
+            <v-list density="compact" class="nav-items">
+              <v-list-item
+                to="/"
+                :title="$t('home') || 'الرئيسية'"
+                :subtitle="$t('homeDescription') || 'الصفحة الرئيسية للموقع'"
+                prepend-avatar="mdi-home"
+                class="nav-item"
+                rounded="lg"
+              />
+              <v-list-item
+                to="/about"
+                :title="$t('aboutUs') || 'من نحن'"
+                :subtitle="$t('aboutDescription') || 'معلومات عن الشركة'"
+                prepend-avatar="mdi-information"
+                class="nav-item"
+                rounded="lg"
+              />
+              <v-list-item
+                to="/contact"
+                :title="$t('contactUs') || 'اتصل بنا'"
+                :subtitle="$t('contactDescription') || 'طرق التواصل معنا'"
+                prepend-avatar="mdi-phone"
+                class="nav-item"
+                rounded="lg"
+              />
+              <v-list-item
+                to="/gallery"
+                :title="$t('gallery') || 'معرض الأعمال'"
+                :subtitle="$t('galleryDescription') || 'صور ومشاريع سابقة'"
+                prepend-avatar="mdi-image-multiple"
+                class="nav-item"
+                rounded="lg"
+              />
+            </v-list>
+          </v-card-text>
+        </v-card>
+      </v-col>
 
-      <!-- المنتجات والفئات -->
-      <div class="nav-section">
-        <h2 class="section-title">
-          <i class="fa-solid fa-box section-icon"></i>
-          المنتجات والفئات
-        </h2>
-        <div class="nav-items">
-          <router-link to="/shop" class="nav-item">
-            <i class="fa-solid fa-store item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">المتجر</span>
-              <span class="item-description">جميع المنتجات المتاحة</span>
-            </div>
-          </router-link>
-          <router-link to="/furniture" class="nav-item">
-            <i class="fa-solid fa-couch item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">الأثاث</span>
-              <span class="item-description">أثاث فاخر ومميز</span>
-            </div>
-          </router-link>
-          <router-link to="/doors" class="nav-item">
-            <i class="fa-solid fa-door-open item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">الأبواب</span>
-              <span class="item-description">مجموعة متنوعة من الأبواب</span>
-            </div>
-          </router-link>
-          <router-link to="/walls" class="nav-item">
-            <i class="fa-solid fa-paint-roller item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">الجدران</span>
-              <span class="item-description">ديكورات وتشطيبات الجدران</span>
-            </div>
-          </router-link>
-          <router-link to="/ceilings" class="nav-item">
-            <i class="fa-solid fa-arrow-up item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">الأسقف</span>
-              <span class="item-description">تصاميم أسقف مبتكرة</span>
-            </div>
-          </router-link>
-          <router-link to="/tiles" class="nav-item">
-            <i class="fa-solid fa-border-all item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">البلاط</span>
-              <span class="item-description">بلاط فاخر بأنواعه</span>
-            </div>
-          </router-link>
-          <router-link to="/kitchens" class="nav-item">
-            <i class="fa-solid fa-utensils item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">المطابخ</span>
-              <span class="item-description">تصاميم مطابخ عصرية</span>
-            </div>
-          </router-link>
-          <router-link to="/cars" class="nav-item">
-            <i class="fa-solid fa-car item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">السيارات</span>
-              <span class="item-description">تعديلات وتجميل السيارات</span>
-            </div>
-          </router-link>
-        </div>
-      </div>
+      <!-- Products and Categories -->
+      <v-col cols="12" md="6" lg="4">
+        <v-card variant="elevated" class="nav-section h-100">
+          <v-card-title class="d-flex align-center ga-3 pa-4">
+            <v-avatar color="primary" variant="tonal">
+              <v-icon>mdi-package-variant</v-icon>
+            </v-avatar>
+            <span class="text-h6 font-weight-bold">
+              {{ $t('productsAndCategories') || 'المنتجات والفئات' }}
+            </span>
+          </v-card-title>
+          
+          <v-divider />
+          
+          <v-card-text class="pa-4">
+            <v-list density="compact" class="nav-items">
+              <v-list-item
+                to="/shop"
+                :title="$t('shop') || 'المتجر'"
+                :subtitle="$t('shopDescription') || 'جميع المنتجات المتاحة'"
+                prepend-avatar="mdi-store"
+                class="nav-item"
+                rounded="lg"
+              />
+              <v-list-item
+                to="/furniture"
+                :title="$t('furniture') || 'الأثاث'"
+                :subtitle="$t('furnitureDescription') || 'أثاث فاخر ومميز'"
+                prepend-avatar="mdi-sofa"
+                class="nav-item"
+                rounded="lg"
+              />
+              <v-list-item
+                to="/doors"
+                :title="$t('doors') || 'الأبواب'"
+                :subtitle="$t('doorsDescription') || 'مجموعة متنوعة من الأبواب'"
+                prepend-avatar="mdi-door-open"
+                class="nav-item"
+                rounded="lg"
+              />
+              <v-list-item
+                to="/walls"
+                :title="$t('walls') || 'الجدران'"
+                :subtitle="$t('wallsDescription') || 'ديكورات وتشطيبات الجدران'"
+                prepend-avatar="mdi-roller-shade"
+                class="nav-item"
+                rounded="lg"
+              />
+              <v-list-item
+                to="/ceilings"
+                :title="$t('ceilings') || 'الأسقف'"
+                :subtitle="$t('ceilingsDescription') || 'تصاميم أسقف مبتكرة'"
+                prepend-avatar="mdi-arrow-up-bold-box"
+                class="nav-item"
+                rounded="lg"
+              />
+              <v-list-item
+                to="/tiles"
+                :title="$t('tiles') || 'البلاط'"
+                :subtitle="$t('tilesDescription') || 'بلاط فاخر بأنواعه'"
+                prepend-avatar="mdi-grid"
+                class="nav-item"
+                rounded="lg"
+              />
+              <v-list-item
+                to="/kitchens"
+                :title="$t('kitchens') || 'المطابخ'"
+                :subtitle="$t('kitchensDescription') || 'تصاميم مطابخ عصرية'"
+                prepend-avatar="mdi-silverware-fork-knife"
+                class="nav-item"
+                rounded="lg"
+              />
+              <v-list-item
+                to="/cars"
+                :title="$t('cars') || 'السيارات'"
+                :subtitle="$t('carsDescription') || 'تعديلات وتجميل السيارات'"
+                prepend-avatar="mdi-car"
+                class="nav-item"
+                rounded="lg"
+              />
+            </v-list>
+          </v-card-text>
+        </v-card>
+      </v-col>
 
-      <!-- لوحات التحكم -->
-      <div class="nav-section">
-        <h2 class="section-title">
-          <i class="fa-solid fa-dashboard section-icon"></i>
-          لوحات التحكم
-        </h2>
-        <div class="nav-items">
-          <router-link to="/dashboard" class="nav-item">
-            <i class="fa-solid fa-tachometer-alt item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">لوحة التحكم الرئيسية</span>
-              <span class="item-description">إدارة الموقع والمنتجات</span>
-            </div>
-          </router-link>
-          <router-link to="/dashboard/products" class="nav-item">
-            <i class="fa-solid fa-box item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">إدارة المنتجات</span>
-              <span class="item-description">إضافة وتعديل المنتجات</span>
-            </div>
-          </router-link>
-          <router-link to="/dashboard/analytics" class="nav-item">
-            <i class="fa-solid fa-chart-line item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">التحليلات</span>
-              <span class="item-description">إحصائيات وتقارير الموقع</span>
-            </div>
-          </router-link>
-          <router-link to="/dashboard/ai" class="nav-item">
-            <i class="fa-solid fa-brain item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">الذكاء الاصطناعي</span>
-              <span class="item-description">أدوات وتحليلات ذكية</span>
-            </div>
-          </router-link>
-          <router-link to="/investor" class="nav-item">
-            <i class="fa-solid fa-chart-line item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">منصة المستثمرين</span>
-              <span class="item-description">تقارير واستثمارات</span>
-            </div>
-          </router-link>
-        </div>
-      </div>
+      <!-- Dashboard Controls -->
+      <v-col cols="12" md="6" lg="4">
+        <v-card variant="elevated" class="nav-section h-100">
+          <v-card-title class="d-flex align-center ga-3 pa-4">
+            <v-avatar color="primary" variant="tonal">
+              <v-icon>mdi-view-dashboard</v-icon>
+            </v-avatar>
+            <span class="text-h6 font-weight-bold">
+              {{ $t('dashboards') || 'لوحات التحكم' }}
+            </span>
+          </v-card-title>
+          
+          <v-divider />
+          
+          <v-card-text class="pa-4">
+            <v-list density="compact" class="nav-items">
+              <v-list-item
+                to="/dashboard"
+                :title="$t('mainDashboard') || 'لوحة التحكم الرئيسية'"
+                :subtitle="$t('dashboardDescription') || 'إدارة الموقع والمنتجات'"
+                prepend-avatar="mdi-gauge"
+                class="nav-item"
+                rounded="lg"
+              />
+              <v-list-item
+                to="/dashboard/products"
+                :title="$t('productManagement') || 'إدارة المنتجات'"
+                :subtitle="$t('productManagementDescription') || 'إضافة وتعديل المنتجات'"
+                prepend-avatar="mdi-package-variant-closed"
+                class="nav-item"
+                rounded="lg"
+              />
+              <v-list-item
+                to="/dashboard/analytics"
+                :title="$t('analytics') || 'التحليلات'"
+                :subtitle="$t('analyticsDescription') || 'إحصائيات وتقارير الموقع'"
+                prepend-avatar="mdi-chart-line"
+                class="nav-item"
+                rounded="lg"
+              />
+              <v-list-item
+                to="/dashboard/ai"
+                :title="$t('aiTools') || 'الذكاء الاصطناعي'"
+                :subtitle="$t('aiToolsDescription') || 'أدوات وتحليلات ذكية'"
+                prepend-avatar="mdi-brain"
+                class="nav-item"
+                rounded="lg"
+              />
+              <v-list-item
+                to="/investor"
+                :title="$t('investorPlatform') || 'منصة المستثمرين'"
+                :subtitle="$t('investorPlatformDescription') || 'تقارير واستثمارات'"
+                prepend-avatar="mdi-trending-up"
+                class="nav-item"
+                rounded="lg"
+              />
+            </v-list>
+          </v-card-text>
+        </v-card>
+      </v-col>
 
-      <!-- الخدمات الإضافية -->
-      <div class="nav-section">
-        <h2 class="section-title">
-          <i class="fa-solid fa-cogs section-icon"></i>
-          الخدمات الإضافية
-        </h2>
-        <div class="nav-items">
-          <router-link to="/cart" class="nav-item">
-            <i class="fa-solid fa-shopping-cart item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">سلة التسوق</span>
-              <span class="item-description">المنتجات المختارة</span>
-            </div>
-          </router-link>
-          <router-link to="/wishlist" class="nav-item">
-            <i class="fa-solid fa-heart item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">قائمة الرغبات</span>
-              <span class="item-description">المنتجات المفضلة</span>
-            </div>
-          </router-link>
-          <router-link to="/search" class="nav-item">
-            <i class="fa-solid fa-search item-icon"></i>
-            <div class="item-content">
-              <span class="item-title">البحث المتقدم</span>
-              <span class="item-description">بحث في جميع المحتويات</span>
-            </div>
-          </router-link>
-        </div>
-      </div>
-    </div>
-  </div>
+      <!-- Additional Services -->
+      <v-col cols="12" md="6" lg="4">
+        <v-card variant="elevated" class="nav-section h-100">
+          <v-card-title class="d-flex align-center ga-3 pa-4">
+            <v-avatar color="primary" variant="tonal">
+              <v-icon>mdi-cog</v-icon>
+            </v-avatar>
+            <span class="text-h6 font-weight-bold">
+              {{ $t('additionalServices') || 'الخدمات الإضافية' }}
+            </span>
+          </v-card-title>
+          
+          <v-divider />
+          
+          <v-card-text class="pa-4">
+            <v-list density="compact" class="nav-items">
+              <v-list-item
+                to="/cart"
+                :title="$t('shoppingCart') || 'سلة التسوق'"
+                :subtitle="$t('cartDescription') || 'المنتجات المختارة'"
+                prepend-avatar="mdi-cart"
+                class="nav-item"
+                rounded="lg"
+              >
+                <template v-slot:append>
+                  <v-chip size="small" color="primary" variant="elevated">
+                    {{ cartItemCount }}
+                  </v-chip>
+                </template>
+              </v-list-item>
+              <v-list-item
+                to="/wishlist"
+                :title="$t('wishlist') || 'قائمة الرغبات'"
+                :subtitle="$t('wishlistDescription') || 'المنتجات المفضلة'"
+                prepend-avatar="mdi-heart"
+                class="nav-item"
+                rounded="lg"
+              >
+                <template v-slot:append>
+                  <v-chip size="small" color="error" variant="elevated">
+                    {{ wishlistItemCount }}
+                  </v-chip>
+                </template>
+              </v-list-item>
+              <v-list-item
+                to="/search"
+                :title="$t('advancedSearch') || 'البحث المتقدم'"
+                :subtitle="$t('searchDescription') || 'بحث في جميع المحتويات'"
+                prepend-avatar="mdi-magnify"
+                class="nav-item"
+                rounded="lg"
+              />
+            </v-list>
+          </v-card-text>
+        </v-card>
+      </v-col>
+
+      <!-- Site Statistics -->
+      <v-col cols="12" md="6" lg="4">
+        <v-card variant="elevated" class="nav-section h-100">
+          <v-card-title class="d-flex align-center ga-3 pa-4">
+            <v-avatar color="primary" variant="tonal">
+              <v-icon>mdi-chart-box</v-icon>
+            </v-avatar>
+            <span class="text-h6 font-weight-bold">
+              {{ $t('siteStatistics') || 'إحصائيات الموقع' }}
+            </span>
+          </v-card-title>
+          
+          <v-divider />
+          
+          <v-card-text class="pa-4">
+            <v-row class="text-center">
+              <v-col cols="6" class="mb-4">
+                <v-icon size="32" color="primary" class="mb-2">mdi-package-variant</v-icon>
+                <div class="text-h4 font-weight-bold text-primary">{{ stats.totalProducts }}</div>
+                <div class="text-caption text-medium-emphasis">
+                  {{ $t('totalProducts') || 'إجمالي المنتجات' }}
+                </div>
+              </v-col>
+              <v-col cols="6" class="mb-4">
+                <v-icon size="32" color="success" class="mb-2">mdi-shape</v-icon>
+                <div class="text-h4 font-weight-bold text-success">{{ stats.totalCategories }}</div>
+                <div class="text-caption text-medium-emphasis">
+                  {{ $t('totalCategories') || 'إجمالي الفئات' }}
+                </div>
+              </v-col>
+              <v-col cols="6" class="mb-4">
+                <v-icon size="32" color="info" class="mb-2">mdi-file-document-multiple</v-icon>
+                <div class="text-h4 font-weight-bold text-info">{{ stats.totalPages }}</div>
+                <div class="text-caption text-medium-emphasis">
+                  {{ $t('totalPages') || 'إجمالي الصفحات' }}
+                </div>
+              </v-col>
+              <v-col cols="6" class="mb-4">
+                <v-icon size="32" color="warning" class="mb-2">mdi-account-group</v-icon>
+                <div class="text-h4 font-weight-bold text-warning">{{ stats.totalUsers }}</div>
+                <div class="text-caption text-medium-emphasis">
+                  {{ $t('totalUsers') || 'إجمالي المستخدمين' }}
+                </div>
+              </v-col>
+            </v-row>
+            
+            <v-btn
+              @click="refreshStats"
+              variant="tonal"
+              color="primary"
+              prepend-icon="mdi-refresh"
+              block
+              class="mt-4"
+            >
+              {{ $t('refreshStats') || 'تحديث الإحصائيات' }}
+            </v-btn>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useStore } from 'vuex';
+import NavigationService from '@/services/NavigationService';
+import CartService from '@/services/CartService';
+import WishlistService from '@/services/WishlistService';
 
-// Page data
-const searchQuery = ref('')
+const { t } = useI18n();
+const store = useStore();
 
-// Statistics (mock data for now)
+// State
+const loading = ref(false);
 const stats = ref({
-  totalProducts: 156,
-  totalCategories: 8,
-  totalPages: 24,
-  totalUsers: 1234
-})
+  totalProducts: 0,
+  totalCategories: 0,
+  totalPages: 0,
+  totalUsers: 0
+});
+
+// Computed
+const cartItemCount = computed(() => {
+  return store.getters['cart/items'].length || 0;
+});
+
+const wishlistItemCount = computed(() => {
+  return store.getters['wishlist/items'].length || 0;
+});
+
+// Methods
+const fetchSiteStats = async () => {
+  try {
+    loading.value = true;
+    const response = await NavigationService.getSiteStatistics();
+    
+    if (response.success) {
+      stats.value = response.data;
+    } else {
+      // Fallback to mock data
+      stats.value = {
+        totalProducts: 156,
+        totalCategories: 8,
+        totalPages: 24,
+        totalUsers: 1234
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching site statistics:', error);
+    
+    // Show error notification
+    store.dispatch('notifications/add', {
+      type: 'warning',
+      title: t('warning') || 'تحذير',
+      message: t('errorLoadingStats') || 'خطأ في تحميل الإحصائيات',
+      timeout: 5000
+    });
+    
+    // Fallback to mock data
+    stats.value = {
+      totalProducts: 156,
+      totalCategories: 8,
+      totalPages: 24,
+      totalUsers: 1234
+    };
+  } finally {
+    loading.value = false;
+  }
+};
+
+const refreshStats = async () => {
+  await fetchSiteStats();
+  
+  // Show success notification
+  store.dispatch('notifications/add', {
+    type: 'success',
+    title: t('success') || 'نجاح',
+    message: t('statsRefreshed') || 'تم تحديث الإحصائيات بنجاح',
+    timeout: 3000
+  });
+};
+
+// Lifecycle
+onMounted(() => {
+  fetchSiteStats();
+  
+  // Load cart and wishlist data
+  CartService.loadCart();
+  WishlistService.loadWishlist();
+});
 </script>
 
 <style scoped>
-.navigation-page {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  background: var(--color-bg-primary);
-  min-height: 100vh;
-  color: var(--color-text-primary);
-}
-
+/* Page Header */
 .page-header {
-  text-align: center;
-  margin-bottom: 3rem;
+  position: relative;
 }
 
-.page-title {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--color-primary);
-  margin-bottom: 0.5rem;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  background: linear-gradient(90deg, rgb(var(--v-theme-primary)), rgb(var(--v-theme-secondary)));
+  border-radius: 2px;
 }
 
-.page-description {
-  font-size: 1.1rem;
-  color: var(--color-text-secondary);
-  opacity: 0.8;
-}
-
-.navigation-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 2rem;
-}
-
+/* Navigation Sections */
 .nav-section {
-  background: var(--color-bg-surface);
-  border-radius: 1rem;
-  padding: 1.5rem;
-  border: 1px solid var(--color-border);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
+  animation: fadeInUp 0.6s ease forwards;
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.nav-section:nth-child(1) { animation-delay: 0.1s; }
+.nav-section:nth-child(2) { animation-delay: 0.2s; }
+.nav-section:nth-child(3) { animation-delay: 0.3s; }
+.nav-section:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .nav-section:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+  transform: translateY(-8px);
+  box-shadow: 0 12px 32px rgba(var(--v-theme-primary), 0.15);
 }
 
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 2px solid var(--color-border);
-}
-
-.section-icon {
-  color: var(--color-primary);
-  font-size: 1.2rem;
-}
-
+/* Navigation Items */
 .nav-items {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 8px;
 }
 
 .nav-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: var(--color-bg-primary);
-  border: 1px solid var(--color-border);
-  border-radius: 0.75rem;
-  text-decoration: none;
-  color: var(--color-text-primary);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -302,7 +487,7 @@ const stats = ref({
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, var(--color-hover), transparent);
+  background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.1), transparent);
   transition: left 0.5s ease;
 }
 
@@ -312,79 +497,102 @@ const stats = ref({
 
 .nav-item:hover {
   transform: translateX(8px);
-  border-color: var(--color-primary);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: rgba(var(--v-theme-primary), 0.05);
 }
 
-.item-icon {
-  width: 3rem;
-  height: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-hover);
-  border-radius: 0.75rem;
-  color: var(--color-primary);
-  font-size: 1.2rem;
-  flex-shrink: 0;
+.nav-item.v-list-item--active {
+  background: rgba(var(--v-theme-primary), 0.1);
+  border-left: 4px solid rgb(var(--v-theme-primary));
 }
 
-.item-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+/* Statistics Cards */
+.nav-section .v-card-text {
+  position: relative;
 }
 
-.item-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
+.nav-section .v-icon {
+  transition: all 0.3s ease;
 }
 
-.item-description {
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-  opacity: 0.8;
+.nav-section:hover .v-icon {
+  transform: scale(1.1);
 }
 
-/* Dark mode adjustments */
-.my-app-dark .nav-section {
-  background: var(--color-bg-surface);
-  border-color: var(--color-border);
-}
-
-.my-app-dark .nav-item {
-  background: var(--color-bg-surface);
-  border-color: var(--color-border);
-}
-
-.my-app-dark .nav-item:hover {
-  border-color: var(--color-primary);
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .navigation-page {
-    padding: 1rem;
-  }
-  
-  .navigation-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-  
-  .page-title {
+/* Responsive Design */
+@media (max-width: 960px) {
+  .page-header h1 {
     font-size: 2rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .nav-items {
+    gap: 4px;
   }
   
   .nav-item {
-    padding: 0.75rem;
+    padding: 8px 12px;
   }
-  
-  .item-icon {
-    width: 2.5rem;
-    height: 2.5rem;
-    font-size: 1rem;
+}
+
+/* Vuetify Overrides */
+:deep(.v-list-item) {
+  margin-bottom: 4px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+:deep(.v-list-item:hover) {
+  background: rgba(var(--v-theme-primary), 0.05);
+  transform: translateX(4px);
+}
+
+:deep(.v-list-item--active) {
+  background: rgba(var(--v-theme-primary), 0.1);
+  border-left: 4px solid rgb(var(--v-theme-primary));
+}
+
+:deep(.v-card) {
+  transition: all 0.3s ease;
+}
+
+:deep(.v-card:hover) {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.15);
+}
+
+:deep(.v-avatar) {
+  transition: all 0.3s ease;
+}
+
+:deep(.v-avatar:hover) {
+  transform: scale(1.05);
+}
+
+:deep(.v-btn) {
+  transition: all 0.3s ease;
+}
+
+:deep(.v-btn:hover) {
+  transform: translateY(-2px);
+}
+
+:deep(.v-chip) {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
   }
 }
 </style>

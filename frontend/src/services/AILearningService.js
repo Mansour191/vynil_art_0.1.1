@@ -1,9 +1,13 @@
+// Enhanced AILearningService with API Integration
+import BaseService from './BaseService';
 import AIService from './AIService';
 import PricingService from './PricingService';
 import ChatService from '@/integration/services/ChatService';
 
-class AILearningService {
+class AILearningService extends BaseService {
   constructor() {
+    super();
+    this.endpoint = '/ai/learning';
     this.learningData = this.loadLearningData();
     this.trainingSessions = this.loadTrainingSessions();
     this.aiModels = this.loadAIModels();
@@ -18,6 +22,18 @@ class AILearningService {
   async initializeLearningSystem() {
     console.log('🧠 Initializing AI Learning System...');
     
+    try {
+      // Test API connection
+      const response = await this.get('/health');
+      if (response.success) {
+        console.log('✅ AI Learning System Initialized with API');
+      } else {
+        console.log('⚠️ AI Learning System in fallback mode');
+      }
+    } catch (error) {
+      console.log('⚠️ AI Learning System in fallback mode:', error.message);
+    }
+    
     // Start continuous learning
     this.startContinuousLearning();
     
@@ -26,8 +42,137 @@ class AILearningService {
     
     // Start adaptive learning
     this.startAdaptiveLearning();
-    
-    console.log('✅ AI Learning System Initialized');
+  }
+
+  // API Methods
+  async getModels() {
+    try {
+      const response = await this.get('/models');
+      if (response.success) {
+        this.aiModels = response.data;
+        this.saveAIModels(response.data);
+      }
+      return response;
+    } catch (error) {
+      console.error('Error getting AI models:', error);
+      return {
+        success: false,
+        data: this.getMockAIModels(),
+        error: error.message
+      };
+    }
+  }
+
+  async getTrainingSessions() {
+    try {
+      const response = await this.get('/training/sessions');
+      if (response.success) {
+        this.trainingSessions = response.data;
+        this.saveTrainingSessions(response.data);
+      }
+      return response;
+    } catch (error) {
+      console.error('Error getting training sessions:', error);
+      return {
+        success: false,
+        data: this.getMockTrainingSessions(),
+        error: error.message
+      };
+    }
+  }
+
+  async getLearningData() {
+    try {
+      const response = await this.get('/data');
+      if (response.success) {
+        this.learningData = response.data;
+        this.saveLearningData(response.data);
+      }
+      return response;
+    } catch (error) {
+      console.error('Error getting learning data:', error);
+      return {
+        success: false,
+        data: this.getMockLearningData(),
+        error: error.message
+      };
+    }
+  }
+
+  async trainModel(modelName) {
+    try {
+      const response = await this.post('/training/start', { modelName });
+      if (response.success) {
+        this.currentTrainingSession = response.data;
+        this.isTraining = true;
+      }
+      return response;
+    } catch (error) {
+      console.error('Error training model:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  async startAllTraining() {
+    try {
+      const response = await this.post('/training/start-all');
+      if (response.success) {
+        this.currentTrainingSession = response.data;
+        this.isTraining = true;
+      }
+      return response;
+    } catch (error) {
+      console.error('Error starting all training:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  async resetModel(modelName) {
+    try {
+      const response = await this.post(`/models/${modelName}/reset`);
+      if (response.success) {
+        // Refresh models data
+        await this.getModels();
+      }
+      return response;
+    } catch (error) {
+      console.error('Error resetting model:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  async saveSettings(settings) {
+    try {
+      const response = await this.post('/settings', settings);
+      if (response.success) {
+        // Update local settings
+        if (settings.training) {
+          Object.assign(this.trainingSettings || {}, settings.training);
+        }
+        if (settings.learning) {
+          Object.assign(this.learningSettings || {}, settings.learning);
+        }
+        if (settings.system) {
+          Object.assign(this.systemSettings || {}, settings.system);
+        }
+      }
+      return response;
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
   }
 
   // Initialize Models
@@ -800,61 +945,107 @@ class AILearningService {
     return this.aiModels;
   }
 
-  async forceRetraining() {
-    console.log('🔄 Forcing retraining of all models...');
-    
-    const modelNames = Object.keys(this.aiModels);
-    const results = [];
-    
-    for (const modelName of modelNames) {
-      try {
-        const result = await this.trainModel(modelName);
-        results.push({ modelName, success: true, result });
-      } catch (error) {
-        results.push({ modelName, success: false, error: error.message });
+  // Mock Data Methods
+  getMockAIModels() {
+    return {
+      chatbot: {
+        version: '2.1.0',
+        accuracy: 0.92,
+        lastTrained: new Date(Date.now() - 86400000).toISOString(),
+        performance: {
+          precision: 0.88,
+          recall: 0.91,
+          f1Score: 0.89
+        },
+        trainingData: Array.from({ length: 1250 }, (_, i) => ({ id: i + 1 }))
+      },
+      pricing: {
+        version: '1.8.3',
+        accuracy: 0.87,
+        lastTrained: new Date(Date.now() - 172800000).toISOString(),
+        performance: {
+          precision: 0.85,
+          recall: 0.88,
+          f1Score: 0.86
+        },
+        trainingData: Array.from({ length: 890 }, (_, i) => ({ id: i + 1 }))
+      },
+      recommendations: {
+        version: '3.0.1',
+        accuracy: 0.94,
+        lastTrained: new Date(Date.now() - 259200000).toISOString(),
+        performance: {
+          precision: 0.92,
+          recall: 0.94,
+          f1Score: 0.93
+        },
+        trainingData: Array.from({ length: 2100 }, (_, i) => ({ id: i + 1 }))
+      },
+      sentiment: {
+        version: '1.5.2',
+        accuracy: 0.89,
+        lastTrained: new Date(Date.now() - 345600000).toISOString(),
+        performance: {
+          precision: 0.87,
+          recall: 0.90,
+          f1Score: 0.88
+        },
+        trainingData: Array.from({ length: 1560 }, (_, i) => ({ id: i + 1 }))
       }
+    };
+  }
+
+  getMockTrainingSessions() {
+    return [
+      {
+        id: 1,
+        modelName: 'chatbot',
+        startTime: new Date(Date.now() - 3600000).toISOString(),
+        endTime: new Date(Date.now() - 3000000).toISOString(),
+        status: 'completed',
+        result: {
+          accuracy: 0.92,
+          improvements: {
+            accuracyImprovement: 0.03
+          }
+        }
+      },
+      {
+        id: 2,
+        modelName: 'pricing',
+        startTime: new Date(Date.now() - 7200000).toISOString(),
+        endTime: new Date(Date.now() - 6000000).toISOString(),
+        status: 'completed',
+        result: {
+          accuracy: 0.87,
+          improvements: {
+            accuracyImprovement: 0.02
+          }
+        }
+      }
+    ];
+  }
+
+  getMockLearningData() {
+    return {
+      userInteractions: Array.from({ length: 450 }, (_, i) => ({ id: i + 1 })),
+      pricingPatterns: Array.from({ length: 230 }, (_, i) => ({ id: i + 1 })),
+      productInsights: Array.from({ length: 180 }, (_, i) => ({ id: i + 1 })),
+      conversationContexts: Array.from({ length: 320 }, (_, i) => ({ id: i + 1 }))
+    };
+  }
+
+  // Export singleton instance
+  static getInstance() {
+    if (!window.aiLearningServiceInstance) {
+      window.aiLearningServiceInstance = new AILearningService();
     }
-    
-    return results;
-  }
-
-  // Reset Learning
-  resetLearning() {
-    this.learningData = {
-      userInteractions: [],
-      pricingPatterns: [],
-      productInsights: [],
-      conversationContexts: [],
-      marketTrends: [],
-      userPreferences: {},
-      systemPerformance: [],
-      lastUpdate: new Date().toISOString()
-    };
-    
-    this.saveLearningData();
-    console.log('🗑️ Learning data reset');
-  }
-
-  // Export Learning Data
-  exportLearningData() {
-    const exportData = {
-      learningData: this.learningData,
-      trainingSessions: this.trainingSessions,
-      aiModels: this.aiModels,
-      analytics: this.getLearningAnalytics(),
-      exportDate: new Date().toISOString()
-    };
-    
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ai-learning-data-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    
-    console.log('📤 Learning data exported');
+    return window.aiLearningServiceInstance;
   }
 }
 
-export default new AILearningService();
+// Export class as default and named export for the instance
+const aiLearningServiceInstance = AILearningService.getInstance();
+export default AILearningService;
+export { aiLearningServiceInstance };
+export const initializeLearningSystem = () => aiLearningServiceInstance.initializeLearningSystem();

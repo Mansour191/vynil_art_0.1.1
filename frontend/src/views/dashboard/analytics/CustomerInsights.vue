@@ -1,152 +1,395 @@
-// @\views\dashboard\CustomerInsights.vue
-
 <template>
-  <div class="customer-insights">
-    <!-- رأس الصفحة -->
-    <div class="page-header">
-      <div class="header-title">
-        <h1>
-          <i class="fa-solid fa-users header-icon"></i>
-          تحليلات سلوك العملاء
-        </h1>
-        <p class="header-subtitle">تحليل متقدم لسلوك العملاء وتقسيمهم وتوقع قيمتهم</p>
-      </div>
-
-      <div class="header-actions">
-        <button class="btn-refresh" @click="refreshAll" :disabled="loading">
-          <i :class="loading ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-sync-alt'"></i>
-          <span>{{ loading ? 'جاري التحديث...' : 'تحديث البيانات' }}</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- تبويبات التنقل -->
-    <div class="tabs-container">
-      <button
-        class="tab-btn"
-        :class="{ active: activeTab === 'overview' }"
-        @click="activeTab = 'overview'"
-      >
-        <i class="fa-solid fa-chart-pie"></i>
-        نظرة عامة
-      </button>
-      <button
-        class="tab-btn"
-        :class="{ active: activeTab === 'segments' }"
-        @click="
-          loadSegments();
-          activeTab = 'segments';
-        "
-      >
-        <i class="fa-solid fa-layer-group"></i>
-        تقسيم العملاء
-      </button>
-      <button
-        class="tab-btn"
-        :class="{ active: activeTab === 'churn' }"
-        @click="
-          loadChurn();
-          activeTab = 'churn';
-        "
-      >
-        <i class="fa-solid fa-exclamation-triangle"></i>
-        خطر التوقف
-      </button>
-      <button
-        class="tab-btn"
-        :class="{ active: activeTab === 'value' }"
-        @click="
-          loadValue();
-          activeTab = 'value';
-        "
-      >
-        <i class="fa-solid fa-coins"></i>
-        القيمة الدائمة
-      </button>
-      <button
-        class="tab-btn"
-        :class="{ active: activeTab === 'behavior' }"
-        @click="
-          loadBehavior();
-          activeTab = 'behavior';
-        "
-      >
-        <i class="fa-solid fa-chart-line"></i>
-        تحليل السلوك
-      </button>
-    </div>
-
-    <!-- محتوى التبويبات -->
-    <div class="tab-content">
-      <!-- ===== تبويب النظرة العامة ===== -->
-      <div v-if="activeTab === 'overview'" class="overview-tab">
-        <!-- بطاقات إحصائيات سريعة -->
-        <div class="stats-grid" v-if="analytics">
-          <div class="stat-card">
-            <div class="stat-icon blue">
-              <i class="fa-solid fa-users"></i>
-            </div>
-            <div class="stat-content">
-              <span class="stat-value">{{ analytics.total }}</span>
-              <span class="stat-label">إجمالي العملاء</span>
-            </div>
+  <v-container class="pa-4">
+    <!-- Header -->
+    <v-card variant="elevated" class="mb-6 insights-header">
+      <v-card-text class="pa-6">
+        <div class="d-flex align-center justify-space-between">
+          <div class="header-content">
+            <h1 class="text-h3 font-weight-bold text-primary mb-2 d-flex align-center ga-3">
+              <v-icon color="primary" size="40">mdi-account-group</v-icon>
+              {{ $t('customerInsights') || 'تحليلات سلوك العملاء' }}
+            </h1>
+            <p class="text-body-1 text-medium-emphasis mb-0">
+              {{ $t('customerInsightsSubtitle') || 'تحليل متقدم لسلوك العملاء وتقسيمهم وتوقع قيمتهم' }}
+            </p>
           </div>
-
-          <div class="stat-card">
-            <div class="stat-icon green">
-              <i class="fa-solid fa-user-check"></i>
-            </div>
-            <div class="stat-content">
-              <span class="stat-value">{{ analytics.active }}</span>
-              <span class="stat-label">نشط (آخر 30 يوم)</span>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon orange">
-              <i class="fa-solid fa-user-plus"></i>
-            </div>
-            <div class="stat-content">
-              <span class="stat-value">{{ analytics.new }}</span>
-              <span class="stat-label">عملاء جدد</span>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-icon red">
-              <i class="fa-solid fa-user-slash"></i>
-            </div>
-            <div class="stat-content">
-              <span class="stat-value">{{ analytics.churned }}</span>
-              <span class="stat-label">متوقفون</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- توزيع العملاء -->
-        <div class="chart-card" v-if="analytics">
-          <h3><i class="fa-solid fa-chart-pie"></i> توزيع العملاء حسب القيمة</h3>
-          <div class="distribution-grid">
-            <div
-              v-for="(value, segment) in analytics.segments"
-              :key="segment"
-              class="distribution-item"
+          <div class="header-actions d-flex ga-3">
+            <v-btn
+              @click="refreshAll"
+              :disabled="loading"
+              variant="elevated"
+              color="primary"
+              :prepend-icon="loading ? 'mdi-loading' : 'mdi-refresh'"
             >
-              <span class="segment-name">{{ getSegmentName(segment) }}</span>
-              <div class="progress-bar">
-                <div class="progress-fill" :style="{ width: value.percentage + '%' }"></div>
-              </div>
-              <span class="segment-count">{{ value.count }} عميل</span>
-            </div>
+              {{ loading ? ($t('updating') || 'جاري التحديث...') : ($t('refreshData') || 'تحديث البيانات') }}
+            </v-btn>
           </div>
         </div>
+      </v-card-text>
+    </v-card>
 
-        <!-- إحصائيات سريعة -->
-        <div class="stats-row" v-if="analytics">
-          <div class="stat-box">
-            <span class="label">متوسط قيمة الطلب</span>
-            <span class="value">{{ formatCurrency(analytics.revenue.averageOrderValue) }}</span>
-          </div>
+    <!-- Tabs Navigation -->
+    <v-card variant="elevated" class="mb-6">
+      <v-tabs
+        v-model="activeTab"
+        align-tabs="center"
+        color="primary"
+      >
+        <v-tab
+          value="overview"
+          prepend-icon="mdi-chart-pie"
+          @click="loadOverview"
+        >
+          {{ $t('overview') || 'نظرة عامة' }}
+        </v-tab>
+        <v-tab
+          value="segments"
+          prepend-icon="mdi-layer-group"
+          @click="loadSegments"
+        >
+          {{ $t('customerSegments') || 'تقسيم العملاء' }}
+        </v-tab>
+        <v-tab
+          value="churn"
+          prepend-icon="mdi-alert-circle"
+          @click="loadChurn"
+        >
+          {{ $t('churnAnalysis') || 'تحليل التسرب' }}
+        </v-tab>
+        <v-tab
+          value="lifetime"
+          prepend-icon="mdi-trending-up"
+          @click="loadLifetime"
+        >
+          {{ $t('lifetimeValue') || 'القيمة الدائمة' }}
+        </v-tab>
+        <v-tab
+          value="behavior"
+          prepend-icon="mdi-brain"
+          @click="loadBehavior"
+        >
+          {{ $t('behaviorAnalysis') || 'تحليل السلوك' }}
+        </v-tab>
+      </v-tabs>
+
+      <v-divider />
+
+      <!-- Tab Content -->
+      <v-card-text class="pa-4">
+        <!-- Loading State -->
+        <div v-if="loading" class="text-center py-8">
+          <v-progress-circular indeterminate color="primary" size="48" />
+          <p class="mt-4 text-medium-emphasis">{{ $t('loadingInsights') || 'جاري تحميل الرؤى...' }}</p>
+        </div>
+
+        <!-- Overview Tab -->
+        <div v-else-if="activeTab === 'overview'" class="overview-content">
+          <v-row class="mb-6">
+            <v-col
+              v-for="metric in overviewMetrics"
+              :key="metric.title"
+              cols="12"
+              sm="6"
+              md="3"
+            >
+              <v-card variant="elevated" class="metric-card">
+                <v-card-text class="pa-4 text-center">
+                  <v-avatar
+                    :color="metric.color"
+                    variant="tonal"
+                    size="50"
+                    class="mb-3"
+                  >
+                    <v-icon :color="metric.color" size="28">{{ metric.icon }}</v-icon>
+                  </v-avatar>
+                  <h3 class="text-h4 font-weight-bold text-white mb-1">{{ metric.value }}</h3>
+                  <p class="text-caption text-medium-emphasis mb-0">{{ metric.title }}</p>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col cols="12" lg="6">
+              <v-card variant="elevated" class="insights-card">
+                <v-card-text class="pa-4">
+                  <h3 class="text-h6 font-weight-medium text-white mb-4 d-flex align-center ga-2">
+                    <v-icon color="primary" size="20">mdi-chart-line</v-icon>
+                    {{ $t('customerGrowth') || 'نمو العملاء' }}
+                  </h3>
+                  <div class="chart-container" style="height: 300px;">
+                    <canvas ref="growthChart"></canvas>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="12" lg="6">
+              <v-card variant="elevated" class="insights-card">
+                <v-card-text class="pa-4">
+                  <h3 class="text-h6 font-weight-medium text-white mb-4 d-flex align-center ga-2">
+                    <v-icon color="primary" size="20">mdi-chart-pie</v-icon>
+                    {{ $t('customerDistribution') || 'توزيع العملاء' }}
+                  </h3>
+                  <div class="chart-container" style="height: 300px;">
+                    <canvas ref="distributionChart"></canvas>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        <!-- Segments Tab -->
+        <div v-else-if="activeTab === 'segments'" class="segments-content">
+          <v-row class="mb-6">
+            <v-col cols="12" lg="8">
+              <v-card variant="elevated" class="insights-card">
+                <v-card-text class="pa-4">
+                  <h3 class="text-h6 font-weight-medium text-white mb-4 d-flex align-center ga-2">
+                    <v-icon color="primary" size="20">mdi-account-group-outline</v-icon>
+                    {{ $t('customerSegments') || 'تقسيم العملاء' }}
+                  </h3>
+                  <div class="chart-container" style="height: 400px;">
+                    <canvas ref="segmentsChart"></canvas>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="12" lg="4">
+              <v-card variant="elevated" class="insights-card">
+                <v-card-text class="pa-4">
+                  <h3 class="text-h6 font-weight-medium text-white mb-4 d-flex align-center ga-2">
+                    <v-icon color="primary" size="20">mdi-information</v-icon>
+                    {{ $t('segmentDetails') || 'تفاصيل الشرائح' }}
+                  </h3>
+                  <div class="segments-list">
+                    <div v-for="segment in customerSegments" :key="segment.name" class="segment-item d-flex align-center justify-space-between mb-3">
+                      <div class="d-flex align-center ga-2">
+                        <v-avatar :color="segment.color" variant="tonal" size="24">
+                          <v-icon size="14">{{ segment.icon }}</v-icon>
+                        </v-avatar>
+                        <span class="text-body-2">{{ segment.name }}</span>
+                      </div>
+                      <div class="text-end">
+                        <div class="text-body-2 font-weight-medium">{{ segment.percentage }}%</div>
+                        <div class="text-caption text-medium-emphasis">{{ segment.count }} {{ $t('customers') || 'عملاء' }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </div>
+
+        <!-- Churn Tab -->
+        <div v-else-if="activeTab === 'churn'" class="churn-content">
+          <v-row class="mb-6">
+            <v-col cols="12">
+              <v-card variant="elevated" class="insights-card">
+                <v-card-text class="pa-4">
+                  <h3 class="text-h6 font-weight-medium text-white mb-4 d-flex align-center ga-2">
+                    <v-icon color="primary" size="20">mdi-alert-circle</v-icon>
+                    {{ $t('churnRiskAnalysis') || 'تحليل مخاطر التسرب' }}
+                  </h3>
+                  <div class="chart-container" style="height: 400px;">
+                    <canvas ref="churnChart"></canvas>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col cols="12" lg="6">
+              <v-card variant="elevated" class="insights-card">
+                <v-card-text class="pa-4">
+                  <h3 class="text-h6 font-weight-medium text-white mb-4 d-flex align-center ga-2">
+                    <v-icon color="primary" size="20">mdi-alert</v-icon>
+                    {{ $t('highRiskCustomers') || 'العملاء ذوي المخاطر العالية' }}
+                  </h3>
+                  <div class="high-risk-customers">
+                    <div v-for="customer in highRiskCustomers" :key="customer.id" class="risk-customer d-flex align-center ga-3 mb-3">
+                      <v-avatar variant="tonal" color="error" size="40">
+                        <v-icon>mdi-account-alert</v-icon>
+                      </v-avatar>
+                      <div class="flex-grow-1">
+                        <h4 class="text-body-2 font-weight-medium text-white mb-1">{{ customer.name }}</h4>
+                        <p class="text-caption text-medium-emphasis mb-0">{{ customer.email }}</p>
+                      </div>
+                      <v-chip color="error" variant="tonal" size="small">
+                        {{ customer.riskScore }}% {{ $t('risk') || 'مخاطرة' }}
+                      </v-chip>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="12" lg="6">
+              <v-card variant="elevated" class="insights-card">
+                <v-card-text class="pa-4">
+                  <h3 class="text-h6 font-weight-medium text-white mb-4 d-flex align-center ga-2">
+                    <v-icon color="primary" size="20">mdi-trending-down</v-icon>
+                    {{ $t('churnTrends') || 'اتجاهات التسرب' }}
+                  </h3>
+                  <div class="churn-trends">
+                    <div class="trend-item d-flex justify-space-between align-center mb-3">
+                      <span class="text-caption text-medium-emphasis">{{ $t('monthlyChurnRate') || 'معدل التسرب الشهري' }}</span>
+                      <span class="text-body-2 font-weight-medium text-error">{{ churnTrends.monthly }}%</span>
+                    </div>
+                    <div class="trend-item d-flex justify-space-between align-center mb-3">
+                      <span class="text-caption text-medium-emphasis">{{ $t('quarterlyChurnRate') || 'معدل التسرب الربع سنوي' }}</span>
+                      <span class="text-body-2 font-weight-medium text-warning">{{ churnTrends.quarterly }}%</span>
+                    </div>
+                    <div class="trend-item d-flex justify-space-between align-center">
+                      <span class="text-caption text-medium-emphasis">{{ $t('annualChurnRate') || 'معدل التسرب السنوي' }}</span>
+                      <span class="text-body-2 font-weight-medium text-success">{{ churnTrends.annual }}%</span>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </div>
+
+        <!-- Lifetime Value Tab -->
+        <div v-else-if="activeTab === 'lifetime'" class="lifetime-content">
+          <v-row class="mb-6">
+            <v-col cols="12">
+              <v-card variant="elevated" class="insights-card">
+                <v-card-text class="pa-4">
+                  <h3 class="text-h6 font-weight-medium text-white mb-4 d-flex align-center ga-2">
+                    <v-icon color="primary" size="20">mdi-trending-up</v-icon>
+                    {{ $t('customerLifetimeValue') || 'القيمة الدائمة للعميل' }}
+                  </h3>
+                  <div class="chart-container" style="height: 400px;">
+                    <canvas ref="lifetimeChart"></canvas>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col cols="12" lg="6">
+              <v-card variant="elevated" class="insights-card">
+                <v-card-text class="pa-4">
+                  <h3 class="text-h6 font-weight-medium text-white mb-4 d-flex align-center ga-2">
+                    <v-icon color="primary" size="20">mdi-star</v-icon>
+                    {{ $t('highValueCustomers') || 'العملاء ذوي القيمة العالية' }}
+                  </h3>
+                  <div class="high-value-customers">
+                    <div v-for="customer in highValueCustomers" :key="customer.id" class="value-customer d-flex align-center ga-3 mb-3">
+                      <v-avatar variant="tonal" color="success" size="40">
+                        <v-icon>mdi-star</v-icon>
+                      </v-avatar>
+                      <div class="flex-grow-1">
+                        <h4 class="text-body-2 font-weight-medium text-white mb-1">{{ customer.name }}</h4>
+                        <p class="text-caption text-medium-emphasis mb-0">{{ customer.email }}</p>
+                      </div>
+                      <div class="text-end">
+                        <div class="text-body-2 font-weight-medium text-success">{{ formatCurrency(customer.lifetimeValue) }}</div>
+                        <div class="text-caption text-medium-emphasis">{{ customer.orders }} {{ $t('orders') || 'طلبات' }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="12" lg="6">
+              <v-card variant="elevated" class="insights-card">
+                <v-card-text class="pa-4">
+                  <h3 class="text-h6 font-weight-medium text-white mb-4 d-flex align-center ga-2">
+                    <v-icon color="primary" size="20">mdi-chart-box</v-icon>
+                    {{ $t('ltvMetrics') || 'مؤشرات القيمة الدائمة' }}
+                  </h3>
+                  <div class="ltv-metrics">
+                    <div class="metric-item d-flex justify-space-between align-center mb-3">
+                      <span class="text-caption text-medium-emphasis">{{ $t('averageLTV') || 'متوسط القيمة الدائمة' }}</span>
+                      <span class="text-body-2 font-weight-medium text-white">{{ formatCurrency(ltvMetrics.average) }}</span>
+                    </div>
+                    <div class="metric-item d-flex justify-space-between align-center mb-3">
+                      <span class="text-caption text-medium-emphasis">{{ $t('medianLTV') || 'وسيط القيمة الدائمة' }}</span>
+                      <span class="text-body-2 font-weight-medium text-white">{{ formatCurrency(ltvMetrics.median) }}</span>
+                    </div>
+                    <div class="metric-item d-flex justify-space-between align-center">
+                      <span class="text-caption text-medium-emphasis">{{ $t('top10LTV') || 'أعلى 10% القيمة الدائمة' }}</span>
+                      <span class="text-body-2 font-weight-medium text-success">{{ formatCurrency(ltvMetrics.top10) }}</span>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </div>
+
+        <!-- Behavior Tab -->
+        <div v-else-if="activeTab === 'behavior'" class="behavior-content">
+          <v-row class="mb-6">
+            <v-col cols="12">
+              <v-card variant="elevated" class="insights-card">
+                <v-card-text class="pa-4">
+                  <h3 class="text-h6 font-weight-medium text-white mb-4 d-flex align-center ga-2">
+                    <v-icon color="primary" size="20">mdi-brain</v-icon>
+                    {{ $t('behaviorPatterns') || 'أنماط السلوك' }}
+                  </h3>
+                  <div class="chart-container" style="height: 400px;">
+                    <canvas ref="behaviorChart"></canvas>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col cols="12" lg="6">
+              <v-card variant="elevated" class="insights-card">
+                <v-card-text class="pa-4">
+                  <h3 class="text-h6 font-weight-medium text-white mb-4 d-flex align-center ga-2">
+                    <v-icon color="primary" size="20">mdi-clock</v-icon>
+                    {{ $t('purchasePatterns') || 'أنماط الشراء' }}
+                  </h3>
+                  <div class="purchase-patterns">
+                    <div v-for="pattern in purchasePatterns" :key="pattern.name" class="pattern-item d-flex justify-space-between align-center mb-3">
+                      <span class="text-caption text-medium-emphasis">{{ pattern.name }}</span>
+                      <span class="text-body-2 font-weight-medium text-white">{{ pattern.percentage }}%</span>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+
+            <v-col cols="12" lg="6">
+              <v-card variant="elevated" class="insights-card">
+                <v-card-text class="pa-4">
+                  <h3 class="text-h6 font-weight-medium text-white mb-4 d-flex align-center ga-2">
+                    <v-icon color="primary" size="20">mdi-target</v-icon>
+                    {{ $t('interestCategories') || 'فئات الاهتمام' }}
+                  </h3>
+                  <div class="interest-categories">
+                    <div v-for="category in interestCategories" :key="category.name" class="category-item d-flex align-center ga-3 mb-3">
+                      <v-avatar :color="category.color" variant="tonal" size="32">
+                        <v-icon size="16">{{ category.icon }}</v-icon>
+                      </v-avatar>
+                      <div class="flex-grow-1">
+                        <span class="text-body-2">{{ category.name }}</span>
+                      </div>
+                      <v-chip :color="category.color" variant="tonal" size="small">
+                        {{ category.percentage }}%
+                      </v-chip>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-container>
+</template>
           <div class="stat-box">
             <span class="label">معدل عودة العملاء</span>
             <span class="value">{{ analytics.retention.returningRate.toFixed(1) }}%</span>
@@ -187,288 +430,26 @@
         <div v-if="loadingSegments" class="loading-state">
           <div class="spinner"></div>
           <p>جاري تحميل بيانات العملاء...</p>
-        </div>
 
-        <div v-else-if="segments" class="segments-container">
-          <!-- شرائح حسب القيمة -->
-          <div class="segment-section">
-            <h3><i class="fa-solid fa-crown"></i> شرائح العملاء حسب القيمة</h3>
-            <div class="segment-cards">
-              <div
-                v-for="(data, segment) in segments.stats"
-                :key="segment"
-                class="segment-card"
-                :class="segment"
-              >
-                <div class="segment-icon">
-                  <i :class="getSegmentIcon(segment)"></i>
-                </div>
-                <div class="segment-info">
-                  <h4>{{ getSegmentName(segment) }}</h4>
-                  <div class="segment-stats">
-                    <div class="stat">
-                      <span class="label">عدد العملاء</span>
-                      <span class="value">{{ data.count }}</span>
-                    </div>
-                    <div class="stat">
-                      <span class="label">نسبة من الإجمالي</span>
-                      <span class="value">{{ data.percentage.toFixed(1) }}%</span>
-                    </div>
-                    <div class="stat">
-                      <span class="label">إجمالي الإيرادات</span>
-                      <span class="value">{{ formatCurrency(data.revenue) }}</span>
-                    </div>
-                    <div class="stat">
-                      <span class="label">متوسط قيمة الطلب</span>
-                      <span class="value">{{ formatCurrency(data.avgOrderValue) }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+// State
+const loading = ref(false);
+const activeTab = ref('overview');
 
-          <!-- شرائح حسب التفاعل -->
-          <div class="segment-section" v-if="engagementSegments">
-            <h3><i class="fa-solid fa-chart-line"></i> شرائح حسب التفاعل</h3>
-            <div class="mini-cards">
-              <div
-                v-for="(data, segment) in engagementSegments.stats"
-                :key="segment"
-                class="mini-card"
-                :class="segment"
-              >
-                <span class="mini-title">{{ getEngagementName(segment) }}</span>
-                <span class="mini-count">{{ data.count }}</span>
-                <span class="mini-percent">{{ data.percentage.toFixed(1) }}%</span>
-              </div>
-            </div>
-          </div>
+// Chart refs
+const growthChart = ref(null);
+const distributionChart = ref(null);
+const segmentsChart = ref(null);
+const churnChart = ref(null);
+const lifetimeChart = ref(null);
+const behaviorChart = ref(null);
 
-          <!-- شرائح حسب دورة الحياة -->
-          <div class="segment-section" v-if="lifecycleSegments">
-            <h3><i class="fa-solid fa-life-ring"></i> شرائح حسب دورة الحياة</h3>
-            <div class="lifecycle-grid">
-              <div
-                v-for="(data, segment) in lifecycleSegments.stats"
-                :key="segment"
-                class="lifecycle-item"
-              >
-                <span class="lifecycle-name">{{ getLifecycleName(segment) }}</span>
-                <span class="lifecycle-value">{{ data.count }} عميل</span>
-                <span class="lifecycle-percent">{{ data.percentage.toFixed(1) }}%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== تبويب خطر التوقف ===== -->
-      <div v-if="activeTab === 'churn'" class="churn-tab">
-        <div v-if="loadingChurn" class="loading-state">
-          <div class="spinner"></div>
-          <p>جاري تحليل خطر التوقف...</p>
-        </div>
-
-        <div v-else-if="churnStats" class="churn-container">
-          <!-- بطاقات خطر التوقف -->
-          <div class="risk-cards">
-            <div class="risk-card high">
-              <div class="risk-icon">
-                <i class="fa-solid fa-exclamation-triangle"></i>
-              </div>
-              <div class="risk-content">
-                <span class="risk-label">خطر مرتفع</span>
-                <span class="risk-value">{{ churnStats.highRisk.count }}</span>
-                <span class="risk-percent">{{ churnStats.highRisk.percentage }}</span>
-              </div>
-            </div>
-
-            <div class="risk-card medium">
-              <div class="risk-icon">
-                <i class="fa-solid fa-exclamation-circle"></i>
-              </div>
-              <div class="risk-content">
-                <span class="risk-label">خطر متوسط</span>
-                <span class="risk-value">{{ churnStats.mediumRisk.count }}</span>
-                <span class="risk-percent">{{ churnStats.mediumRisk.percentage }}</span>
-              </div>
-            </div>
-
-            <div class="risk-card low">
-              <div class="risk-icon">
-                <i class="fa-solid fa-info-circle"></i>
-              </div>
-              <div class="risk-content">
-                <span class="risk-label">خطر منخفض</span>
-                <span class="risk-value">{{ churnStats.lowRisk.count }}</span>
-                <span class="risk-percent">{{ churnStats.lowRisk.percentage }}</span>
-              </div>
-            </div>
-
-            <div class="risk-card safe">
-              <div class="risk-icon">
-                <i class="fa-solid fa-check-circle"></i>
-              </div>
-              <div class="risk-content">
-                <span class="risk-label">آمن</span>
-                <span class="risk-value">{{ churnStats.safe.count }}</span>
-                <span class="risk-percent">{{ churnStats.safe.percentage }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- إحصائيات الخطر -->
-          <div class="churn-stats-row">
-            <div class="stat-box warning">
-              <span class="label">معدل التوقف</span>
-              <span class="value">{{ churnStats.churnRate }}</span>
-            </div>
-            <div class="stat-box danger">
-              <span class="label">خسارة محتملة</span>
-              <span class="value">{{ formatCurrency(churnStats.highRisk.potentialLoss) }}</span>
-            </div>
-          </div>
-
-          <!-- قائمة العملاء المعرضين للخطر -->
-          <div class="risk-list" v-if="churnPredictions && churnPredictions.highRisk">
-            <h3><i class="fa-solid fa-exclamation-triangle"></i> عملاء خطر التوقف مرتفع</h3>
-            <div class="customer-cards">
-              <div
-                v-for="customer in churnPredictions.highRisk.slice(0, 5)"
-                :key="customer.id"
-                class="customer-card"
-              >
-                <div class="customer-info">
-                  <h4>{{ customer.name }}</h4>
-                  <div class="customer-details">
-                    <span>آخر طلب: {{ formatDate(customer.lastOrderDate) }}</span>
-                    <span>قيمة المشتريات: {{ formatCurrency(customer.totalSpent) }}</span>
-                    <span
-                      >احتمالية التوقف: {{ (customer.churnProbability * 100).toFixed(0) }}%</span
-                    >
-                  </div>
-                </div>
-                <div class="churn-bar">
-                  <div
-                    class="churn-fill"
-                    :style="{ width: customer.churnProbability * 100 + '%' }"
-                  ></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- توصيات للاحتفاظ -->
-          <div class="retention-recs" v-if="retentionRecs">
-            <h3><i class="fa-solid fa-life-ring"></i> توصيات للاحتفاظ بالعملاء</h3>
-            <div class="recs-list">
-              <div v-for="rec in retentionRecs" :key="rec.title" class="rec-card">
-                <div class="rec-level" :class="rec.level"></div>
-                <div class="rec-content">
-                  <h4>{{ rec.title }}</h4>
-                  <p>{{ rec.count }} عميل - {{ rec.percentage }}</p>
-                  <div class="rec-actions">
-                    <span v-for="action in rec.actions" :key="action.type" class="action-tag">
-                      {{ action.description }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== تبويب القيمة الدائمة ===== -->
-      <div v-if="activeTab === 'value'" class="value-tab">
-        <div v-if="loadingValue" class="loading-state">
-          <div class="spinner"></div>
-          <p>جاري حساب القيمة الدائمة للعملاء...</p>
-        </div>
-
-        <div v-else-if="valueStats" class="value-container">
-          <!-- بطاقات القيمة -->
-          <div class="value-cards">
-            <div class="value-card total">
-              <span class="label">القيمة الدائمة الإجمالية</span>
-              <span class="value">{{ formatCurrency(valueStats.totalLTV) }}</span>
-            </div>
-            <div class="value-card average">
-              <span class="label">متوسط القيمة لكل عميل</span>
-              <span class="value">{{ formatCurrency(valueStats.averageLTV) }}</span>
-            </div>
-            <div class="value-card growth">
-              <span class="label">نمو محتمل</span>
-              <span class="value">{{ formatCurrency(valueStats.potentialGrowth) }}</span>
-            </div>
-            <div class="value-card atrisk">
-              <span class="label">قيمة معرضة للخطر</span>
-              <span class="value">{{ formatCurrency(valueStats.atRiskValue) }}</span>
-            </div>
-          </div>
-
-          <!-- توزيع القيمة -->
-          <div class="distribution-chart">
-            <h3><i class="fa-solid fa-chart-bar"></i> توزيع العملاء حسب القيمة</h3>
-            <div class="distribution-bars">
-              <div class="dist-item">
-                <span class="dist-label">أقل من 1000</span>
-                <div class="dist-bar">
-                  <div
-                    class="dist-fill"
-                    :style="{
-                      width: (valueStats.distribution.under1000 / analytics.total) * 100 + '%',
-                    }"
-                  ></div>
-                </div>
-                <span class="dist-value">{{ valueStats.distribution.under1000 }}</span>
-              </div>
-              <div class="dist-item">
-                <span class="dist-label">1000 - 5000</span>
-                <div class="dist-bar">
-                  <div
-                    class="dist-fill"
-                    :style="{
-                      width: (valueStats.distribution.under5000 / analytics.total) * 100 + '%',
-                    }"
-                  ></div>
-                </div>
-                <span class="dist-value">{{ valueStats.distribution.under5000 }}</span>
-              </div>
-              <div class="dist-item">
-                <span class="dist-label">5000 - 10000</span>
-                <div class="dist-bar">
-                  <div
-                    class="dist-fill"
-                    :style="{
-                      width: (valueStats.distribution.under10000 / analytics.total) * 100 + '%',
-                    }"
-                  ></div>
-                </div>
-                <span class="dist-value">{{ valueStats.distribution.under10000 }}</span>
-              </div>
-              <div class="dist-item">
-                <span class="dist-label">10000 - 50000</span>
-                <div class="dist-bar">
-                  <div
-                    class="dist-fill"
-                    :style="{
-                      width: (valueStats.distribution.under50000 / analytics.total) * 100 + '%',
-                    }"
-                  ></div>
-                </div>
-                <span class="dist-value">{{ valueStats.distribution.under50000 }}</span>
-              </div>
-              <div class="dist-item">
-                <span class="dist-label">أكثر من 50000</span>
-                <div class="dist-bar">
-                  <div
-                    class="dist-fill"
-                    :style="{
-                      width: (valueStats.distribution.over50000 / analytics.total) * 100 + '%',
-                    }"
-                  ></div>
+// Data
+const overviewMetrics = ref([
+  {
+    title: t('totalCustomers') || 'إجمالي العملاء',
+    value: '1,234',
+    icon: 'mdi-account-group',
+    color: 'primary'
                 </div>
                 <span class="dist-value">{{ valueStats.distribution.over50000 }}</span>
               </div>
@@ -717,149 +698,327 @@ export default {
   min-height: 100vh;
   background: var(--bg-primary);
   animation: fadeIn 0.5s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .insights-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+    transition: left 0.5s ease;
   }
-}
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-  background: var(--bg-card);
-  padding: 25px 30px;
-  border-radius: 24px;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-md);
-}
-
-.header-title h1 {
-  font-size: 2rem;
-  color: white;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-icon {
-  color: var(--gold-1);
-  font-size: 2rem;
-  animation: iconPulse 2s ease infinite;
-}
-
-@keyframes iconPulse {
-  0%,
-  100% {
-    transform: scale(1);
+  .insights-header:hover::before {
+    left: 100%;
   }
-  50% {
+
+  /* Metric Cards */
+  .metric-card {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .metric-card:hover::before {
+    left: 100%;
+  }
+
+  .metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.15);
+  }
+
+  /* Insights Cards */
+  .insights-card {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .insights-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .insights-card:hover::before {
+    left: 100%;
+  }
+
+  .insights-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.15);
+  }
+
+  /* Customer Lists */
+  .risk-customer,
+  .value-customer {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .risk-customer::before,
+  .value-customer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .risk-customer:hover::before,
+  .value-customer:hover::before {
+    left: 100%;
+  }
+
+  .risk-customer:hover,
+  .value-customer:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.15);
+  }
+
+  /* Segments List */
+  .segment-item {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .segment-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .segment-item:hover::before {
+    left: 100%;
+  }
+
+  .segment-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.15);
+  }
+
+  /* Chart Containers */
+  .chart-container {
+    position: relative;
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .metric-card {
+    animation: fadeIn 0.5s ease forwards;
+  }
+
+  .metric-card:nth-child(1) { animation-delay: 0.1s; }
+  .metric-card:nth-child(2) { animation-delay: 0.2s; }
+  .metric-card:nth-child(3) { animation-delay: 0.3s; }
+  .metric-card:nth-child(4) { animation-delay: 0.4s; }
+
+  .insights-card {
+    animation: fadeIn 0.6s ease forwards;
+  }
+
+  .insights-card:nth-child(1) { animation-delay: 0.1s; }
+  .insights-card:nth-child(2) { animation-delay: 0.2s; }
+
+  .risk-customer,
+  .value-customer,
+  .segment-item {
+    animation: fadeIn 0.3s ease forwards;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 960px) {
+    .insights-header .d-flex {
+      flex-direction: column;
+      text-align: center;
+      gap: 1rem;
+    }
+    
+    .header-actions {
+      flex-direction: column;
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .insights-header h1 {
+      font-size: 1.5rem;
+    }
+    
+    .metric-card {
+      margin-bottom: 1rem;
+    }
+    
+    .insights-card {
+      margin-bottom: 1rem;
+    }
+  }
+
+  /* Vuetify Overrides */
+  :deep(.v-card) {
+    transition: all 0.3s ease;
+  }
+
+  :deep(.v-card:hover) {
+    transform: translateY(-2px);
+  }
+
+  :deep(.v-btn) {
+    transition: all 0.3s ease;
+  }
+
+  :deep(.v-btn:hover) {
+    transform: translateY(-2px);
+  }
+
+  :deep(.v-avatar) {
+    transition: all 0.3s ease;
+  }
+
+  :deep(.v-avatar:hover) {
+    transform: scale(1.05);
+  }
+
+  :deep(.v-chip) {
+    transition: all 0.3s ease;
+  }
+
+  :deep(.v-chip:hover) {
+    transform: translateY(-2px);
+  }
+
+  :deep(.v-progress-circular) {
+    animation: spin 2s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  :deep(.v-icon) {
+    transition: all 0.3s ease;
+  }
+
+  :deep(.v-icon:hover) {
     transform: scale(1.1);
   }
-}
 
-.header-subtitle {
-  color: var(--text-dim);
-  font-size: 0.95rem;
-}
+  :deep(.v-tabs) {
+    transition: all 0.3s ease;
+  }
 
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
+  :deep(.v-tab) {
+    transition: all 0.3s ease;
+  }
 
-.btn-refresh {
-  padding: 12px 24px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  border-radius: 16px;
-  color: var(--gold-1);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s;
-}
+  :deep(.v-tab:hover) {
+    transform: translateY(-1px);
+  }
 
-.btn-refresh:hover:not(:disabled) {
-  background: var(--gold-gradient);
-  color: var(--bg-deep);
-  transform: translateY(-3px);
-}
+  :deep(.v-tab.v-tab--selected) {
+    transform: translateY(0);
+  }
 
-/* ===== التبويبات ===== */
-.tabs-container {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 25px;
-  background: var(--bg-card);
-  padding: 10px;
-  border-radius: 20px;
-  border: 1px solid var(--border-light);
-  flex-wrap: wrap;
-}
+  .customer-insights {
+    padding: 25px;
+    min-height: 100vh;
+    background: var(--v-theme-surface);
+    animation: fadeIn 0.5s ease;
+  }
 
-.tab-btn {
-  flex: 1;
-  padding: 12px 20px;
-  background: transparent;
-  border: none;
-  border-radius: 16px;
-  color: var(--text-dim);
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.3s;
-  min-width: 120px;
-}
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 
-.tab-btn:hover {
-  color: var(--gold-1);
-  background: rgba(212, 175, 55, 0.1);
-}
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    background: var(--v-theme-surface);
+    padding: 25px 30px;
+    border-radius: 24px;
+    border: 1px solid var(--v-theme-outline);
+    box-shadow: var(--v-theme-shadow);
+  }
 
-.tab-btn.active {
-  background: var(--gold-gradient);
-  color: var(--bg-deep);
-  box-shadow: var(--shadow-gold);
-}
+  .header-title h1 {
+    font-size: 2rem;
+    color: var(--v-theme-on-surface);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
 
-/* ===== بطاقات الإحصائيات ===== */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 25px;
-}
+  .header-icon {
+    color: var(--v-theme-primary);
+    font-size: 2rem;
+    animation: iconPulse 2s ease infinite;
+  }
 
-.stat-card {
-  background: var(--bg-card);
-  border-radius: 20px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  border: 1px solid var(--border-light);
-  transition: all 0.3s;
-}
+  @keyframes iconPulse {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.1);
+    }
+  }
 
-.stat-card:hover {
-  transform: translateY(-5px);
-  border-color: var(--gold-1);
-  box-shadow: var(--shadow-gold);
+  .header-subtitle {
+    color: var(--v-theme-on-surface);
+    font-size: 0.95rem;
+  }
 }
 
 .stat-icon {

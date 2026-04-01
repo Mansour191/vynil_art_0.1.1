@@ -43,7 +43,8 @@
           sm="6"
           md="4"
           lg="3"
-        <v-card elevation="4" class="gallery-item cursor-pointer" @click="openLightbox(item)">
+        >
+          <v-card elevation="4" class="gallery-item cursor-pointer" @click="openLightbox(item)">
             <v-img
               :src="item.image"
               :alt="$t(item.titleKey)"
@@ -63,9 +64,6 @@
           </v-card>
         </v-col>
       </v-row>
-            </div>
-          </div>
-        </transition-group>
 
         <!-- Load More Button -->
         <div v-if="hasMore" class="text-center mt-8">

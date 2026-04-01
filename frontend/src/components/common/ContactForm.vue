@@ -186,4 +186,5 @@ const submitContactForm = async () => {
     }, 5000);
   }
 };
+</script>
 

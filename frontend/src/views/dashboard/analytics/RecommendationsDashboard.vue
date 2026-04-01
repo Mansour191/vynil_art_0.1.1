@@ -1,61 +1,17 @@
 <template>
-  <div class="recommendations-dashboard">
-    <!-- رأس الصفحة -->
-    <div class="page-header">
-      <div class="header-title">
-        <h1>
-          <i class="fa-solid fa-star header-icon"></i>
-          نظام التوصيات الذكي
-        </h1>
-        <p class="header-subtitle">توصيات مخصصة للمنتجات بناءً على تحليل سلوك العملاء</p>
-      </div>
-
-      <div class="header-actions">
-        <button class="btn-refresh" @click="refreshModels" :disabled="loading">
-          <i :class="loading ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-sync-alt'"></i>
-          <span>{{ loading ? 'جاري التحديث...' : 'تحديث النماذج' }}</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- إحصائيات سريعة -->
-    <div class="stats-cards" v-if="analytics">
-      <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(212, 175, 55, 0.1); color: #d4af37">
-          <i class="fa-solid fa-percent"></i>
-        </div>
-        <div class="stat-content">
-          <span class="stat-value">{{ (analytics.clickThroughRate * 100).toFixed(1) }}%</span>
-          <span class="stat-label">نسبة النقر</span>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(76, 175, 80, 0.1); color: #4caf50">
-          <i class="fa-solid fa-shopping-cart"></i>
-        </div>
-        <div class="stat-content">
-          <span class="stat-value">{{ (analytics.conversionRate * 100).toFixed(1) }}%</span>
-          <span class="stat-label">نسبة التحويل</span>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(33, 150, 243, 0.1); color: #2196f3">
-          <i class="fa-solid fa-coins"></i>
-        </div>
-        <div class="stat-content">
-          <span class="stat-value">{{ formatCurrency(analytics.averageOrderValue) }}</span>
-          <span class="stat-label">متوسط الطلب</span>
-        </div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(156, 39, 176, 0.1); color: #9c27b0">
-          <i class="fa-solid fa-box"></i>
-        </div>
-        <div class="stat-content">
-          <span class="stat-value">{{ analytics.totalRecommendations }}</span>
+  <v-container class="pa-4">
+    <!-- Header -->
+    <v-card variant="elevated" class="mb-6 recommendations-header">
+      <v-card-text class="pa-6">
+        <div class="d-flex align-center justify-space-between">
+          <div class="header-content">
+            <h1 class="text-h3 font-weight-bold text-primary mb-2 d-flex align-center ga-3">
+              <v-icon color="primary" size="40">mdi-star</v-icon>
+              نظام التوصيات الذكي
+            </h1>
+            <p class="text-body-1 text-medium-emphasis mb-0">
+              توصيات مخصصة للمنتجات بناءً على تحليل سلوك العملاء
+            </p>
           <span class="stat-label">إجمالي التوصيات</span>
         </div>
       </div>
@@ -302,695 +258,407 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useStore } from 'vuex';
+import Chart from 'chart.js/auto';
+import AnalyticsService from '@/services/AnalyticsService';
 import RecommendationService from '@/integration/ai/recommendations/RecommendationService';
 import CurrencyService from '@/integration/services/CurrencyService';
 import RecommendationsWidget from '@/components/RecommendationsWidget.vue';
-import Chart from 'chart.js/auto';
 
-export default {
-  name: 'RecommendationsDashboard',
-  components: {
-    RecommendationsWidget,
-  },
-  data() {
-    return {
-      performance: null,
-      loadingPerformance: false,
-      recommendationStats: null,
-      topPerformingRecommendations: [],
-      loading: false,
-      loadingGeneral: false,
-      loadingTrending: false,
-      loadingPersonalized: false,
-      activeTab: 'overview',
-      analytics: null,
-      generalRecommendations: [],
-      trendingProducts: [],
-      personalizedRecommendations: [],
-      user: {
-        id: 1,
-        name: 'أحمد محمد',
-      },
-      categoryPerformance: [
-        { name: 'جدران', count: 145, percentage: 35 },
-        { name: 'أبواب', count: 98, percentage: 24 },
-        { name: 'سيارات', count: 87, percentage: 21 },
-        { name: 'مطابخ', count: 42, percentage: 10 },
-        { name: 'أثاث', count: 38, percentage: 9 },
-      ],
-      charts: {
-        performance: null,
-      },
-    };
-  },
-  mounted() {
-    this.loadData();
-    this.loadRecommendationStats();
-  },
-  methods: {
-    formatCurrency(value) {
-      return CurrencyService.formatAmount(value || 0);
-    },
+const { t } = useI18n();
+const store = useStore();
 
-    async loadData() {
-      await this.loadAnalytics();
-      await this.loadGeneralRecommendations();
-      await this.loadTrendingProducts();
-      await this.loadPersonalizedRecommendations();
-    },
+// Service instance
+const analyticsService = new AnalyticsService();
 
-    async loadAnalytics() {
-      try {
-        this.analytics = await RecommendationService.getRecommendationsAnalytics();
-        this.$nextTick(() => {
-          this.initCharts();
-        });
-      } catch (error) {
-        console.error('خطأ في تحميل التحليلات:', error);
-      }
-    },
+// State
+const loading = ref(false);
+const loadingPerformance = ref(false);
+const loadingGeneral = ref(false);
+const loadingTrending = ref(false);
+const loadingPersonalized = ref(false);
+const activeTab = ref('overview');
+const analytics = ref(null);
+const generalRecommendations = ref([]);
+const trendingProducts = ref([]);
+const personalizedRecommendations = ref([]);
+const user = ref(null);
+const categoryPerformance = ref([]);
+const charts = ref({
+  performance: null,
+});
+const performance = ref(null);
+const recommendationStats = ref(null);
+const topPerformingRecommendations = ref([]);
 
-    async loadGeneralRecommendations() {
-      this.loadingGeneral = true;
-      try {
-        this.generalRecommendations = await RecommendationService.getTopSellingProducts(20);
-      } catch (error) {
-        console.error('خطأ في تحميل التوصيات العامة:', error);
-      } finally {
-        this.loadingGeneral = false;
-      }
-    },
+// Chart refs
+const trendsChart = ref(null);
+const performanceChart = ref(null);
 
-    async loadTrendingProducts() {
-      this.loadingTrending = true;
-      try {
-        this.trendingProducts = await RecommendationService.getTrendingProducts(20);
-      } catch (error) {
-        console.error('خطأ في تحميل المنتجات الرائجة:', error);
-      } finally {
-        this.loadingTrending = false;
-      }
-    },
-
-    async loadPersonalizedRecommendations() {
-      this.loadingPersonalized = true;
-      try {
-        this.personalizedRecommendations =
-          await RecommendationService.getPersonalizedRecommendations(this.user.id, 15);
-      } catch (error) {
-        console.error('خطأ في تحميل التوصيات المخصصة:', error);
-      } finally {
-        this.loadingPersonalized = false;
-      }
-    },
-
-    async refreshModels() {
-      this.loading = true;
-      try {
-        await RecommendationService.refreshAll();
-        await this.loadData();
-        this.$toast?.success('تم تحديث نماذج التوصيات بنجاح');
-      } catch (error) {
-        console.error('خطأ في تحديث النماذج:', error);
-        this.$toast?.error('فشل تحديث النماذج');
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    async loadPerformance() {
-      this.loadingPerformance = true;
-      try {
-        this.performance = await RecommendationService.getRecommendationPerformance(30);
-      } catch (error) {
-        console.error('خطأ في تحميل أداء التوصيات:', error);
-      } finally {
-        this.loadingPerformance = false;
-      }
-    },
-
-    getTypeName(type) {
-      const names = {
-        collaborative: 'توصيات تعاونية',
-        seasonal: 'موسمية',
-        event: 'مناسبات',
-        similar: 'منتجات مشابهة',
-        together: 'تُشترى معاً',
-        lowStock: 'مخزون محدود',
-        general: 'عامة',
-      };
-      return names[type] || type;
-    },
-
-    getCategoryName(category) {
-      const names = {
-        walls: 'جدران',
-        doors: 'أبواب',
-        cars: 'سيارات',
-        kitchens: 'مطابخ',
-        furniture: 'أثاث',
-        ceilings: 'أسقف',
-        tiles: 'بلاط',
-      };
-      return names[category] || category;
-    },
-
-    initCharts() {
-      // رسم بياني لأداء التوصيات
-      const perfCtx = this.$refs.performanceChart?.getContext('2d');
-      if (perfCtx) {
-        if (this.charts.performance) this.charts.performance.destroy();
-
-        this.charts.performance = new Chart(perfCtx, {
-          type: 'line',
-          data: {
-            labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'],
-            datasets: [
-              {
-                label: 'نسبة النقر',
-                data: [32, 35, 38, 40, 42, 45],
-                borderColor: '#2196f3',
-                backgroundColor: 'rgba(33, 150, 243, 0.1)',
-                tension: 0.4,
-                fill: true,
-              },
-              {
-                label: 'نسبة التحويل',
-                data: [8, 9, 10, 11, 12, 13],
-                borderColor: '#4caf50',
-                backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                tension: 0.4,
-                fill: true,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                display: true,
-                position: 'bottom',
-                labels: { color: '#fff' },
-              },
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-                grid: { color: 'rgba(255,255,255,0.1)' },
-                ticks: {
-                  color: '#fff',
-                  callback: (v) => v + '%',
-                },
-              },
-              x: {
-                grid: { display: false },
-                ticks: { color: '#fff' },
-              },
-            },
-          },
-        });
-      }
-    },
-    async loadRecommendationStats() {
-      try {
-        const performance = await RecommendationService.getRecommendationPerformance(30);
-
-        // حساب الإحصائيات
-        this.recommendationStats = {
-          total: performance.total.clicks,
-          ctr: (performance.total.ctr * 100).toFixed(1),
-          conversionRate: (
-            (performance.total.conversions / performance.total.clicks) *
-            100
-          ).toFixed(1),
-          revenue: performance.total.conversions * 850, // متوسط قيمة الطلب
-        };
-
-        // أفضل التوصيات
-        this.topPerformingRecommendations = Object.entries(performance.byType)
-          .map(([type, data]) => ({
-            id: type,
-            productName: this.getTypeName(type),
-            clicks: data.clicks,
-            conversions: data.conversions,
-          }))
-          .sort((a, b) => b.clicks - a.clicks)
-          .slice(0, 5);
-      } catch (error) {
-        console.error('خطأ في تحميل إحصائيات التوصيات:', error);
-      }
-    },
-  },
+// API Integration Methods
+const loadRecommendationsData = async () => {
+  loading.value = true;
+  
+  try {
+    // Load user data
+    const userResponse = await analyticsService.getCurrentUser();
+    user.value = userResponse.data || analyticsService.getMockCurrentUser();
+    
+    // Load general recommendations
+    const generalResponse = await analyticsService.getGeneralRecommendations();
+    generalRecommendations.value = generalResponse.data || analyticsService.getMockGeneralRecommendations();
+    
+    // Load trending products
+    const trendingResponse = await analyticsService.getTrendingProducts();
+    trendingProducts.value = trendingResponse.data || analyticsService.getMockTrendingProducts();
+    
+    // Load personalized recommendations
+    const personalizedResponse = await analyticsService.getPersonalizedRecommendations(user.value?.id);
+    personalizedRecommendations.value = personalizedResponse.data || analyticsService.getMockPersonalizedRecommendations();
+    
+    // Load category performance
+    const categoryResponse = await analyticsService.getCategoryPerformance();
+    categoryPerformance.value = categoryResponse.data || analyticsService.getMockCategoryPerformance();
+    
+    // Load analytics data
+    const analyticsResponse = await analyticsService.getRecommendationsAnalytics();
+    analytics.value = analyticsResponse.data || analyticsService.getMockRecommendationsAnalytics();
+    
+    // Load recommendation stats
+    const statsResponse = await analyticsService.getRecommendationStats();
+    recommendationStats.value = statsResponse.data || analyticsService.getMockRecommendationStats();
+    
+    // Load top performing recommendations
+    const topResponse = await analyticsService.getTopPerformingRecommendations();
+    topPerformingRecommendations.value = topResponse.data || analyticsService.getMockTopPerformingRecommendations();
+    
+    // Show success notification
+    store.dispatch('notifications/add', {
+      type: 'success',
+      title: 'تم تحميل التوصيات',
+      message: 'تم تحميل بيانات التوصيات بنجاح',
+      timeout: 3000
+    });
+    
+  } catch (error) {
+    console.error('Error loading recommendations data:', error);
+    
+    // Fallback to mock data from service
+    user.value = analyticsService.getMockCurrentUser();
+    generalRecommendations.value = analyticsService.getMockGeneralRecommendations();
+    trendingProducts.value = analyticsService.getMockTrendingProducts();
+    personalizedRecommendations.value = analyticsService.getMockPersonalizedRecommendations();
+    categoryPerformance.value = analyticsService.getMockCategoryPerformance();
+    analytics.value = analyticsService.getMockRecommendationsAnalytics();
+    recommendationStats.value = analyticsService.getMockRecommendationStats();
+    topPerformingRecommendations.value = analyticsService.getMockTopPerformingRecommendations();
+    
+    // Show error notification
+    store.dispatch('notifications/add', {
+      type: 'error',
+      title: t('recommendationsError') || 'خطأ في تحميل التوصيات',
+      message: 'جاري استخدام البيانات الوهمية',
+      timeout: 5000
+    });
+  } finally {
+    loading.value = false;
+  }
 };
+
+// Load data on component mount
+onMounted(() => {
+  loadRecommendationsData();
+});
 </script>
 
 <style scoped>
 @import '@/assets/theme.css';
 
+/* ... */
 .recommendations-dashboard {
   padding: 25px;
   min-height: 100vh;
   background: var(--bg-primary);
   animation: fadeIn 0.5s ease;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .recommendations-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+    transition: left 0.5s ease;
   }
-}
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-  background: var(--bg-card);
-  padding: 25px 30px;
-  border-radius: 24px;
-  border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-md);
-}
-
-.header-title h1 {
-  font-size: 2rem;
-  color: white;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-icon {
-  color: var(--gold-1);
-  font-size: 2rem;
-  animation: iconPulse 2s ease infinite;
-}
-
-@keyframes iconPulse {
-  0%,
-  100% {
-    transform: scale(1);
+  .recommendations-header:hover::before {
+    left: 100%;
   }
-  50% {
+
+  /* Stat Cards */
+  .stat-card {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .stat-card:hover::before {
+    left: 100%;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.15);
+  }
+
+  /* Recommendations Cards */
+  .recommendations-card {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .recommendations-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .recommendations-card:hover::before {
+    left: 100%;
+  }
+
+  .recommendations-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.15);
+  }
+
+  /* Model Items */
+  .model-item {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .model-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .model-item:hover::before {
+    left: 100%;
+  }
+
+  .model-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.15);
+  }
+
+  /* Recommendation Items */
+  .recommendation-item {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .recommendation-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .recommendation-item:hover::before {
+    left: 100%;
+  }
+
+  .recommendation-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.15);
+  }
+
+  /* Segment Items */
+  .segment-item {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .segment-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+    transition: left 0.5s ease;
+  }
+
+  .segment-item:hover::before {
+    left: 100%;
+  }
+
+  .segment-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.15);
+  }
+
+  /* Chart Containers */
+  .chart-container {
+    position: relative;
+  }
+
+  /* Animations */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .stat-card {
+    animation: fadeIn 0.5s ease forwards;
+  }
+
+  .stat-card:nth-child(1) { animation-delay: 0.1s; }
+  .stat-card:nth-child(2) { animation-delay: 0.2s; }
+  .stat-card:nth-child(3) { animation-delay: 0.3s; }
+  .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+  .recommendations-card {
+    animation: fadeIn 0.6s ease forwards;
+  }
+
+  .recommendations-card:nth-child(1) { animation-delay: 0.1s; }
+  .recommendations-card:nth-child(2) { animation-delay: 0.2s; }
+
+  .model-item,
+  .recommendation-item,
+  .segment-item {
+    animation: fadeIn 0.3s ease forwards;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 960px) {
+    .recommendations-header .d-flex {
+      flex-direction: column;
+      text-align: center;
+      gap: 1rem;
+    }
+    
+    .header-actions {
+      flex-direction: column;
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .recommendations-header h1 {
+      font-size: 1.5rem;
+    }
+    
+    .stat-card {
+      margin-bottom: 1rem;
+    }
+    
+    .recommendations-card {
+      margin-bottom: 1rem;
+    }
+  }
+
+  /* Vuetify Overrides */
+  :deep(.v-card) {
+    transition: all 0.3s ease;
+  }
+
+  :deep(.v-card:hover) {
+    transform: translateY(-2px);
+  }
+
+  :deep(.v-btn) {
+    transition: all 0.3s ease;
+  }
+
+  :deep(.v-btn:hover) {
+    transform: translateY(-2px);
+  }
+
+  :deep(.v-avatar) {
+    transition: all 0.3s ease;
+  }
+
+  :deep(.v-avatar:hover) {
+    transform: scale(1.05);
+  }
+
+  :deep(.v-chip) {
+    transition: all 0.3s ease;
+  }
+
+  :deep(.v-chip:hover) {
+    transform: translateY(-2px);
+  }
+
+  :deep(.v-progress-circular) {
+    animation: spin 2s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  :deep(.v-icon) {
+    transition: all 0.3s ease;
+  }
+
+  :deep(.v-icon:hover) {
     transform: scale(1.1);
   }
-}
 
-.header-subtitle {
-  color: var(--text-dim);
-  font-size: 0.95rem;
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.btn-refresh {
-  padding: 12px 24px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  border-radius: 16px;
-  color: var(--gold-1);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s;
-}
-
-.btn-refresh:hover:not(:disabled) {
-  background: var(--gold-gradient);
-  color: var(--bg-deep);
-  transform: translateY(-3px);
-}
-
-.stats-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 25px;
-}
-
-.stat-card {
-  background: var(--bg-card);
-  border-radius: 20px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  border: 1px solid var(--border-light);
-  transition: all 0.3s;
-}
-
-.stat-card:hover {
-  transform: translateY(-5px);
-  border-color: var(--gold-1);
-  box-shadow: var(--shadow-gold);
-}
-
-.stat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-}
-
-.stat-content {
-  flex: 1;
-}
-
-.stat-value {
-  display: block;
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 5px;
-}
-
-.stat-label {
-  color: var(--text-dim);
-  font-size: 0.9rem;
-}
-
-.tabs-container {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 25px;
-  background: var(--bg-card);
-  padding: 10px;
-  border-radius: 20px;
-  border: 1px solid var(--border-light);
-}
-
-.tab-btn {
-  flex: 1;
-  padding: 12px 20px;
-  background: transparent;
-  border: none;
-  border-radius: 16px;
-  color: var(--text-dim);
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.3s;
-}
-
-.tab-btn:hover {
-  color: var(--gold-1);
-  background: rgba(212, 175, 55, 0.1);
-}
-
-.tab-btn.active {
-  background: var(--gold-gradient);
-  color: var(--bg-deep);
-  box-shadow: var(--shadow-gold);
-}
-
-.category-performance {
-  background: var(--bg-card);
-  border-radius: 20px;
-  padding: 25px;
-  margin-bottom: 25px;
-  border: 1px solid var(--border-light);
-}
-
-.category-performance h3 {
-  color: white;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.category-performance h3 i {
-  color: var(--gold-1);
-}
-
-.category-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.category-item {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.category-name {
-  width: 80px;
-  color: white;
-  font-weight: 600;
-}
-
-.category-bar {
-  flex: 1;
-  height: 30px;
-  background: var(--bg-primary);
-  border-radius: 15px;
-  overflow: hidden;
-}
-
-.bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #d4af37, #f5e7b2);
-  border-radius: 15px;
-  transition: width 0.5s;
-}
-
-.category-revenue {
-  width: 100px;
-  color: var(--gold-1);
-  font-weight: 600;
-  text-align: left;
-}
-
-.recommendations-section {
-  margin-bottom: 30px;
-}
-
-.recommendations-section h3 {
-  color: white;
-  margin-bottom: 15px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.recommendations-section h3 i {
-  color: var(--gold-1);
-}
-
-.personalized-section {
-  margin-top: 30px;
-  background: var(--bg-card);
-  border-radius: 20px;
-  padding: 25px;
-  border: 1px solid var(--border-light);
-}
-
-.personalized-section h2 {
-  color: white;
-  font-size: 1.2rem;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.personalized-section h2 i {
-  color: var(--gold-1);
-}
-
-.advanced-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 25px;
-}
-
-.analytics-card {
-  background: var(--bg-card);
-  border-radius: 20px;
-  padding: 25px;
-  border: 1px solid var(--border-light);
-}
-
-.analytics-card h4 {
-  color: white;
-  font-size: 1rem;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.analytics-card h4 i {
-  color: var(--gold-1);
-}
-
-.category-stat {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.category-stat span {
-  color: white;
-  font-size: 0.9rem;
-  min-width: 80px;
-}
-
-.progress-bar {
-  flex: 1;
-  height: 20px;
-  background: var(--bg-primary);
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #d4af37, #f5e7b2);
-  border-radius: 10px;
-  transition: width 0.5s;
-}
-
-.patterns-list {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.pattern-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: white;
-  font-size: 0.95rem;
-  padding: 10px;
-  background: var(--bg-primary);
-  border-radius: 12px;
-}
-
-.pattern-item i {
-  color: var(--gold-1);
-}
-
-@media (max-width: 768px) {
-  .page-header {
-    flex-direction: column;
-    gap: 15px;
-    text-align: center;
+  :deep(.v-progress-linear) {
+    transition: all 0.3s ease;
   }
 
-  .tabs-container {
-    flex-wrap: wrap;
+  :deep(.v-progress-linear:hover) {
+    transform: scale(1.02);
   }
-
-  .tab-btn {
-    flex: auto;
-    min-width: 120px;
-  }
-
-  .category-item {
-    flex-wrap: wrap;
-  }
-
-  .advanced-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.personalized-section {
-  margin-top: 30px;
-  background: var(--bg-card);
-  border-radius: 20px;
-  padding: 25px;
-  border: 1px solid var(--border-light);
-}
-
-.personalized-section h2 {
-  color: white;
-  font-size: 1.2rem;
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.personalized-section h2 i {
-  color: var(--gold-1);
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
-}
-
-.stat-item {
-  background: var(--bg-primary);
-  border-radius: 16px;
-  padding: 15px;
-  text-align: center;
-}
-
-.stat-label {
-  display: block;
-  color: var(--text-dim);
-  font-size: 0.9rem;
-  margin-bottom: 5px;
-}
-
-.stat-value {
-  display: block;
-  color: white;
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.top-recommendations h3 {
-  color: white;
-  font-size: 1rem;
-  margin-bottom: 15px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.top-recommendations h3 i {
-  color: var(--gold-1);
-}
-
-.recommendations-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.rec-item {
-  display: flex;
-  align-items: center;
-  gap: 15px;
   padding: 12px;
   background: var(--bg-primary);
   border-radius: 12px;

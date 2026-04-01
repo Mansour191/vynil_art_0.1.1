@@ -704,5 +704,4 @@ onMounted(() => {
   border-bottom-left-radius: 16px;
   border-bottom-right-radius: 4px;
 }
-
-  
+</style>

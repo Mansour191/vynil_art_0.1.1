@@ -362,6 +362,26 @@ class ChatService {
     
     return suggestions[intent] || [];
   }
+
+  // Static method for sending messages (used by components)
+  static async sendMessage(message) {
+    try {
+      const service = new ChatService();
+      const response = await service.ask(message);
+      
+      return {
+        success: true,
+        message: response.response || response.message || 'شكراً لتواصلك. فريق Paclos سيقوم بالرد على استفسارك في أقرب وقت ممكن.'
+      };
+    } catch (error) {
+      console.error('❌ ChatService.sendMessage error:', error);
+      return {
+        success: false,
+        message: 'عذراً، حدث خطأ. يرجى المحاولة مرة أخرى.',
+        error: error.message
+      };
+    }
+  }
 }
 
 export { ChatService };

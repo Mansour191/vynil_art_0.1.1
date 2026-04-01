@@ -1,254 +1,335 @@
 <template>
-  <footer class="footer">
-    <div class="container">
-      <div class="footer-grid">
+  <v-footer class="footer" color="surface" elevation="8">
+    <v-container>
+      <v-row>
         <!-- About Column -->
-        <div class="footer-col about-col">
-          <h4><i class="fa-solid fa-info-circle"></i> {{ $t('aboutTitle') }}</h4>
-          <p class="footer-about-text">{{ $t('footerAboutText') }}</p>
-          <div class="footer-stats-mini">
-            <div class="stat-mini">
-              <span class="stat-number">500+</span>
-              <span class="stat-label">{{ $t('footerProjects') }}</span>
-            </div>
-            <div class="stat-mini">
-              <span class="stat-number">300+</span>
-              <span class="stat-label">{{ $t('footerClients') }}</span>
-            </div>
-            <div class="stat-mini">
-              <span class="stat-number">5+</span>
-              <span class="stat-label">{{ $t('footerYears') }}</span>
-            </div>
-          </div>
-        </div>
+        <v-col cols="12" md="3">
+          <v-card class="footer-card h-100" elevation="2">
+            <v-card-title class="d-flex align-center ga-2">
+              <v-icon color="primary">mdi-information</v-icon>
+              <span class="text-h6">{{ $t('aboutTitle') }}</span>
+            </v-card-title>
+            <v-card-text>
+              <p class="footer-about-text">{{ footerData.aboutText || $t('footerAboutText') }}</p>
+              
+              <!-- Stats Mini -->
+              <v-row class="footer-stats-mini mt-4" density="compact">
+                <v-col cols="4" class="text-center">
+                  <div class="stat-mini">
+                    <span class="stat-number">{{ footerData.projectsCount || '500+' }}</span>
+                    <span class="stat-label">{{ $t('footerProjects') }}</span>
+                  </div>
+                </v-col>
+                <v-col cols="4" class="text-center">
+                  <div class="stat-mini">
+                    <span class="stat-number">{{ footerData.clientsCount || '300+' }}</span>
+                    <span class="stat-label">{{ $t('footerClients') }}</span>
+                  </div>
+                </v-col>
+                <v-col cols="4" class="text-center">
+                  <div class="stat-mini">
+                    <span class="stat-number">{{ footerData.yearsCount || '5+' }}</span>
+                    <span class="stat-label">{{ $t('footerYears') }}</span>
+                  </div>
+                </v-col>
+              </v-row>
+            </v-card-text>
+          </v-card>
+        </v-col>
 
         <!-- Products Column -->
-        <div class="footer-col">
-          <h4><i class="fa-solid fa-th-large"></i> {{ $t('ourProducts') }}</h4>
-          <ul class="footer-links">
-            <li v-for="item in productItems" :key="item.route">
-              <router-link :to="item.route">
-                <i :class="item.icon"></i>
-                {{ $t(item.key) }}
-              </router-link>
-            </li>
-          </ul>
-        </div>
+        <v-col cols="12" md="3">
+          <v-card class="footer-card h-100" elevation="2">
+            <v-card-title class="d-flex align-center ga-2">
+              <v-icon color="primary">mdi-view-grid</v-icon>
+              <span class="text-h6">{{ $t('ourProducts') }}</span>
+            </v-card-title>
+            <v-card-text>
+              <v-list density="compact" class="footer-list">
+                <v-list-item
+                  v-for="item in productItems"
+                  :key="item.route"
+                  :to="item.route"
+                  prepend-icon="mdi-chevron-right"
+                  class="footer-list-item"
+                >
+                  <v-list-item-title>{{ $t(item.key) }}</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+          </v-card>
+        </v-col>
 
         <!-- Quick Links Column -->
-        <div class="footer-col">
-          <h4><i class="fa-solid fa-link"></i> {{ $t('importantLinks') }}</h4>
-          <ul class="footer-links">
-            <li>
-              <router-link to="/about"><i class="fa-solid fa-users"></i> {{ $t('about') }}</router-link>
-            </li>
-            <li>
-              <router-link to="/contact"
-                ><i class="fa-solid fa-phone-alt"></i> {{ $t('contact') }}</router-link
-              >
-            </li>
-            <li>
-              <router-link to="/gallery"
-                ><i class="fa-solid fa-images"></i> {{ $t('gallery') }}</router-link
-              >
-            </li>
-            <li>
-              <router-link to="/privacy"
-                ><i class="fa-solid fa-shield-alt"></i> {{ $t('privacy') }}</router-link
-              >
-            </li>
-            <li>
-              <router-link to="/terms"
-                ><i class="fa-solid fa-file-contract"></i> {{ $t('terms') }}</router-link
-              >
-            </li>
-          </ul>
-        </div>
+        <v-col cols="12" md="3">
+          <v-card class="footer-card h-100" elevation="2">
+            <v-card-title class="d-flex align-center ga-2">
+              <v-icon color="primary">mdi-link</v-icon>
+              <span class="text-h6">{{ $t('importantLinks') }}</span>
+            </v-card-title>
+            <v-card-text>
+              <v-list density="compact" class="footer-list">
+                <v-list-item
+                  to="/about"
+                  prepend-icon="mdi-account-group"
+                  class="footer-list-item"
+                >
+                  <v-list-item-title>{{ $t('about') }}</v-list-item-title>
+                </v-list-item>
+                <v-list-item
+                  to="/contact"
+                  prepend-icon="mdi-phone"
+                  class="footer-list-item"
+                >
+                  <v-list-item-title>{{ $t('contact') }}</v-list-item-title>
+                </v-list-item>
+                <v-list-item
+                  to="/gallery"
+                  prepend-icon="mdi-image-multiple"
+                  class="footer-list-item"
+                >
+                  <v-list-item-title>{{ $t('gallery') }}</v-list-item-title>
+                </v-list-item>
+                <v-list-item
+                  to="/privacy"
+                  prepend-icon="mdi-shield-check"
+                  class="footer-list-item"
+                >
+                  <v-list-item-title>{{ $t('privacy') }}</v-list-item-title>
+                </v-list-item>
+                <v-list-item
+                  to="/terms"
+                  prepend-icon="mdi-file-document"
+                  class="footer-list-item"
+                >
+                  <v-list-item-title>{{ $t('terms') }}</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-card-text>
+          </v-card>
+        </v-col>
 
         <!-- Contact Column -->
-        <div class="footer-col contact-col">
-          <h4><i class="fa-solid fa-phone-alt"></i> {{ $t('contactUs') }}</h4>
-          <div class="footer-contact-info">
-            <div class="contact-item">
-              <i class="fa-solid fa-envelope"></i>
-              <a href="mailto:remadnamansour7@gmail.com">remadnamansour7@gmail.com</a>
-            </div>
-            <div class="contact-item">
-              <i class="fa-solid fa-phone-alt"></i>
-              <a href="tel:0663140341">0663140341</a>
-            </div>
-          </div>
-          <div class="social-section">
-            <h5>{{ $t('followUsTitle') }}</h5>
-            <div class="social-icons">
-              <a
-                v-for="social in socialLinks"
-                :key="social.name"
-                :href="social.link"
-                target="_blank"
-                rel="noopener noreferrer"
-                :class="['social-icon', social.name]"
-                :title="social.name"
-              >
-                <i :class="social.icon"></i>
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
+        <v-col cols="12" md="3">
+          <v-card class="footer-card h-100" elevation="2">
+            <v-card-title class="d-flex align-center ga-2">
+              <v-icon color="primary">mdi-phone</v-icon>
+              <span class="text-h6">{{ $t('contactUs') }}</span>
+            </v-card-title>
+            <v-card-text>
+              <!-- Contact Info -->
+              <div class="footer-contact-info">
+                <v-card
+                  class="contact-item mb-3"
+                  variant="outlined"
+                  density="compact"
+                >
+                  <v-card-text class="d-flex align-center ga-3 pa-3">
+                    <v-avatar size="32" color="primary">
+                      <v-icon size="16" color="white">mdi-email</v-icon>
+                    </v-avatar>
+                    <a :href="`mailto:${footerData.email || 'remadnamansour7@gmail.com'}`" class="text-decoration-none">
+                      {{ footerData.email || 'remadnamansour7@gmail.com' }}
+                    </a>
+                  </v-card-text>
+                </v-card>
+                
+                <v-card
+                  class="contact-item"
+                  variant="outlined"
+                  density="compact"
+                >
+                  <v-card-text class="d-flex align-center ga-3 pa-3">
+                    <v-avatar size="32" color="primary">
+                      <v-icon size="16" color="white">mdi-phone</v-icon>
+                    </v-avatar>
+                    <a :href="`tel:${footerData.phone || '0663140341'}`" class="text-decoration-none">
+                      {{ footerData.phone || '0663140341' }}
+                    </a>
+                  </v-card-text>
+                </v-card>
+              </div>
+              
+              <!-- Social Media -->
+              <div class="social-section mt-4">
+                <h5 class="text-subtitle-2 mb-3">{{ $t('followUsTitle') }}</h5>
+                <div class="d-flex flex-wrap ga-2">
+                  <v-btn
+                    v-for="social in socialLinks"
+                    :key="social.name"
+                    :href="social.link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    :icon="social.icon"
+                    :color="getSocialColor(social.name)"
+                    variant="elevated"
+                    size="small"
+                    class="social-btn"
+                  />
+                </div>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
 
-      <div class="footer-divider">
-        <span class="divider-icon">&#10022;</span>
-      </div>
+      <!-- Divider -->
+      <v-divider class="my-6" thickness="2">
+        <v-icon color="primary" class="mx-2">mdi-star</v-icon>
+      </v-divider>
 
-      <div class="footer-bottom">
-        <div class="copyright">
-          <i class="fa-solid fa-copyright"></i> {{ $t('siteTitle') }} {{ new Date().getFullYear() }} -
-          {{ $t('allRightsReserved') }}
-        </div>
-        <div class="footer-legal">
-          <router-link to="/privacy">{{ $t('privacy') }}</router-link>
-          <span class="separator">|</span>
-          <router-link to="/terms">{{ $t('terms') }}</router-link>
-        </div>
-      </div>
-    </div>
-  </footer>
+      <!-- Footer Bottom -->
+      <v-row class="footer-bottom">
+        <v-col cols="12" md="6" class="text-center text-md-start">
+          <div class="copyright d-flex align-center justify-center justify-md-start ga-2">
+            <v-icon color="primary" size="small">mdi-copyright</v-icon>
+            <span>{{ $t('siteTitle') }} {{ new Date().getFullYear() }} - {{ $t('allRightsReserved') }}</span>
+          </div>
+        </v-col>
+        <v-col cols="12" md="6" class="text-center text-md-end">
+          <div class="footer-legal d-flex align-center justify-center justify-md-end ga-3 flex-wrap">
+            <v-btn
+              to="/privacy"
+              variant="text"
+              size="small"
+              color="primary"
+            >
+              {{ $t('privacy') }}
+            </v-btn>
+            <span class="text-caption text-medium-emphasis">|</span>
+            <v-btn
+              to="/terms"
+              variant="text"
+              size="small"
+              color="primary"
+            >
+              {{ $t('terms') }}
+            </v-btn>
+          </div>
+        </v-col>
+      </v-row>
+    </v-container>
+  </v-footer>
 </template>
 
-<script>
-export default {
-  name: 'Footer',
-  data() {
-    return {
-      productItems: [
-        { route: '/furniture', icon: 'fa-solid fa-couch', key: 'furniture' },
-        { route: '/doors', icon: 'fa-solid fa-door-open', key: 'doors' },
-        { route: '/walls', icon: 'fa-solid fa-paint-roller', key: 'walls' },
-        { route: '/ceilings', icon: 'fa-solid fa-arrow-up', key: 'ceilings' },
-        { route: '/tiles', icon: 'fa-solid fa-border-all', key: 'tiles' },
-        { route: '/kitchens', icon: 'fa-solid fa-utensils', key: 'kitchens' },
-        { route: '/cars', icon: 'fa-solid fa-car', key: 'cars' },
-      ],
-      socialLinks: [
-        {
-          name: 'facebook',
-          icon: 'fab fa-facebook-f',
-          link: 'https://www.facebook.com/profile.php?id=61588391030740',
-        },
-        { name: 'youtube', icon: 'fab fa-youtube', link: 'https://www.youtube.com/@store_paclos' },
-        { name: 'whatsapp', icon: 'fab fa-whatsapp', link: 'https://wa.me/213663140341' },
-        { name: 'instagram', icon: 'fab fa-instagram', link: '#' },
-        { name: 'tiktok', icon: 'fab fa-tiktok', link: 'https://www.tiktok.com/@mansour.2026' },
-        { name: 'email', icon: 'fa-solid fa-envelope', link: 'mailto:remadnamansour7@gmail.com' },
-      ],
-    };
+<script setup>
+import { ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
+import FooterService from '@/integration/services/FooterService';
+
+const { t } = useI18n();
+
+// State
+const footerData = ref({});
+const loading = ref(false);
+
+// Static data with fallback
+const productItems = ref([
+  { route: '/furniture', key: 'furniture' },
+  { route: '/doors', key: 'doors' },
+  { route: '/walls', key: 'walls' },
+  { route: '/ceilings', key: 'ceilings' },
+  { route: '/tiles', key: 'tiles' },
+  { route: '/kitchens', key: 'kitchens' },
+  { route: '/cars', key: 'cars' },
+]);
+
+const socialLinks = ref([
+  {
+    name: 'facebook',
+    icon: 'mdi-facebook',
+    link: 'https://www.facebook.com/profile.php?id=61588391030740',
   },
+  { name: 'youtube', icon: 'mdi-youtube', link: 'https://www.youtube.com/@store_paclos' },
+  { name: 'whatsapp', icon: 'mdi-whatsapp', link: 'https://wa.me/213663140341' },
+  { name: 'instagram', icon: 'mdi-instagram', link: '#' },
+  { name: 'tiktok', icon: 'mdi-tiktok', link: 'https://www.tiktok.com/@mansour.2026' },
+  { name: 'email', icon: 'mdi-email', link: 'mailto:remadnamansour7@gmail.com' },
+]);
+
+// Methods
+const loadFooterData = async () => {
+  loading.value = true;
+  try {
+    // جلب بيانات الفوتر من قاعدة البيانات عبر API
+    const response = await FooterService.getFooterData();
+    if (response.success) {
+      footerData.value = response.data || {};
+      
+      // تحديث العناصر الديناميكية إذا وجدت
+      if (response.data?.productItems) {
+        productItems.value = response.data.productItems;
+      }
+      if (response.data?.socialLinks) {
+        socialLinks.value = response.data.socialLinks;
+      }
+      
+      console.log('✅ Footer data loaded successfully:', footerData.value);
+    } else {
+      console.warn('⚠️ Footer API returned error:', response.error);
+      // استخدام البيانات الافتراضية في حالة فشل API
+    }
+  } catch (error) {
+    console.error('❌ Error loading footer data:', error);
+    // استخدام البيانات الافتراضية في حالة فشل API
+    // لا تظهر خطأ للمستخدم، فقط استخدم البيانات الافتراضية
+  } finally {
+    loading.value = false;
+  }
 };
+
+const getSocialColor = (socialName) => {
+  const colors = {
+    facebook: '#1877f2',
+    youtube: '#ff0000',
+    whatsapp: '#25d366',
+    instagram: '#e4405f',
+    tiktok: '#000000',
+    email: '#d44638',
+  };
+  return colors[socialName] || 'primary';
+};
+
+// Lifecycle
+onMounted(() => {
+  loadFooterData();
+});
 </script>
 
 <style scoped>
 .footer {
-  background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-deep) 100%);
-  position: relative;
-  overflow: hidden;
-  padding: 40px 0 20px;
+  background: linear-gradient(180deg, rgb(var(--v-theme-surface)) 0%, rgb(var(--v-theme-surface-variant)) 100%);
+  border-top: 3px solid rgb(var(--v-theme-primary));
   margin-top: 40px;
-  border-top: 1px solid var(--border-subtle);
 }
 
-.footer::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--gold-gradient);
-  animation: shimmer 3s infinite;
-}
-
-@keyframes shimmer {
-  0% {
-    opacity: 0.5;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.5;
-  }
-}
-
-.footer-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 25px;
-  margin-bottom: 30px;
-}
-
-.footer-col {
-  background: rgba(255, 255, 255, 0.02);
+.footer-card {
+  background: rgba(var(--v-theme-surface), 0.8);
   backdrop-filter: blur(10px);
-  border: 1px solid var(--border-subtle);
-  border-radius: 15px;
-  padding: 20px;
+  border: 1px solid rgba(var(--v-theme-outline), 0.2);
+  border-radius: 16px;
   transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
+  height: 100%;
 }
 
-.footer-col:hover {
-  border-color: var(--gold-primary);
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-gold);
-}
-
-.footer-col h4 {
-  color: var(--gold-primary);
-  font-size: 1.1rem;
-  margin-bottom: 15px;
-  position: relative;
-  padding-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.footer-col h4::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 40px;
-  height: 2px;
-  background: var(--gold-gradient);
-  transition: width 0.3s;
-}
-
-.footer-col:hover h4::after {
-  width: 60px;
-}
-
-[dir='ltr'] .footer-col h4::after {
-  right: auto;
-  left: 0;
+.footer-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(var(--v-theme-shadow), 0.15);
+  border-color: rgb(var(--v-theme-primary));
 }
 
 .footer-about-text {
-  color: var(--text-muted);
+  color: rgb(var(--v-theme-on-surface-variant));
   font-size: 0.95rem;
-  line-height: 1.7;
-  margin-bottom: 20px;
+  line-height: 1.6;
+  margin-bottom: 16px;
 }
 
 .footer-stats-mini {
-  display: flex;
-  gap: 15px;
-  justify-content: space-around;
-  background: rgba(212, 175, 55, 0.05);
-  border-radius: 15px;
-  padding: 15px;
+  background: rgba(var(--v-theme-primary), 0.05);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(var(--v-theme-primary), 0.1);
 }
 
 .stat-mini {
@@ -257,277 +338,105 @@ export default {
 
 .stat-number {
   display: block;
-  color: var(--gold-primary);
-  font-size: 1.3rem;
-  font-weight: 800;
+  color: rgb(var(--v-theme-primary));
+  font-size: 1.4rem;
+  font-weight: 700;
   line-height: 1.2;
 }
 
 .stat-label {
-  color: var(--text-muted);
-  font-size: 0.8rem;
+  color: rgb(var(--v-theme-on-surface-variant));
+  font-size: 0.75rem;
   text-transform: uppercase;
-}
-
-.footer-links {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.footer-links li {
-  margin-bottom: 10px;
-}
-
-.footer-links li a {
-  color: var(--text-muted);
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  transition: all 0.3s;
-}
-
-.footer-links li a i {
-  color: var(--gold-primary);
-  width: 20px;
-  text-align: center;
-  transition: all 0.3s;
-}
-
-.footer-links li a:hover {
-  color: var(--text-primary);
-  transform: translateX(-5px);
-}
-
-[dir='ltr'] .footer-links li a:hover {
-  transform: translateX(5px);
-}
-
-.footer-links li a:hover i {
-  color: var(--gold-light);
-  transform: scale(1.2);
-}
-
-.footer-contact-info {
-  margin-bottom: 15px;
-}
-
-.contact-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 10px;
-  transition: all 0.3s;
-}
-
-.contact-item:hover {
-  background: rgba(212, 175, 55, 0.1);
-  transform: translateX(-3px);
-}
-
-[dir='ltr'] .contact-item:hover {
-  transform: translateX(3px);
-}
-
-.contact-item i {
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--gold-gradient);
-  border-radius: 50%;
-  color: var(--bg-deep);
-  font-size: 0.85rem;
-}
-
-.contact-item a {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  transition: color 0.3s;
-  word-break: break-word;
-  text-decoration: none;
-}
-
-.contact-item:hover a {
-  color: var(--text-primary);
-}
-
-.social-section {
-  margin-top: 15px;
-}
-
-.social-section h5 {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  margin-bottom: 10px;
   font-weight: 500;
 }
 
-.social-icons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+.footer-list {
+  background: transparent;
 }
 
-.social-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  border: 1px solid var(--border-subtle);
-  background: rgba(255, 255, 255, 0.02);
+.footer-list-item {
+  margin-bottom: 4px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.footer-list-item:hover {
+  background: rgba(var(--v-theme-primary), 0.08);
+  transform: translateX(-4px);
+}
+
+.footer-contact-info {
+  margin-bottom: 16px;
+}
+
+.contact-item {
+  transition: all 0.3s ease;
+}
+
+.contact-item:hover {
+  transform: translateX(-2px);
+  box-shadow: 0 4px 12px rgba(var(--v-theme-shadow), 0.1);
+}
+
+.contact-item a {
+  color: rgb(var(--v-theme-on-surface));
+  font-size: 0.9rem;
   text-decoration: none;
-  color: var(--text-primary);
+  transition: color 0.3s ease;
 }
 
-.social-icon:hover {
-  transform: translateY(-5px) scale(1.1);
-  border-color: transparent;
+.contact-item a:hover {
+  color: rgb(var(--v-theme-primary));
 }
 
-.social-icon.facebook:hover {
-  background: #1877f2;
-}
-.social-icon.youtube:hover {
-  background: #ff0000;
-}
-.social-icon.whatsapp:hover {
-  background: #25d366;
-}
-.social-icon.instagram:hover {
-  background: linear-gradient(45deg, #f09433, #d62976, #962fbf, #4f5bd5);
-}
-.social-icon.tiktok:hover {
-  background: #000000;
-}
-.social-icon.email:hover {
-  background: #d44638;
+.social-section h5 {
+  color: rgb(var(--v-theme-on-surface-variant));
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 12px;
 }
 
-.social-icon:hover i {
-  color: white;
-  transform: scale(1.1);
+.social-btn {
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.footer-divider {
-  position: relative;
-  margin: 30px 0 20px;
-  text-align: center;
-}
-
-.footer-divider::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--gold-primary), transparent);
-}
-
-.divider-icon {
-  position: relative;
-  background: var(--bg-deep);
-  padding: 0 20px;
-  color: var(--gold-primary);
-  font-size: 1.2rem;
-  animation: spin 6s linear infinite;
-  display: inline-block;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.social-btn:hover {
+  transform: translateY(-4px) scale(1.1);
 }
 
 .footer-bottom {
-  text-align: center;
-  padding-top: 20px;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid rgba(var(--v-theme-outline), 0.2);
+  padding-top: 24px;
 }
 
 .copyright {
-  color: var(--text-dim);
+  color: rgb(var(--v-theme-on-surface-variant));
   font-size: 0.85rem;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-}
-
-.copyright i {
-  color: var(--gold-primary);
 }
 
 .footer-legal {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
+  gap: 12px;
 }
 
-.footer-legal a {
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  text-decoration: none;
-  transition: color 0.3s;
-}
-
-.footer-legal a:hover {
-  color: var(--gold-primary);
-}
-
-.separator {
-  color: var(--border-subtle);
-}
-
-/* Responsive */
-@media (min-width: 768px) {
-  .footer-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .footer-grid {
-    grid-template-columns: repeat(4, 1fr);
+/* Responsive adjustments */
+@media (max-width: 960px) {
+  .footer-card {
+    margin-bottom: 16px;
   }
 }
 
 @media (max-width: 600px) {
   .footer-stats-mini {
-    flex-direction: column;
-    gap: 10px;
+    padding: 12px;
   }
-
-  .contact-item {
-    flex-direction: column;
-    text-align: center;
+  
+  .stat-number {
+    font-size: 1.2rem;
   }
-
-  .footer-legal {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .separator {
-    display: none;
+  
+  .stat-label {
+    font-size: 0.7rem;
   }
 }
 </style>

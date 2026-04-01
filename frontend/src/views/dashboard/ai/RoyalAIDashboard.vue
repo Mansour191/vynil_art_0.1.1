@@ -1,152 +1,142 @@
 <template>
-  <div class="royal-ai-dashboard marble-bg min-h-screen p-6">
+  <v-container class="pa-4">
     <!-- Header -->
-    <div
-      class="dashboard-header bg-white/80 backdrop-blur-md rounded-2xl shadow-marble p-6 mb-6"
-      v-motion="fadeUpVariants"
-    >
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 class="text-3xl font-bold bg-gradient-to-r from-royal-600 to-gold-500 bg-clip-text text-transparent">
-            <i class="fas fa-brain mr-3"></i>
-            لوحة تحكم الذكاء الاصطناعي
-          </h1>
-          <p class="text-marble-600 mt-2">مراقبة وإدارة جميع أنظمة الذكاء الاصطناعي والتدريب</p>
+    <v-card variant="elevated" class="mb-6 royal-header">
+      <v-card-text class="pa-6">
+        <div class="d-flex align-center justify-space-between">
+          <div class="header-content">
+            <h1 class="text-h3 font-weight-bold text-primary mb-2 d-flex align-center ga-3">
+              <v-icon color="primary" size="40">mdi-brain</v-icon>
+              {{ $t('aiDashboard') || 'لوحة تحكم الذكاء الاصطناعي' }}
+            </h1>
+            <p class="text-body-1 text-medium-emphasis mb-0">
+              {{ $t('aiDashboardSubtitle') || 'مراقبة وإدارة جميع أنظمة الذكاء الاصطناعي والتدريب' }}
+            </p>
+          </div>
+          <div class="header-actions d-flex ga-3">
+            <v-btn
+              @click="refreshData"
+              variant="tonal"
+              color="primary"
+              prepend-icon="mdi-refresh"
+            >
+              {{ $t('refresh') || 'تحديث' }}
+            </v-btn>
+            <v-btn
+              @click="exportReport"
+              variant="elevated"
+              color="primary"
+              prepend-icon="mdi-download"
+            >
+              {{ $t('exportReport') || 'تصدير التقرير' }}
+            </v-btn>
+          </div>
         </div>
-        <div class="flex flex-wrap gap-3">
-          <Button
-            icon="fas fa-sync"
-            label="تحديث"
-            class="p-button-outlined p-button-royal"
-            @click="refreshData"
-          />
-          <Button
-            icon="fas fa-download"
-            label="تصدير التقرير"
-            class="p-button-gold"
-            @click="exportReport"
-          />
-        </div>
-      </div>
-    </div>
+      </v-card-text>
+    </v-card>
 
     <!-- Loading State -->
-    <div
-      v-if="isLoading"
-      class="flex flex-col items-center justify-center py-20"
-      v-motion="fadeUpVariants"
-    >
-      <div class="relative">
-        <div class="w-16 h-16 border-4 border-royal-200 border-t-royal-600 rounded-full animate-spin"></div>
-        <div class="absolute inset-0 w-16 h-16 border-4 border-gold-200 border-b-gold-500 rounded-full animate-spin" style="animation-delay: 0.15s"></div>
-      </div>
-      <p class="text-marble-600 mt-4 font-medium">جاري تحميل بيانات الذكاء الاصطناعي...</p>
+    <div v-if="isLoading" class="text-center py-20">
+      <v-progress-circular
+        indeterminate
+        color="primary"
+        size="64"
+        class="mb-4"
+      />
+      <p class="text-body-1 text-medium-emphasis">{{ $t('loadingAIData') || 'جاري تحميل بيانات الذكاء الاصطناعي...' }}</p>
     </div>
 
     <!-- Main Content -->
-    <div v-else class="space-y-6">
+    <div v-else>
       <!-- Quick Stats -->
-      <div class="dashboard-grid">
-        <div
+      <v-row class="mb-6">
+        <v-col
           v-for="(stat, index) in quickStats"
           :key="index"
-          class="card-marble"
-          v-motion="{
-            initial: { opacity: 0, y: 20 },
-            enter: {
-              opacity: 1,
-              y: 0,
-              transition: {
-                delay: index * 100,
-                duration: 500
-              }
-            }
-          }"
+          cols="12"
+          sm="6"
+          md="3"
         >
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-2xl font-bold text-marble-900">{{ stat.value }}</h3>
-              <p class="text-marble-600 text-sm mt-1">{{ stat.label }}</p>
-            </div>
-            <div
-              class="w-12 h-12 rounded-xl flex items-center justify-center"
-              :class="stat.iconBg"
-            >
-              <i :class="stat.icon" class="text-white text-lg"></i>
-            </div>
-          </div>
-          <div class="mt-4">
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-marble-500">{{ stat.changeLabel }}</span>
-              <span :class="stat.changeColor">{{ stat.change }}</span>
-            </div>
-            <div class="mt-2 bg-marble-200 rounded-full h-2">
-              <div
-                class="h-2 rounded-full"
-                :class="stat.progressColor"
-                :style="{ width: stat.progress }"
-              ></div>
-            </div>
-          </div>
-        </div>
-      </div>
+          <v-card variant="elevated" class="stat-card">
+            <v-card-text class="pa-4 text-center">
+              <v-avatar
+                :color="stat.color"
+                variant="tonal"
+                size="50"
+                class="mb-3"
+              >
+                <v-icon :color="stat.color" size="28">{{ stat.icon }}</v-icon>
+              </v-avatar>
+              <h3 class="text-h4 font-weight-bold text-white mb-1">{{ stat.value }}</h3>
+              <p class="text-caption text-medium-emphasis mb-0">{{ stat.label }}</p>
+            </v-card-text>
+          </v-card>
+        </v-col>
+      </v-row>
 
       <!-- AI Services Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- AI Service Status -->
-        <div
-          class="card-royal"
-          v-motion="fadeUpVariants"
-        >
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-marble-900">
-              <i class="fas fa-brain mr-2 text-royal-600"></i>
-              خدمة الذكاء الاصطناعي
-            </h3>
-            <div
-              class="w-3 h-3 rounded-full"
-              :class="aiStatus.overall === 'healthy' ? 'bg-green-500 pulse-live' : 'bg-yellow-500'"
-            ></div>
-          </div>
-          
-          <div class="space-y-3">
-            <div class="flex justify-between items-center">
-              <span class="text-marble-600">الخدمات الفرعية</span>
-              <span class="font-medium text-marble-900">{{ aiStatus.services?.length || 0 }}</span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-marble-600">نظام التشغيل</span>
-              <span class="font-medium text-marble-900">
-                {{ aiStatus.fallbackMode ? 'احتياطي' : 'أساسي' }}
-              </span>
-            </div>
-            <div class="flex justify-between items-center">
-              <span class="text-marble-600">وقت التشغيل</span>
-              <span class="font-medium text-marble-900">{{ aiStatus.uptime || '0s' }}</span>
-            </div>
-          </div>
+      <v-row class="mb-6">
+        <v-col cols="12" md="6" lg="4">
+          <v-card variant="elevated" class="service-card">
+            <v-card-text class="pa-4">
+              <div class="d-flex align-center justify-space-between mb-4">
+                <h3 class="text-h6 font-weight-medium text-white d-flex align-center ga-2">
+                  <v-icon color="primary" size="20">mdi-brain</v-icon>
+                  {{ $t('aiService') || 'خدمة الذكاء الاصطناعي' }}
+                </h3>
+                <v-chip
+                  :color="aiStatus.overall === 'healthy' ? 'success' : 'warning'"
+                  variant="dot"
+                  size="small"
+                >
+                  {{ aiStatus.overall === 'healthy' ? $t('healthy') || 'سليم' : $t('warning') || 'تحذير' }}
+                </v-chip>
+              </div>
+              
+              <div class="space-y-3">
+                <div class="d-flex justify-space-between align-center">
+                  <span class="text-caption text-medium-emphasis">{{ $t('subServices') || 'الخدمات الفرعية' }}</span>
+                  <span class="text-body-2 font-weight-medium text-white">{{ aiStatus.services?.length || 0 }}</span>
+                </div>
+                <div class="d-flex justify-space-between align-center">
+                  <span class="text-caption text-medium-emphasis">{{ $t('systemMode') || 'نظام التشغيل' }}</span>
+                  <span class="text-body-2 font-weight-medium text-white">
+                    {{ aiStatus.fallbackMode ? ($t('fallback') || 'احتياطي') : ($t('primary') || 'أساسي') }}
+                  </span>
+                </div>
+                <div class="d-flex justify-space-between align-center">
+                  <span class="text-caption text-medium-emphasis">{{ $t('uptime') || 'وقت التشغيل' }}</span>
+                  <span class="text-body-2 font-weight-medium text-white">{{ aiStatus.uptime || '0s' }}</span>
+                </div>
+              </div>
 
-          <div class="mt-4 flex gap-2">
-            <Button
-              icon="fas fa-flask"
-              label="اختبار"
-              class="p-button-outlined p-button-sm p-button-royal"
-              @click="testAIService"
-            />
-            <Button
-              icon="fas fa-sync"
-              label="إعادة تشغيل"
-              class="p-button-outlined p-button-sm p-button-royal"
-              @click="restartAIService"
-            />
-          </div>
-        </div>
+              <div class="d-flex ga-2 mt-4">
+                <v-btn
+                  @click="testAIService"
+                  variant="tonal"
+                  color="primary"
+                  size="small"
+                  prepend-icon="mdi-flask"
+                >
+                  {{ $t('test') || 'اختبار' }}
+                </v-btn>
+                <v-btn
+                  @click="restartAIService"
+                  variant="tonal"
+                  color="secondary"
+                  size="small"
+                  prepend-icon="mdi-refresh"
+                >
+                  {{ $t('restart') || 'إعادة تشغيل' }}
+                </v-btn>
+              </div>
+            </v-card-text>
+          </v-card>
+        </v-col>
 
         <!-- Learning System Status -->
-        <div
-          class="card-royal"
-          v-motion="fadeUpVariants"
-        >
+        <v-col cols="12" md="6" lg="4">
+          <v-card variant="elevated" class="service-card">
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-lg font-semibold text-marble-900">
               <i class="fas fa-graduation-cap mr-2 text-gold-500"></i>
@@ -342,18 +332,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { useFadeInUp } from '@/composables/useAnimations';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useStore } from 'vuex';
 import AIService from '@/services/AIService';
-import AIMonitorService from '@/services/AIMonitorService';
 import AILearningService from '@/services/AILearningService';
+import AIMonitorService from '@/services/AIMonitorService';
+import Chart from 'chart.js/auto';
 
-const { variants: fadeUpVariants } = useFadeInUp();
+const { t } = useI18n();
+const store = useStore();
 
 // State
-const isLoading = ref(true);
+const isLoading = ref(false);
 const aiStatus = ref({
-  overall: 'unknown',
+  overall: 'healthy',
   services: [],
   fallbackMode: false,
   uptime: '0s'
@@ -387,31 +380,37 @@ const recentActivities = ref([
   {
     id: 1,
     type: 'training',
-    title: 'تدريب نموذج المساعد',
-    description: 'تم تدريب نموذج المساعد الذكي بدقة 92%',
+    title: t('assistantModelTraining') || 'تدريب نموذج المساعد',
+    description: t('assistantModelTrained') || 'تم تدريب نموذج المساعد الذكي بدقة 92%',
     timestamp: new Date(Date.now() - 1000 * 60 * 5)
   },
   {
     id: 2,
     type: 'optimization',
-    title: 'تحسين الخوارزميات',
-    description: 'تم تحسين خوارزمية التسعير بنسبة 15%',
+    title: t('algorithmOptimization') || 'تحسين الخوارزميات',
+    description: t('pricingAlgorithmOptimized') || 'تم تحسين خوارزمية التسعير بنسبة 15%',
     timestamp: new Date(Date.now() - 1000 * 60 * 15)
   },
   {
     id: 3,
     type: 'monitoring',
-    title: 'فحص النظام',
-    description: 'اكتمل فحص صحة جميع الخدمات بنجاح',
+    title: t('systemCheck') || 'فحص النظام',
+    description: t('servicesHealthCheckCompleted') || 'اكتمل فحص صحة جميع الخدمات بنجاح',
     timestamp: new Date(Date.now() - 1000 * 60 * 30)
   }
 ]);
 
+// Chart refs
+const performanceChart = ref(null);
+const learningChart = ref(null);
+
 // Computed
 const quickStats = computed(() => [
   {
-    label: 'حالة الذكاء الاصطناعي',
-    value: aiStatus.value.overall === 'healthy' ? 'نشط' : 'محدود',
+    label: t('activeModels') || 'النماذج النشطة',
+    value: learningStats.value.totalModels || 4,
+    icon: 'mdi-brain',
+    color: 'primary'
     icon: 'fas fa-brain',
     iconBg: 'bg-gradient-to-r from-royal-600 to-royal-700',
     changeLabel: 'معدل الاستجابة',
@@ -632,91 +631,258 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.royal-ai-dashboard {
-  font-family: 'Inter', system-ui, sans-serif;
+/* Royal Header */
+.royal-header {
+  position: relative;
+  overflow: hidden;
 }
 
-.pulse-live {
-  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.royal-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+  transition: left 0.5s ease;
 }
 
-@keyframes pulse-glow {
-  0%, 100% {
+.royal-header:hover::before {
+  left: 100%;
+}
+
+/* Stat Cards */
+.stat-card {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+  transition: left 0.5s ease;
+}
+
+.stat-card:hover::before {
+  left: 100%;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.15);
+}
+
+/* Service Cards */
+.service-card {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.service-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+  transition: left 0.5s ease;
+}
+
+.service-card:hover::before {
+  left: 100%;
+}
+
+.service-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(var(--v-theme-primary), 0.15);
+}
+
+/* Activity Cards */
+.activity-card {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.activity-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+  transition: left 0.5s ease;
+}
+
+.activity-card:hover::before {
+  left: 100%;
+}
+
+.activity-card:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.15);
+}
+
+/* Chart Cards */
+.chart-card {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.chart-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(var(--v-theme-primary), 0.05), transparent);
+  transition: left 0.5s ease;
+}
+
+.chart-card:hover::before {
+  left: 100%;
+}
+
+.chart-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.15);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
     opacity: 1;
-    box-shadow: 0 0 20px rgba(34, 197, 94, 0.6);
-  }
-  50% {
-    opacity: 0.8;
-    box-shadow: 0 0 40px rgba(34, 197, 94, 0.8);
+    transform: translateY(0);
   }
 }
 
-:deep(.p-button) {
-  border-radius: 12px;
-  font-weight: 500;
+.stat-card {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.stat-card:nth-child(1) { animation-delay: 0.1s; }
+.stat-card:nth-child(2) { animation-delay: 0.2s; }
+.stat-card:nth-child(3) { animation-delay: 0.3s; }
+.stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+.service-card {
+  animation: fadeIn 0.6s ease forwards;
+}
+
+.service-card:nth-child(1) { animation-delay: 0.1s; }
+.service-card:nth-child(2) { animation-delay: 0.2s; }
+.service-card:nth-child(3) { animation-delay: 0.3s; }
+
+.activity-card {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.chart-card {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.chart-card:nth-child(1) { animation-delay: 0.1s; }
+.chart-card:nth-child(2) { animation-delay: 0.2s; }
+
+/* Responsive Design */
+@media (max-width: 960px) {
+  .royal-header .d-flex {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  
+  .header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .royal-header h1 {
+    font-size: 1.5rem;
+  }
+  
+  .stat-card {
+    margin-bottom: 1rem;
+  }
+  
+  .service-card {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Vuetify Overrides */
+:deep(.v-card) {
   transition: all 0.3s ease;
 }
 
-:deep(.p-button:hover) {
+:deep(.v-card:hover) {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
-:deep(.p-button-royal) {
-  background: linear-gradient(135deg, #4f46e5, #4338ca);
-  border: 1px solid #4f46e5;
-  color: white;
+:deep(.v-btn) {
+  transition: all 0.3s ease;
 }
 
-:deep(.p-button-royal:hover) {
-  background: linear-gradient(135deg, #4338ca, #3730a3);
-  box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+:deep(.v-btn:hover) {
+  transform: translateY(-2px);
 }
 
-:deep(.p-button-gold) {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  border: 1px solid #f59e0b;
-  color: white;
+:deep(.v-avatar) {
+  transition: all 0.3s ease;
 }
 
-:deep(.p-button-gold:hover) {
-  background: linear-gradient(135deg, #d97706, #b45309);
-  box-shadow: 0 10px 25px rgba(245, 158, 11, 0.3);
+:deep(.v-avatar:hover) {
+  transform: scale(1.05);
 }
 
-:deep(.p-button-danger) {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  border: 1px solid #ef4444;
-  color: white;
+:deep(.v-chip) {
+  transition: all 0.3s ease;
 }
 
-:deep(.p-button-danger:hover) {
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
-  box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+:deep(.v-chip:hover) {
+  transform: translateY(-2px);
 }
 
-:deep(.p-button-outlined) {
-  background: transparent;
-  border: 2px solid;
+:deep(.v-progress-circular) {
+  animation: spin 2s linear infinite;
 }
 
-:deep(.p-button-outlined.p-button-royal) {
-  border-color: #4f46e5;
-  color: #4f46e5;
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-:deep(.p-button-outlined.p-button-royal:hover) {
-  background: #4f46e5;
-  color: white;
+:deep(.v-icon) {
+  transition: all 0.3s ease;
 }
 
-:deep(.p-button-outlined.p-button-gold) {
-  border-color: #f59e0b;
-  color: #f59e0b;
+:deep(.v-icon:hover) {
+  transform: scale(1.1);
 }
 
-:deep(.p-button-outlined.p-button-gold:hover) {
-  background: #f59e0b;
-  color: white;
+:deep(.v-progress-linear) {
+  transition: all 0.3s ease;
+}
+
+:deep(.v-progress-linear:hover) {
+  transform: scale(1.02);
 }
 </style>
